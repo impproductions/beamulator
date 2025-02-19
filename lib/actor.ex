@@ -46,26 +46,20 @@ defmodule Beamulacrum.Actor do
       state: initial_state
     }
 
-    case Registry.register(Beamulacrum.ActorRegistry, :actors, self()) do
-      {:ok, _} ->
-        IO.puts("Actor #{name} registered successfully in ActorRegistry")
-
-      {:error, reason} ->
-        IO.puts("Failed to register actor #{name}: #{inspect(reason)}")
-    end
-
     {:ok, actor_state}
   end
 
   def handle_info({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
     IO.puts("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
+    Logger.metadata(tick: tick_number)
 
-    behavior_state = %Beamulacrum.Behavior.Data{
+    behavior_data = %Beamulacrum.Behavior.Data{
       name: actor_data.name,
+      config: actor_data.config,
       state: state
     }
 
-    case behavior.act(tick_number, behavior_state) do
+    case behavior.act(tick_number, behavior_data) do
       {:ok, new_behavior_data} ->
         IO.puts("Actor #{actor_data.name} acted successfully")
         new_state = %{actor_data | state: new_behavior_data.state}

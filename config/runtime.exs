@@ -1,7 +1,10 @@
 import Config
 
-config :beamulacrum, Beamulacrum.Simulation,
+config :beamulacrum,
+  simulation: [
+    tick_interval_ms: 10
+  ],
   actors: [
-    %{module: MyApp.BehaviorA, count: 10, initial_state: %{foo: 1}},
-    %{module: MyApp.BehaviorB, count: 5, initial_state: %{bar: 2}}
+    %{behavior: Beamulacrum.Behaviors.Wanderer, name: "Slow Wanderer", amt: 5, config: %{speed: 1}},
+    %{behavior: Beamulacrum.Behaviors.Wanderer, name: "Fast Wanderer", amt: 2, config: %{speed: 10}}
   ]

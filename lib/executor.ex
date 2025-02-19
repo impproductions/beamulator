@@ -3,6 +3,8 @@ defmodule Beamulacrum.ActionExecutor do
   Executes user-defined actions from the Beamulacrum.Actions module.
   """
 
+  require Logger
+
   @spec exec((... -> {:ok, any()} | {:error, String.t()}), any()) ::
           {:ok, any()} | {:error, String.t()}
   def exec(action, args) when is_function(action) do

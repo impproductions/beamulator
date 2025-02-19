@@ -11,7 +11,7 @@ defmodule Beamulacrum.ActorSupervisor do
   end
 
   def start_actor(name, behavior_module, config) do
-    IO.puts("Starting actor: #{name} with behavior #{inspect(behavior_module)}")
+    IO.puts("Starting actor: #{name}")
     spec = {Beamulacrum.Actor, {name, behavior_module, config}}
     DynamicSupervisor.start_child(__MODULE__, spec)
   end

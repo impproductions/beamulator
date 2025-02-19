@@ -1,9 +1,10 @@
 defmodule Beamulacrum.Behavior.Data do
-  @enforce_keys [:name, :state]
-  defstruct [:name, :state]
+  @enforce_keys [:name, :config, :state]
+  defstruct [:name, :config, :state]
 
   @type t :: %__MODULE__{
           name: String.t(),
+          config: map(),
           state: map()
         }
 end

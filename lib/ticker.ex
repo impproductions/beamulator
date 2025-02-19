@@ -1,8 +1,6 @@
 defmodule Beamulacrum.Ticker do
   use GenServer
-
-  # 1 second per tick
-  @tick_interval 1000
+  require Logger
 
   def start_link(_) do
     IO.puts("Starting ticker process...")
@@ -32,13 +30,14 @@ defmodule Beamulacrum.Ticker do
   end
 
   defp schedule_tick() do
-    IO.puts("Scheduling tick")
-    Process.send_after(self(), :tick, @tick_interval)
+    tick_interval = Application.get_env(:beamulacrum, :simulation)[:tick_interval_ms] || 1000
+    IO.puts("Scheduling next tick in #{tick_interval}ms")
+    Process.send_after(self(), :tick, tick_interval)
   end
 
   defp broadcast_tick(tick_number) do
     actors =
-      Registry.lookup(Beamulacrum.ActorRegistry, :actors) |> Enum.map(fn {pid, _} -> pid end)
+      Registry.select(Beamulacrum.ActorRegistry, [{{:"$1", :"$2", :"$3"}, [], [:"$2"]}])
 
     Enum.each(actors, fn actor_pid ->
       IO.puts("Sending tick #{tick_number} to #{inspect(actor_pid)}")

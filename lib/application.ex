@@ -4,7 +4,8 @@ defmodule Beamulacrum.Application do
   def start(_type, _args) do
     IO.puts("Starting Beamulacrum...")
 
-    # Beamulacrum.ModuleLoader.load_user_modules(@user_module_path)
+    Logger.add_backend({LoggerFileBackend, :file_logger})
+    Logger.configure(level: :info, backends: [:console, :file_logger])
 
     children = [
       {Registry, keys: :unique, name: Beamulacrum.ActorRegistry},
@@ -16,7 +17,22 @@ defmodule Beamulacrum.Application do
     opts = [strategy: :one_for_one, name: :main_supervisor]
     {:ok, spid} = Supervisor.start_link(children, opts)
 
-    Beamulacrum.ActorSupervisor.start_actor("wanderer_1", Beamulacrum.Behaviors.Wanderer, %{})
+    actors_config = Application.fetch_env!(:beamulacrum, :actors)
+
+    IO.inspect(actors_config, label: "actors_config")
+
+    actors_config
+    |> Enum.each(fn conf ->
+      # IO.inspect(conf, label: "conf")
+      %{name: name, behavior: behavior, config: config, amt: amt} = conf
+      # IO.inspect(name, label: "name")
+      # IO.inspect(behavior, label: "behavior")
+      # IO.inspect(config, label: "config")
+      # IO.inspect(amt, label: "amt")
+      for _ <- 1..amt,
+          do:
+            Beamulacrum.ActorSupervisor.start_actor(name <> " " <> UUID.uuid4(), behavior, config)
+    end)
 
     IO.puts("Application started successfully")
 
