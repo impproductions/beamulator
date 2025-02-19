@@ -57,15 +57,15 @@ defmodule Beamulacrum.Actor do
   def handle_info({:tick, tick_number}, %{behavior: behavior, data: data} = actor_state) do
     IO.puts("Actor #{actor_state.name} reacting to simulation tick #{tick_number}")
 
-    behaviour_state = %Beamulacrum.Behavior.State{
+    behavior_state = %Beamulacrum.Behavior.State{
       name: actor_state.name,
       data: data
     }
 
-    case behavior.act(tick_number, behaviour_state) do
-      {:ok, new_behaviour_state} ->
+    case behavior.act(tick_number, behavior_state) do
+      {:ok, new_behavior_state} ->
         IO.puts("Actor #{actor_state.name} acted successfully")
-        new_state = %{actor_state | data: new_behaviour_state.data}
+        new_state = %{actor_state | data: new_behavior_state.data}
         {:noreply, new_state}
 
       {:error, reason} ->

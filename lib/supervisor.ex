@@ -10,8 +10,8 @@ defmodule Beamulacrum.ActorSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  def start_actor(name, behaviour_module) do
-    spec = {Beamulacrum.Actor, {name, behaviour_module}}
+  def start_actor(name, behavior_module) do
+    spec = {Beamulacrum.Actor, {name, behavior_module}}
     DynamicSupervisor.start_child(__MODULE__, spec)
   end
 end

@@ -1,8 +1,8 @@
-defmodule Beamulacrum.Behaviours.Wanderer do
+defmodule Beamulacrum.Behaviors.Wanderer do
   @behaviour Beamulacrum.Behavior
 
   alias Beamulacrum.ActionExecutor
-  # alias Beamulacrum.Behaviours
+  # alias Beamulacrum.Behaviors
   alias Beamulacrum.Actions
 
   @impl Beamulacrum.Behavior
