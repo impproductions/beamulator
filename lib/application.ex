@@ -1,12 +1,10 @@
 defmodule Beamulacrum.Application do
   use Application
 
-  @user_module_path "simulacrum"
-
   def start(_type, _args) do
     IO.puts("Starting Beamulacrum...")
 
-    Beamulacrum.ModuleLoader.load_user_modules(@user_module_path)
+    # Beamulacrum.ModuleLoader.load_user_modules(@user_module_path)
 
     children = [
       {Registry, keys: :unique, name: Beamulacrum.ActorRegistry},
@@ -18,7 +16,7 @@ defmodule Beamulacrum.Application do
     opts = [strategy: :one_for_one, name: :main_supervisor]
     {:ok, spid} = Supervisor.start_link(children, opts)
 
-    Beamulacrum.ActorSupervisor.start_actor("wanderer_1", Wanderer)
+    Beamulacrum.ActorSupervisor.start_actor("wanderer_1", Beamulacrum.Behaviours.Wanderer)
 
     IO.puts("Application started successfully")
 

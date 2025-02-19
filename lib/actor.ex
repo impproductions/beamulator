@@ -1,3 +1,14 @@
+defmodule Beamulacrum.Actor.State do
+  @enforce_keys [:name, :tick, :behavior, :data]
+  defstruct [:name, :tick, :behavior, :data]
+
+  @type t :: %__MODULE__{
+          name: String.t(),
+          behavior: module(),
+          data: map()
+        }
+end
+
 defmodule Beamulacrum.Actor do
   use GenServer
 
@@ -16,13 +27,17 @@ defmodule Beamulacrum.Actor do
       {:error, reason} ->
         IO.puts("Failed to start actor #{name}: #{inspect(reason)}")
         {:error, reason}
+
+      _ ->
+        IO.puts("Unknown error")
+        {:error, "Unknown error"}
     end
   end
 
   def init({name, behavior_module, initial_state}) do
     IO.puts("Initializing actor: #{name}")
 
-    state = %{
+    actor_state = %{
       name: name,
       behavior: behavior_module,
       data: initial_state
@@ -36,18 +51,27 @@ defmodule Beamulacrum.Actor do
         IO.puts("Failed to register actor #{name}: #{inspect(reason)}")
     end
 
-    {:ok, state}
+    {:ok, actor_state}
   end
 
-  def handle_info({:tick, tick_number}, %{behavior: behavior, data: data} = state) do
-    IO.puts("Actor #{state.name} reacting to simulation tick #{tick_number}")
+  def handle_info({:tick, tick_number}, %{behavior: behavior, data: data} = actor_state) do
+    IO.puts("Actor #{actor_state.name} reacting to simulation tick #{tick_number}")
 
-    {decision, updated_data} = behavior.decide(data)
-    IO.puts("Picked op: #{decision}, new state: #{inspect(state)}")
+    behaviour_state = %Beamulacrum.Behavior.State{
+      name: actor_state.name,
+      data: data
+    }
 
-    new_state = %{state | data: updated_data}
+    case behavior.act(tick_number, behaviour_state) do
+      {:ok, new_behaviour_state} ->
+        IO.puts("Actor #{actor_state.name} acted successfully")
+        new_state = %{actor_state | data: new_behaviour_state.data}
+        {:noreply, new_state}
 
-    {:noreply, new_state}
+      {:error, reason} ->
+        IO.puts("Actor #{actor_state.name} failed to act: #{reason}")
+        {:noreply, actor_state}
+    end
   end
 
   defp via_tuple(name), do: {:via, Registry, {Beamulacrum.ActorRegistry, name}}
