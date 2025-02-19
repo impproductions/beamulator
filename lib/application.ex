@@ -16,7 +16,7 @@ defmodule Beamulacrum.Application do
     opts = [strategy: :one_for_one, name: :main_supervisor]
     {:ok, spid} = Supervisor.start_link(children, opts)
 
-    Beamulacrum.ActorSupervisor.start_actor("wanderer_1", Beamulacrum.Behaviors.Wanderer)
+    Beamulacrum.ActorSupervisor.start_actor("wanderer_1", Beamulacrum.Behaviors.Wanderer, %{})
 
     IO.puts("Application started successfully")
 

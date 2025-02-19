@@ -1,10 +1,10 @@
-defmodule Beamulacrum.Behavior.State do
-  @enforce_keys [:name, :data]
-  defstruct [:name, :data]
+defmodule Beamulacrum.Behavior.Data do
+  @enforce_keys [:name, :state]
+  defstruct [:name, :state]
 
   @type t :: %__MODULE__{
           name: String.t(),
-          data: map()
+          state: map()
         }
 end
 
@@ -12,8 +12,8 @@ defmodule Beamulacrum.Behavior do
   @moduledoc """
   A behavior that all actor behaviors must implement.
   """
-  alias Beamulacrum.Behavior.State
+  alias Beamulacrum.Behavior
 
   @callback default_state() :: map()
-  @callback act(tick :: integer(), state :: State.t()) :: {:ok, State.t()} | {:error, String.t()}
+  @callback act(tick :: integer(), state :: Behavior.Data.t()) :: {:ok, Behavior.Data.t()} | {:error, String.t()}
 end

@@ -9,7 +9,7 @@ defmodule Beamulacrum.Behaviors.Wanderer do
   def default_state(), do: %{x: 0, y: 0}
 
   @impl Beamulacrum.Behavior
-  def act(tick, %{name: name, data: data} = state) do
+  def act(tick, %{name: name, state: state} = data) do
     multiplier = case tick do
       tick when tick < 10 -> 1
       tick when tick < 20 -> 10
@@ -21,9 +21,9 @@ defmodule Beamulacrum.Behaviors.Wanderer do
 
     _ = ActionExecutor.exec(&Actions.move/1, %{name: name, dx: dx, dy: dy})
 
-    new_state = %{state | data: %{data | x: data.x + dx, y: data.y + dy}}
+    new_data = %{data | state: %{state | x: state.x + dx, y: state.y + dy}}
 
-    IO.puts("Actor #{name} moved to (#{new_state.data.x}, #{new_state.data.y})")
-    {:ok, new_state}
+    IO.puts("Actor #{name} moved to (#{new_data.state.x}, #{new_data.state.y})")
+    {:ok, new_data}
   end
 end
