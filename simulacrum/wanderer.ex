@@ -6,7 +6,7 @@ defmodule Beamulacrum.Behaviors.Wanderer do
   alias Beamulacrum.Actions
 
   @impl Beamulacrum.Behavior
-  def default_state(), do: %{x: 0, y: 0}
+  def default_state(), do: %{person_name: Faker.Person.En.name(), x: 0, y: 0}
 
   @impl Beamulacrum.Behavior
   def act(tick, %{name: name, state: state, config: config} = data) do
@@ -19,6 +19,7 @@ defmodule Beamulacrum.Behaviors.Wanderer do
     dx = Enum.random([-multiplier * config.speed, 0, multiplier * config.speed])
     dy = Enum.random([-multiplier * config.speed, 0, multiplier * config.speed])
 
+    IO.puts("Actor #{state.person_name} moving by (#{dx}, #{dy})")
     _ = ActionExecutor.exec(&Actions.move/1, %{name: name, dx: dx, dy: dy})
 
     new_data = %{data | state: %{state | x: state.x + dx, y: state.y + dy}}

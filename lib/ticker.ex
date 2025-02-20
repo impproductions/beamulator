@@ -24,10 +24,23 @@ defmodule Beamulacrum.Ticker do
 
   def handle_info(:tick, tick_number) do
     IO.puts("Now executing next tick")
+    if rem(tick_number, 100) == 0 do
+      Logger.info("Executing tick #{tick_number} (#{as_duration(tick_number)})")
+    end
     broadcast_tick(tick_number)
     schedule_tick()
     {:noreply, tick_number + 1}
   end
+
+  defp as_duration(tick) when is_integer(tick) do
+    tick_seconds = tick
+    duration = Timex.Duration.from_seconds(tick_seconds)
+
+    duration
+    |> Timex.Format.Duration.Formatter.format(:humanized)
+    |> String.replace(" ago", "")
+  end
+
 
   defp schedule_tick() do
     tick_interval = Application.get_env(:beamulacrum, :simulation)[:tick_interval_ms] || 1000

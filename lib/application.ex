@@ -4,8 +4,15 @@ defmodule Beamulacrum.Application do
   def start(_type, _args) do
     IO.puts("Starting Beamulacrum...")
 
+
     Logger.add_backend({LoggerFileBackend, :file_logger})
     Logger.configure(level: :info, backends: [:console, :file_logger])
+
+    simulatiom_config = Application.fetch_env!(:beamulacrum, :simulation)
+    random_seed = simulatiom_config[:random_seed]
+
+    IO.puts("Random seed: #{random_seed}")
+    :rand.seed(:exsss, random_seed)
 
     children = [
       {Registry, keys: :unique, name: Beamulacrum.ActorRegistry},
@@ -23,15 +30,15 @@ defmodule Beamulacrum.Application do
 
     actors_config
     |> Enum.each(fn conf ->
-      # IO.inspect(conf, label: "conf")
       %{name: name, behavior: behavior, config: config, amt: amt} = conf
-      # IO.inspect(name, label: "name")
-      # IO.inspect(behavior, label: "behavior")
-      # IO.inspect(config, label: "config")
-      # IO.inspect(amt, label: "amt")
+
       for _ <- 1..amt,
           do:
-            Beamulacrum.ActorSupervisor.start_actor(name <> " " <> UUID.uuid4(), behavior, config)
+            Beamulacrum.ActorSupervisor.start_actor(
+              name <> " " <> to_string(:erlang.unique_integer([:monotonic, :positive])),
+              behavior,
+              config
+            )
     end)
 
     IO.puts("Application started successfully")

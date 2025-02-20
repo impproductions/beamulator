@@ -9,6 +9,7 @@ defmodule Beamulacrum.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: [
         {:logger_file_backend, "~> 0.0.12"},
+        {:faker, "~> 0.18"},
         {:timex, "~> 3.7"},
         {:uuid, "~> 1.1"}
       ],

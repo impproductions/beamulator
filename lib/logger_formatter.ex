@@ -6,17 +6,17 @@ defmodule Beamulacrum.LoggerFormatter do
     "[#{time}] [#{tick}] #{message}\n"
   end
 
-  defp format_timestamp({{year, month, day}, {hour, min, sec, millis}}) do
-    "#{year}-#{pad(month)}-#{pad(day)} #{pad(hour)}:#{pad(min)}:#{pad(sec)}.#{millis}"
+  defp format_timestamp({{year, month, day}, {hour, min, sec, _}}) do
+    "#{year}-#{pad(month)}-#{pad(day)} #{pad(hour)}:#{pad(min)}:#{pad(sec)}"
   end
 
   defp as_duration(tick) when is_integer(tick) do
-    tick_seconds = tick  # Assuming tick represents elapsed seconds in simulation
+    tick_seconds = tick
     duration = Timex.Duration.from_seconds(tick_seconds)
 
     duration
     |> Timex.Format.Duration.Formatter.format(:humanized)
-    |> String.replace(" ago", "")  # Remove past tense wording if any
+    |> String.replace(" ago", "")
   end
 
   defp as_duration(_), do: "N/A"
