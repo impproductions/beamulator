@@ -3,10 +3,16 @@ defmodule Beamulacrum.Actions do
 
   require Logger
 
-  def onboard_user(%{onboarder: onboarder, name: name, email: email}) do
-    IO.puts("Salesperson #{onboarder} onboarded user #{name} with email #{email}")
-    Logger.info("Salesperson #{onboarder} onboarded user #{name} with email #{email}")
-    {:ok, nil}
+  def onboard_user(%{onboarder: onboarder}) do
+    IO.puts("Onboarder #{onboarder} is creating a new user")
+    Logger.info("Onboarder #{onboarder} is creating a new user")
+
+    new_user_name = Faker.Person.name() <> " " <> to_string(Beamulacrum.Tools.increasing_int())
+    new_email = Faker.Internet.email()
+
+    IO.puts("Onboarder #{onboarder} created a new user: #{new_user_name} with email #{new_email}")
+    Logger.info("Onboarder #{onboarder} created a new user: #{new_user_name} with email #{new_email}")
+    {:ok, %{name: new_user_name, email: new_email}}
   end
 
   def user_purchase(%{name: name, email: email, product: product, price: price}) do

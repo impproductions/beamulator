@@ -20,27 +20,28 @@ defmodule Beamulacrum.Application do
 
     IO.puts("Starting the simulation tree")
     opts = [strategy: :one_for_one, name: :main_supervisor]
-    {:ok, spid} = Supervisor.start_link(children, opts)
+    {:ok, supervisor_pid} = Supervisor.start_link(children, opts)
 
     actors_config = Application.fetch_env!(:beamulacrum, :actors)
 
     IO.inspect(actors_config, label: "actors_config")
 
-    actors_config
-    |> Enum.each(fn conf ->
-      %{name: name, behavior: behavior, config: config, amt: amt} = conf
+    actors_to_create =
+      actors_config
+      |> Enum.map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
+        for _ <- 1..amt,
+            do: %{
+              name: name <> " " <> to_string(Beamulacrum.Tools.increasing_int()),
+              behavior: behavior,
+              config: config
+            }
+      end)
+      |> List.flatten()
 
-      for _ <- 1..amt,
-          do:
-            Beamulacrum.ActorSupervisor.start_actor(
-              name <> " " <> to_string(Beamulacrum.Tools.increasing_int()),
-              behavior,
-              config
-            )
-    end)
+    _pids = Beamulacrum.Connectors.Internal.create_actors(actors_to_create)
 
-    IO.puts("Application started successfully")
+    IO.puts("Application started successfully!")
 
-    {:ok, spid}
+    {:ok, supervisor_pid}
   end
 end
