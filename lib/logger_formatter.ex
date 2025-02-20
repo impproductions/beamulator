@@ -11,12 +11,7 @@ defmodule Beamulacrum.LoggerFormatter do
   end
 
   defp as_duration(tick) when is_integer(tick) do
-    tick_seconds = tick
-    duration = Timex.Duration.from_seconds(tick_seconds)
-
-    duration
-    |> Timex.Format.Duration.Formatter.format(:humanized)
-    |> String.replace(" ago", "")
+    Beamulacrum.Tools.Time.as_duration(tick, :shorten)
   end
 
   defp as_duration(_), do: "N/A"

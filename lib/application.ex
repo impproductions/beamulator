@@ -4,12 +4,10 @@ defmodule Beamulacrum.Application do
   def start(_type, _args) do
     IO.puts("Starting Beamulacrum...")
 
-
     Logger.add_backend({LoggerFileBackend, :file_logger})
     Logger.configure(level: :info, backends: [:console, :file_logger])
 
-    simulatiom_config = Application.fetch_env!(:beamulacrum, :simulation)
-    random_seed = simulatiom_config[:random_seed]
+    random_seed = Beamulacrum.Tools.random_seed()
 
     IO.puts("Random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
@@ -35,7 +33,7 @@ defmodule Beamulacrum.Application do
       for _ <- 1..amt,
           do:
             Beamulacrum.ActorSupervisor.start_actor(
-              name <> " " <> to_string(:erlang.unique_integer([:monotonic, :positive])),
+              name <> " " <> to_string(Beamulacrum.Tools.increasing_int()),
               behavior,
               config
             )
