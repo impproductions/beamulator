@@ -12,36 +12,35 @@ defmodule Beamulacrum.Application do
     IO.puts("Random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
 
-    children = [
-      {Registry, keys: :duplicate, name: Beamulacrum.ActorRegistry},
-      {Beamulacrum.Ticker, []},
-      {Beamulacrum.ActorSupervisor, []}
-    ]
+    children = [{Beamulacrum.Supervisor, []}]
 
-    IO.puts("Starting the simulation tree")
-    opts = [strategy: :one_for_one, name: :main_supervisor]
-    {:ok, supervisor_pid} = Supervisor.start_link(children, opts)
+    opts = [strategy: :one_for_one, name: Beamulacrum.RootSupervisor]
 
-    actors_config = Application.fetch_env!(:beamulacrum, :actors)
+    case Supervisor.start_link(children, opts) do
+      {:ok, pid} ->
+        IO.puts("Application started successfully!")
+        actors_config = Application.fetch_env!(:beamulacrum, :actors)
 
-    IO.inspect(actors_config, label: "actors_config")
+        IO.inspect(actors_config, label: "actors_config")
 
-    actors_to_create =
-      actors_config
-      |> Enum.map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
-        for _ <- 1..amt,
-            do: %{
-              name: name <> " " <> to_string(Beamulacrum.Tools.increasing_int()),
-              behavior: behavior,
-              config: config
-            }
-      end)
-      |> List.flatten()
+        actors_to_create =
+          actors_config
+          |> Enum.map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
+            for _ <- 1..amt,
+                do: %{
+                  name: name <> " " <> to_string(Beamulacrum.Tools.increasing_int()),
+                  behavior: behavior,
+                  config: config
+                }
+          end)
+          |> List.flatten()
 
-    _pids = Beamulacrum.Connectors.Internal.create_actors(actors_to_create)
+        _pids = Beamulacrum.Connectors.Internal.create_actors(actors_to_create)
+        {:ok, pid}
 
-    IO.puts("Application started successfully!")
-
-    {:ok, supervisor_pid}
+      {:error, reason} ->
+        IO.puts("Failed to start supervisor: #{inspect(reason)}")
+        {:error, reason}
+    end
   end
 end

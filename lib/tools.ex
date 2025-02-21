@@ -27,7 +27,7 @@ defmodule Beamulacrum.Tools do
 
   defmodule Time do
     def second() do
-      1 * Application.get_env(:beamulacrum, :simulation)[:tick_to_seconds]
+      Application.get_env(:beamulacrum, :simulation)[:tick_to_seconds]
     end
 
     def minute() do

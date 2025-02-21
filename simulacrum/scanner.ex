@@ -9,7 +9,7 @@ defmodule Beamulacrum.Behaviors.Scanner do
   @impl Beamulacrum.Behavior
   def default_state() do
     %{
-      wait_ticks: 10
+      wait_ticks: 1000
     }
   end
 
