@@ -1,10 +1,11 @@
 # Roadmap
 
 ## Next
-- query actors tool + example
+- query actors tool + example ✅
 - destroy actors tool + example
 - connectors
   - rest
+  - ws?
   - pg?
   - Opensearch?
 

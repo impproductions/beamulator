@@ -11,6 +11,20 @@ defmodule Beamulacrum.Tools do
     Application.get_env(:beamulacrum, :simulation)[:random_seed]
   end
 
+  defmodule Logging do
+    require Logger
+
+    def log(level, message) do
+      Logger.log(level, message)
+    end
+  end
+
+  defmodule Actors do
+    def select_by_behavior(behavior_module) do
+      Registry.match(Beamulacrum.ActorRegistry, :actors, {behavior_module, :_, :_})
+    end
+  end
+
   defmodule Time do
     def second() do
       1 * Application.get_env(:beamulacrum, :simulation)[:tick_to_seconds]

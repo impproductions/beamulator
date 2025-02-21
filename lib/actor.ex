@@ -19,9 +19,7 @@ defmodule Beamulacrum.Actor do
 
     initial_state = behavior_module.default_state()
 
-    case GenServer.start_link(__MODULE__, {name, behavior_module, config, initial_state},
-           name: via_tuple(name)
-         ) do
+    case GenServer.start_link(__MODULE__, {name, behavior_module, config, initial_state}) do
       {:ok, pid} ->
         IO.puts("Actor #{name} started successfully with PID #{inspect(pid)}")
         {:ok, pid}
@@ -34,10 +32,14 @@ defmodule Beamulacrum.Actor do
         IO.puts("Unknown error")
         {:error, "Unknown error"}
     end
+
+
   end
 
   def init({name, behavior_module, config, initial_state}) do
     IO.puts("Initializing actor: #{name}")
+    selector = {behavior_module, Beamulacrum.Tools.increasing_int(), name}
+    Registry.register(Beamulacrum.ActorRegistry, :actors, selector)
 
     actor_state = %Data{
       name: name,
@@ -94,5 +96,5 @@ defmodule Beamulacrum.Actor do
     end
   end
 
-  defp via_tuple(name), do: {:via, Registry, {Beamulacrum.ActorRegistry, name}}
+  # defp via_tuple(selector), do: {:via, Registry, {Beamulacrum.ActorRegistry, :actors, selector}}
 end

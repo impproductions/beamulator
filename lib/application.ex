@@ -13,7 +13,7 @@ defmodule Beamulacrum.Application do
     :rand.seed(:exsss, random_seed)
 
     children = [
-      {Registry, keys: :unique, name: Beamulacrum.ActorRegistry},
+      {Registry, keys: :duplicate, name: Beamulacrum.ActorRegistry},
       {Beamulacrum.Ticker, []},
       {Beamulacrum.ActorSupervisor, []}
     ]

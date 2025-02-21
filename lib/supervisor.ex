@@ -1,6 +1,8 @@
 defmodule Beamulacrum.ActorSupervisor do
   use DynamicSupervisor
 
+  # alias Beamulacrum.Tools
+
   def start_link(_) do
     IO.puts("Starting Actor Supervisor...")
     DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)

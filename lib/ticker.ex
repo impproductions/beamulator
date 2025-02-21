@@ -37,13 +37,15 @@ defmodule Beamulacrum.Ticker do
 
   defp broadcast_tick(tick_number) do
     actors =
-      Registry.select(Beamulacrum.ActorRegistry, [{{:"$1", :"$2", :"$3"}, [], [:"$2"]}])
+      Registry.lookup(Beamulacrum.ActorRegistry, :actors) |> Enum.map(fn {pid, _} -> pid end)
 
     Enum.each(actors, fn actor_pid ->
-      IO.puts("Sending tick #{tick_number} to #{inspect(actor_pid)}")
-      send(actor_pid, {:tick, tick_number})
+      if Process.alive?(actor_pid) do
+        IO.puts("Sending tick #{tick_number} to #{inspect(actor_pid)} (alive)")
+        send(actor_pid, {:tick, tick_number})
+      else
+        IO.puts("Actor #{inspect(actor_pid)} is not alive!")
+      end
     end)
-
-    IO.puts("Broadcasted tick #{tick_number} to #{length(actors)} actors")
   end
 end
