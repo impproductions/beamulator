@@ -21,6 +21,9 @@ defmodule Beamulacrum.Application do
         IO.puts("Application started successfully!")
         actors_config = Application.fetch_env!(:beamulacrum, :actors)
 
+        Beamulacrum.ModuleLoader.load_behaviors("./simulacrum")
+        Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
+
         IO.inspect(actors_config, label: "actors_config")
 
         actors_to_create =

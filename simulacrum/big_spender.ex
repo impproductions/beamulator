@@ -1,5 +1,5 @@
 defmodule Beamulacrum.Behaviors.BigSpender do
-  @behaviour Beamulacrum.Behavior
+  use Beamulacrum.Behavior
 
   alias Beamulacrum.ActionExecutor
   alias Beamulacrum.Actions

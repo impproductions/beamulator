@@ -29,6 +29,14 @@ defmodule Beamulacrum.Ticker do
     {:noreply, tick_number + 1}
   end
 
+  def get_tick_number() do
+    GenServer.call(__MODULE__, :get_tick_number)
+  end
+
+  def handle_call(:get_tick_number, _from, tick_number) do
+    {:reply, tick_number, tick_number}
+  end
+
   defp schedule_tick() do
     tick_interval = Application.get_env(:beamulacrum, :simulation)[:tick_interval_ms] || 1000
     IO.puts("Scheduling next tick in #{tick_interval}ms")

@@ -96,5 +96,9 @@ defmodule Beamulacrum.Actor do
     end
   end
 
+  def handle_call(:state, _from, actor_data) do
+    {:reply, actor_data, actor_data}
+  end
+
   # defp via_tuple(selector), do: {:via, Registry, {Beamulacrum.ActorRegistry, :actors, selector}}
 end

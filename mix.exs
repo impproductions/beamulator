@@ -13,6 +13,12 @@ defmodule Beamulacrum.MixProject do
         {:timex, "~> 3.7"},
         {:uuid, "~> 1.1"}
       ],
+      releases: [
+        beamulacrum: [
+          version: "0.1.0",
+          vm_args: "rel/vm.args"
+        ]
+      ],
       elixirc_paths: elixirc_paths()
     ]
   end

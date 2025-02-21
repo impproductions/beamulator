@@ -1,6 +1,10 @@
 # The directory Mix will write compiled artifacts to.
 /_build/
 
+# Configs, envs
+rel/vm.args
+!rel/vm.args.template
+
 # If you run "mix test --cover", coverage assets end up here.
 /cover/
 

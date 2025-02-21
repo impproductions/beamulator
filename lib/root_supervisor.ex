@@ -10,6 +10,7 @@ defmodule Beamulacrum.Supervisor do
     children = [
       {Registry, keys: :duplicate, name: Beamulacrum.ActorRegistry},
       {Beamulacrum.Ticker, []},
+      {Beamulacrum.Behavior.Registry, []},
       # {Beamulacrum.Worker, []},
       {Beamulacrum.ActorSupervisor, []}
     ]
