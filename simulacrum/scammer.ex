@@ -1,11 +1,10 @@
 defmodule Beamulacrum.Behaviors.Scammer do
   use Beamulacrum.Behavior
 
-  alias Beamulacrum.ActionExecutor
   alias Beamulacrum.Actions
 
-  @scam_delay_ticks 2000  # Delay before attempting a scam after a purchase
-  @next_buy_wait_ticks 2000  # Time before making another purchase
+  @scam_delay_ticks 2000
+  @next_buy_wait_ticks 2000
 
   @impl Beamulacrum.Behavior
   def default_state() do
@@ -35,7 +34,7 @@ defmodule Beamulacrum.Behaviors.Scammer do
 
         IO.puts("Scammer #{state.name} is attempting a refund scam for #{expensive_item.product} worth $#{expensive_item.price}")
 
-        case ActionExecutor.exec({__MODULE__, name}, &Actions.user_refund/1, %{
+        case execute(name, &Actions.user_refund/1, %{
               name: name,
                email: state.email,
                product: expensive_item.product,
@@ -59,7 +58,7 @@ defmodule Beamulacrum.Behaviors.Scammer do
         IO.puts("Scammer #{name} is browsing available products.")
 
         {:ok, products} =
-          ActionExecutor.exec({__MODULE__, name}, &Actions.user_list_available_products/1, %{name: name, email: state.email})
+          execute(name, &Actions.user_list_available_products/1, %{name: name, email: state.email})
 
         new_data = %{data | state: %{state | catalog: products}}
         IO.puts("Scammer #{state.name} received a catalog with #{length(products)} items.")
@@ -78,7 +77,7 @@ defmodule Beamulacrum.Behaviors.Scammer do
 
           IO.puts("Scammer #{state.name} bought #{chosen_product.product} for $#{chosen_product.price}")
 
-          _ = ActionExecutor.exec({__MODULE__, name}, &Actions.user_purchase/1, %{
+          _ = execute(name, &Actions.user_purchase/1, %{
             name: name,
             email: state.email,
             product: chosen_product.product,

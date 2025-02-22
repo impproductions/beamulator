@@ -1,7 +1,6 @@
 defmodule Beamulacrum.Behaviors.Onboarder do
   use Beamulacrum.Behavior
 
-  # alias Beamulacrum.ActionExecutor
   alias Beamulacrum.Actions
   alias Beamulacrum.Connectors.Internal
   alias Beamulacrum.Tools.Time

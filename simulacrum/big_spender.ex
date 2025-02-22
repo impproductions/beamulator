@@ -1,7 +1,6 @@
 defmodule Beamulacrum.Behaviors.BigSpender do
   use Beamulacrum.Behavior
 
-  alias Beamulacrum.ActionExecutor
   alias Beamulacrum.Actions
 
   @next_buy_wait_ticks 3600
@@ -25,11 +24,10 @@ defmodule Beamulacrum.Behaviors.BigSpender do
         # Step 1: Fetch available products
         IO.puts("BigSpender #{name} is checking available products.")
 
-        {:ok, products} =
-          ActionExecutor.exec({__MODULE__, name}, &Actions.user_list_available_products/1, %{
-            name: name,
-            email: state.email,
-          })
+        {:ok, products} = execute(name, &Actions.user_list_available_products/1, %{
+          name: name,
+          email: state.email
+        })
 
         new_wait_ticks = :rand.uniform(@decision_wait_ticks)
 
@@ -57,7 +55,7 @@ defmodule Beamulacrum.Behaviors.BigSpender do
 
         IO.puts("BigSpender #{state.name} decided to buy #{chosen_product.product} for $#{chosen_product.price}")
 
-        _ = ActionExecutor.exec({__MODULE__, name}, &Actions.user_purchase/1, %{
+        _ = execute(name, &Actions.user_purchase/1, %{
           name: name,
           email: state.email,
           product: chosen_product.product,

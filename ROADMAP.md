@@ -23,7 +23,10 @@
 
 ## Improvements
 - use pubsub for tick
-- action logger interface requires knowledge about {__MODULE, name}, make it more explicit in typing (struct?) <- macro?
+- action logger interface requires knowledge about {__MODULE, name}, make it more explicit in typing (struct?) <- macro? ✅
 - uniform error handling
 - better logging
 - dashboard: better terminal renderer
+
+## Just thinking
+- rename behavior to personality to avoid confusion with elixir's behaviour keyword

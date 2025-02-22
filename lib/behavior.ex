@@ -2,7 +2,6 @@ defmodule Beamulacrum.Behavior.Data do
   @enforce_keys [:name, :config, :state]
   defstruct [:name, :config, :state]
 
-
   @type t :: %__MODULE__{
           name: String.t(),
           config: map(),
@@ -22,9 +21,10 @@ defmodule Beamulacrum.Behavior do
     quote do
       @behaviour Beamulacrum.Behavior
 
-      # Inject a register/0 function that logs a message with the module name.
-      def register do
-        IO.puts("Registering #{__MODULE__}")
+      alias Beamulacrum.ActionExecutor
+
+      def execute(name, action, args) do
+        ActionExecutor.exec({__MODULE__, name}, action, args)
       end
     end
   end
@@ -62,6 +62,7 @@ defmodule Beamulacrum.Behavior.Registry do
   """
   def scan_and_register_all_behaviors do
     IO.puts("Scanning and registering all behaviors...")
+
     :code.all_loaded()
     |> Enum.map(fn {module, _file} -> module end)
     |> Enum.filter(&module_in_behaviors_namespace?/1)

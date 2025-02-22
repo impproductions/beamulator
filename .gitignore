@@ -28,3 +28,7 @@ beamulacrum-*.tar
 
 # Logs
 /log/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -13,8 +13,8 @@ config :beamulacrum,
   ],
   actors: [
     %{behavior: Beamulacrum.Behaviors.BigSpender, name: "Big Spender", amt: 1, config: %{}},
-    # %{behavior: Beamulacrum.Behaviors.CompulsiveBrowser, name: "Compulsive browser", amt: 1, config: %{}},
-    # %{behavior: Beamulacrum.Behaviors.Scammer, name: "Scammer", amt: 1, config: %{}},
-    # %{behavior: Beamulacrum.Behaviors.Onboarder, name: "Onboarder", amt: 1, config: %{}},
+    %{behavior: Beamulacrum.Behaviors.CompulsiveBrowser, name: "Compulsive browser", amt: 1, config: %{}},
+    %{behavior: Beamulacrum.Behaviors.Scammer, name: "Scammer", amt: 1, config: %{}},
+    %{behavior: Beamulacrum.Behaviors.Onboarder, name: "Onboarder", amt: 1, config: %{}},
     # %{behavior: Beamulacrum.Behaviors.Scanner, name: "Scanner", amt: 1, config: %{}}
   ]

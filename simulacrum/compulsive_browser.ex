@@ -1,7 +1,6 @@
 defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
   use Beamulacrum.Behavior
 
-  alias Beamulacrum.ActionExecutor
   alias Beamulacrum.Actions
 
   @next_buy_wait_ticks 5000  # Long delay between small purchases
@@ -36,7 +35,7 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
         IO.puts("CompulsiveBrowser #{name} is browsing available products.")
 
         {:ok, products} =
-          ActionExecutor.exec({__MODULE__, name}, &Actions.user_list_available_products/1, %{
+          execute(name, &Actions.user_list_available_products/1, %{
             name: name,
             email: state.email
           })
@@ -63,7 +62,7 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
 
           IO.puts("CompulsiveBrowser #{state.name} decided to buy #{chosen_product.product} for $#{chosen_product.price}")
 
-          _ = ActionExecutor.exec({__MODULE__, name}, &Actions.user_purchase/1, %{
+          _ = execute(name, &Actions.user_purchase/1, %{
             name: name,
             email: state.email,
             product: chosen_product.product,
