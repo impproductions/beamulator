@@ -5,9 +5,7 @@ defmodule Beamulacrum.ActionExecutor do
 
   require Logger
 
-  @spec exec((... -> {:ok, any()} | {:error, String.t()}), any()) ::
-          {:ok, any()} | {:error, String.t()}
-  def exec(action, args) when is_function(action) do
+  def exec({behavior, name}, action, args) when is_function(action) do
     IO.puts("Executing action: #{inspect(action)} with args #{inspect(args)}")
 
     result = apply_action(action, args)
@@ -17,14 +15,24 @@ defmodule Beamulacrum.ActionExecutor do
             "Action must return {:ok, any()} or {:error, String.t()}, got: #{inspect(result)}"
     end
 
+    logger_enabled = Application.get_env(:beamulacrum, :start_action_logger, false)
+
+    case result do
+      {:error, reason} ->
+        Logger.error("Action failed: #{reason}")
+
+      _ ->
+        if logger_enabled,
+          do: GenServer.cast(ActionLoggerPersistent, {:log_event, {{behavior, name}, action, args, result}})
+    end
+
     IO.puts("Action result: #{inspect(result)}")
 
     result
   end
 
-  @spec exec((... -> {:error, String.t()} | {:ok, any()})) :: {:error, String.t()} | {:ok, any()}
-  def exec(action) do
-    exec(action, nil)
+  def exec({behavior, name}, action) do
+    exec({behavior, name}, action, nil)
   end
 
   defp apply_action(action, args) do

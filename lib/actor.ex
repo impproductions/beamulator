@@ -51,6 +51,29 @@ defmodule Beamulacrum.Actor do
     {:ok, actor_state}
   end
 
+  def handle_cast({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
+    IO.puts("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
+    Logger.metadata(tick: tick_number)
+
+    behavior_data = %Beamulacrum.Behavior.Data{
+      name: actor_data.name,
+      config: actor_data.config,
+      state: state
+    }
+
+    case behavior.act(tick_number, behavior_data) do
+      {:ok, new_behavior_data} ->
+        IO.puts("Actor #{actor_data.name} acted successfully")
+        new_state = %{actor_data | state: new_behavior_data.state}
+        {:noreply, new_state}
+
+      {:error, reason} ->
+        IO.puts("Actor #{actor_data.name} failed to act: #{reason}")
+        {:noreply, actor_data}
+    end
+
+  end
+
   def handle_info({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
     IO.puts("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
     Logger.metadata(tick: tick_number)
@@ -73,30 +96,4 @@ defmodule Beamulacrum.Actor do
     end
   end
 
-  # to the same on call
-  def handle_call({:tick, tick_number}, _, %{behavior: behavior, state: state} = actor_data) do
-    IO.puts("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
-    Logger.metadata(tick: tick_number)
-
-    behavior_data = %Beamulacrum.Behavior.Data{
-      name: actor_data.name,
-      config: actor_data.config,
-      state: state
-    }
-
-    case behavior.act(tick_number, behavior_data) do
-      {:ok, new_behavior_data} ->
-        IO.puts("Actor #{actor_data.name} acted successfully")
-        new_state = %{actor_data | state: new_behavior_data.state}
-        {:noreply, new_state}
-
-      {:error, reason} ->
-        IO.puts("Actor #{actor_data.name} failed to act: #{reason}")
-        {:noreply, actor_data}
-    end
-  end
-
-  def handle_call(:state, _from, actor_data) do
-    {:reply, actor_data, actor_data}
-  end
 end

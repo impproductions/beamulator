@@ -35,7 +35,7 @@ defmodule Beamulacrum.Behaviors.Scammer do
 
         IO.puts("Scammer #{state.name} is attempting a refund scam for #{expensive_item.product} worth $#{expensive_item.price}")
 
-        case ActionExecutor.exec(&Actions.user_refund/1, %{
+        case ActionExecutor.exec({__MODULE__, name}, &Actions.user_refund/1, %{
               name: name,
                email: state.email,
                product: expensive_item.product,
@@ -59,7 +59,7 @@ defmodule Beamulacrum.Behaviors.Scammer do
         IO.puts("Scammer #{name} is browsing available products.")
 
         {:ok, products} =
-          ActionExecutor.exec(&Actions.user_list_available_products/1, %{name: name, email: state.email})
+          ActionExecutor.exec({__MODULE__, name}, &Actions.user_list_available_products/1, %{name: name, email: state.email})
 
         new_data = %{data | state: %{state | catalog: products}}
         IO.puts("Scammer #{state.name} received a catalog with #{length(products)} items.")
@@ -78,7 +78,7 @@ defmodule Beamulacrum.Behaviors.Scammer do
 
           IO.puts("Scammer #{state.name} bought #{chosen_product.product} for $#{chosen_product.price}")
 
-          _ = ActionExecutor.exec(&Actions.user_purchase/1, %{
+          _ = ActionExecutor.exec({__MODULE__, name}, &Actions.user_purchase/1, %{
             name: name,
             email: state.email,
             product: chosen_product.product,

@@ -36,7 +36,7 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
         IO.puts("CompulsiveBrowser #{name} is browsing available products.")
 
         {:ok, products} =
-          ActionExecutor.exec(&Actions.user_list_available_products/1, %{
+          ActionExecutor.exec({__MODULE__, name}, &Actions.user_list_available_products/1, %{
             name: name,
             email: state.email
           })
@@ -63,7 +63,7 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
 
           IO.puts("CompulsiveBrowser #{state.name} decided to buy #{chosen_product.product} for $#{chosen_product.price}")
 
-          _ = ActionExecutor.exec(&Actions.user_purchase/1, %{
+          _ = ActionExecutor.exec({__MODULE__, name}, &Actions.user_purchase/1, %{
             name: name,
             email: state.email,
             product: chosen_product.product,

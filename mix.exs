@@ -8,8 +8,10 @@ defmodule Beamulacrum.MixProject do
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
       deps: [
-        {:logger_file_backend, "~> 0.0.12"},
         {:faker, "~> 0.18"},
+        {:httpoison, "~> 2.2"},
+        {:jason, "~> 1.2"},
+        {:logger_file_backend, "~> 0.0.12"},
         {:timex, "~> 3.7"},
         {:uuid, "~> 1.1"}
       ],
@@ -25,7 +27,6 @@ defmodule Beamulacrum.MixProject do
 
   def application do
     [
-      # Start Beamulacrum on launch
       mod: {Beamulacrum.Application, []},
       extra_applications: [:logger]
     ]

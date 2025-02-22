@@ -2,58 +2,119 @@ defmodule Beamulacrum.Ticker do
   use GenServer
   require Logger
 
+  # Public API
+
   def start_link(_) do
-    IO.puts("Starting ticker process...")
-
-    case GenServer.start_link(__MODULE__, 0, name: __MODULE__) do
-      {:ok, pid} ->
-        IO.puts("Ticker started successfully with PID: #{inspect(pid)}")
-        {:ok, pid}
-
-      {:error, reason} ->
-        IO.puts("Ticker failed to start: #{inspect(reason)}")
-        {:error, reason}
-    end
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
-  def init(initial_tick) do
-    IO.puts("Initializing ticker")
-    schedule_tick()
-    {:ok, initial_tick}
-  end
-
-  def handle_info(:tick, tick_number) do
-    IO.puts("Now executing next tick")
-    broadcast_tick(tick_number)
-    schedule_tick()
-    {:noreply, tick_number + 1}
+  def get_start_time() do
+    GenServer.call(__MODULE__, :get_start_time)
   end
 
   def get_tick_number() do
     GenServer.call(__MODULE__, :get_tick_number)
   end
 
-  def handle_call(:get_tick_number, _from, tick_number) do
-    {:reply, tick_number, tick_number}
+  def get_fps() do
+    GenServer.call(__MODULE__, :get_fps)
   end
 
+  # GenServer callbacks
+
+  def init(_) do
+    start_time = DateTime.utc_now()
+
+    # Schedule the first tick.
+    schedule_tick()
+
+    # Initialize state with:
+    # tick_number: overall tick count
+    # start_time: when ticker started
+    # fps_counter: count of ticks since last measurement
+    # last_fps_time: time at which fps counter was last reset
+    # last_fps: most recent fps measurement
+    state = %{
+      tick_number: 0,
+      start_time: start_time,
+      fps_counter: 0,
+      last_fps_time: start_time,
+      last_fps: 0
+    }
+
+    {:ok, state}
+  end
+
+  def handle_info(:tick, state) do
+    current_time = DateTime.utc_now()
+    tick_number = state.tick_number
+
+    # Broadcast tick to actors
+    broadcast_tick(state)
+
+    # Update FPS counters.
+    new_fps_counter = state.fps_counter + 1
+
+    # Check if at least one second has elapsed.
+    {updated_fps, updated_fps_counter, updated_last_fps_time} =
+      if DateTime.diff(current_time, state.last_fps_time, :second) >= 1 do
+        {new_fps_counter, 0, current_time}
+      else
+        {state.last_fps, new_fps_counter, state.last_fps_time}
+      end
+
+    # Schedule next tick.
+    schedule_tick()
+
+    new_state = %{
+      state
+      | tick_number: tick_number + 1,
+        fps_counter: updated_fps_counter,
+        last_fps_time: updated_last_fps_time,
+        last_fps: updated_fps
+    }
+
+    {:noreply, new_state}
+  end
+
+  def handle_call(:get_tick_number, _from, state) do
+    {:reply, state.tick_number, state}
+  end
+
+  def handle_call(:get_start_time, _from, state) do
+    {:reply, state.start_time, state}
+  end
+
+  def handle_call(:get_fps, _from, state) do
+    {:reply, state.last_fps, state}
+  end
+
+  # Private helper functions
+
   defp schedule_tick() do
-    tick_interval = Application.get_env(:beamulacrum, :simulation)[:tick_interval_ms] || 1000
-    IO.puts("Scheduling next tick in #{tick_interval}ms")
+    tick_interval =
+      Application.get_env(:beamulacrum, :simulation)[:tick_interval_ms] || 1000
+
     Process.send_after(self(), :tick, tick_interval)
   end
 
-  defp broadcast_tick(tick_number) do
-    actors =
-      Registry.lookup(Beamulacrum.ActorRegistry, :actors) |> Enum.map(fn {pid, _} -> pid end)
+  defp broadcast_tick(state) do
+    tick_number = state.tick_number
 
-    Enum.each(actors, fn actor_pid ->
-      if Process.alive?(actor_pid) do
-        IO.puts("Sending tick #{tick_number} to #{inspect(actor_pid)} (alive)")
-        send(actor_pid, {:tick, tick_number})
-      else
-        IO.puts("Actor #{inspect(actor_pid)} is not alive!")
-      end
-    end)
+    actors =
+      Registry.lookup(Beamulacrum.ActorRegistry, :actors)
+      |> Enum.map(fn {pid, _} -> pid end)
+
+    actors
+    |> Task.async_stream(
+      fn actor_pid ->
+        if Process.alive?(actor_pid) do
+          GenServer.cast(actor_pid, {:tick, tick_number})
+        end
+      end,
+      max_concurrency: 5,
+      timeout: 5000
+    )
+    |> Stream.run()
   end
 end

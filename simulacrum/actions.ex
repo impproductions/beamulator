@@ -5,25 +5,25 @@ defmodule Beamulacrum.Actions do
 
   def onboard_user(%{onboarder: onboarder}) do
     IO.puts("Onboarder #{onboarder} is creating a new user")
-    Logger.info("Onboarder #{onboarder} is creating a new user")
+    # Logger.info("Onboarder #{onboarder} is creating a new user")
 
     new_user_name = Faker.Person.name() <> " " <> to_string(Beamulacrum.Tools.increasing_int())
     new_email = Faker.Internet.email()
 
     IO.puts("Onboarder #{onboarder} created a new user: #{new_user_name} with email #{new_email}")
-    Logger.info("Onboarder #{onboarder} created a new user: #{new_user_name} with email #{new_email}")
+    # Logger.info("Onboarder #{onboarder} created a new user: #{new_user_name} with email #{new_email}")
     {:ok, %{name: new_user_name, email: new_email}}
   end
 
   def user_purchase(%{name: name, email: email, product: product, price: price}) do
     IO.puts("User #{name} (#{email}) purchased product #{product} for #{price}")
-    Logger.info("User #{name} (#{email}) purchased product #{product} for #{price}")
+    # Logger.info("User #{name} (#{email}) purchased product #{product} for #{price}")
     {:ok, nil}
   end
 
   def user_refund(%{name: name, email: email, product: product, price: price}) do
     IO.puts("User #{name} (#{email}) requested a refund for product #{product} worth #{price}")
-    Logger.info("User #{name} (#{email}) requested a refund for product #{product} worth #{price}")
+    # Logger.info("User #{name} (#{email}) requested a refund for product #{product} worth #{price}")
 
     case :rand.uniform(2) do
       1 ->
@@ -32,7 +32,7 @@ defmodule Beamulacrum.Actions do
         {:error, "Refund request failed"}
       _ ->
         IO.puts("Refund request for user #{email} succeeded")
-        Logger.info("Refund request for user #{email} succeeded")
+        # Logger.info("Refund request for user #{email} succeeded")
         {:ok, nil}
     end
     {:ok, nil}
@@ -40,13 +40,13 @@ defmodule Beamulacrum.Actions do
 
   def user_change_email(%{name: name, email: email, new_email: new_email}) do
     IO.puts("User #{name} (#{email}) changed their email to #{new_email}")
-    Logger.info("User #{name} (#{email}) changed their email to #{new_email}")
+    # Logger.info("User #{name} (#{email}) changed their email to #{new_email}")
     {:ok, nil}
   end
 
   def user_list_available_products(%{name: name, email: email}) do
     IO.puts("User #{name} (#{email}) is browsing available products")
-    Logger.info("User #{name} (#{email}) is browsing available products")
+    # Logger.info("User #{name} (#{email}) is browsing available products")
     all_products = [
       %{product: "Luxury Watch", price: 5000},
       %{product: "Sports Car", price: 75000},
@@ -68,7 +68,7 @@ defmodule Beamulacrum.Actions do
     ]
     product_list = Enum.take_random(all_products, :rand.uniform(Enum.count(all_products)))
     IO.puts("User #{email} received a list of #{length(product_list)} available products")
-    Logger.info("User #{email} received a list of #{length(product_list)} available products")
+    # Logger.info("User #{email} received a list of #{length(product_list)} available products")
     {:ok, product_list}
   end
 end

@@ -97,5 +97,4 @@ defmodule Manage do
     |> Enum.filter(fn {_, {behavior, _, _}} -> behavior == behavior_module end)
     |> Enum.map(&simplify_actor_data/1)
   end
-
 end

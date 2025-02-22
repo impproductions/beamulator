@@ -8,11 +8,15 @@ defmodule Beamulacrum.Application do
     Logger.configure(level: :info, backends: [:console, :file_logger])
 
     random_seed = Beamulacrum.Tools.random_seed()
-
     IO.puts("Random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
 
-    children = [{Beamulacrum.SupervisorRoot, []}]
+    # Build the children list
+    children = [
+      {Beamulacrum.SupervisorRoot, []}
+    ]
+    |> maybe_add_action_logger()
+
     opts = [strategy: :one_for_one, name: Beamulacrum.Supervisor.Root]
 
     case Supervisor.start_link(children, opts) do
@@ -43,6 +47,15 @@ defmodule Beamulacrum.Application do
       {:error, reason} ->
         IO.puts("Failed to start supervisor: #{inspect(reason)}")
         {:error, reason}
+    end
+  end
+
+  defp maybe_add_action_logger(children) do
+    if Application.get_env(:beamulacrum, :start_action_logger, false) do
+      IO.puts("Starting ActionLoggerPersistent...")
+      children ++ [{ActionLoggerPersistent, []}]
+    else
+      children
     end
   end
 end

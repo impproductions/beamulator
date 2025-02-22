@@ -1,0 +1,7 @@
+services:
+  database:
+    container_name: questdb
+    image: questdb/questdb:8.2.2
+    ports:
+      - "8812:8812"
+      - "9000:9000"

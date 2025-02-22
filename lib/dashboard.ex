@@ -115,7 +115,8 @@ defmodule Dashboard do
     IO.write(IO.ANSI.home())
     IO.puts("Dashboard #{Map.get(state, :page)} #{Map.get(state, :page_arg)}\t\t available pages: [#{@pages |> Enum.map(&inspect/1) |> Enum.join(", ")}]")
     IO.puts("\n--------- Ticker ---------")
-    IO.puts("Current tick: #{Beamulacrum.Ticker.get_tick_number()}\n")
+    IO.puts("Current tick: #{Beamulacrum.Ticker.get_tick_number()}" <>
+    "\t\tRunning at #{Beamulacrum.Ticker.get_fps()} FPS\n")
   end
 
   defp actor_counts() do
