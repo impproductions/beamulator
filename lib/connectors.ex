@@ -1,7 +1,7 @@
 defmodule Beamulacrum.Connectors do
   defmodule Internal do
     def create_actor(name, behavior_module, config) do
-      Beamulacrum.ActorSupervisor.start_actor(name, behavior_module, config)
+      Beamulacrum.SupervisorActors.start_actor(name, behavior_module, config)
     end
 
     def create_actors(actors) do
@@ -10,7 +10,7 @@ defmodule Beamulacrum.Connectors do
         |> Enum.map(fn conf ->
           %{name: name, behavior: behavior, config: config} = conf
 
-          case Beamulacrum.ActorSupervisor.start_actor(
+          case Beamulacrum.SupervisorActors.start_actor(
                  name,
                  behavior,
                  config

@@ -14,8 +14,11 @@
   - Opensearch?
 - better logging
 
-# Feature ideas
+## Feature ideas
 - action logger on db
   - action replay?
 - fuzzer (fuzzy actor example?)
 - python behaviours
+
+## Improvements
+- dashboard: better terminal renderer

@@ -1,4 +1,4 @@
-defmodule Beamulacrum.Supervisor do
+defmodule Beamulacrum.SupervisorRoot do
   use Supervisor
 
   def start_link(opts) do
@@ -11,7 +11,7 @@ defmodule Beamulacrum.Supervisor do
       {Registry, keys: :duplicate, name: Beamulacrum.ActorRegistry},
       {Beamulacrum.Ticker, []},
       {Beamulacrum.Behavior.Registry, []},
-      {Beamulacrum.ActorSupervisor, []},
+      {Beamulacrum.SupervisorActors, []},
       # {Beamulacrum.Worker, []},
     ]
 

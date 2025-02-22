@@ -7,30 +7,30 @@ defmodule Dashboard do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
-  def manual_start() do
+  def start() do
     IO.puts("Starting dashboard...")
     start_link([])
   end
 
-  def manual_start(page, arg \\ nil) when page in @pages do
+  def start(page, arg \\ nil) when page in @pages do
     IO.puts("Starting dashboard with page #{page} and arg #{arg}")
     start_link([])
-    set_page(page, arg)
+    page_set(page, arg)
   end
 
-  def manual_stop() do
+  def stop() do
     IO.puts("Stopping dashboard...")
     GenServer.stop(__MODULE__)
   end
 
-  def set_page(page) do
+  def page_set(page) do
     IO.puts("Setting page to #{page}")
-    GenServer.cast(__MODULE__, {:set_page, page, nil})
+    GenServer.cast(__MODULE__, {:page_set, page, nil})
   end
 
-  def set_page(page, arg) when is_atom(page) do
+  def page_set(page, arg) when is_atom(page) do
     IO.puts("Setting page to #{page} with arg #{arg}")
-    GenServer.cast(__MODULE__, {:set_page, page, arg})
+    GenServer.cast(__MODULE__, {:page_set, page, arg})
   end
 
   def init(state) do
@@ -49,7 +49,7 @@ defmodule Dashboard do
     {:noreply, state}
   end
 
-  def handle_cast({:set_page, page, arg}, state)
+  def handle_cast({:page_set, page, arg}, state)
       when page in [:overview, :behavior, :actor] do
     {:noreply,
      state
@@ -115,7 +115,7 @@ defmodule Dashboard do
     IO.write(IO.ANSI.home())
     IO.puts("Dashboard #{Map.get(state, :page)} #{Map.get(state, :page_arg)}\t\t available pages: [#{@pages |> Enum.map(&inspect/1) |> Enum.join(", ")}]")
     IO.puts("\n--------- Ticker ---------")
-    IO.puts("Current frame: #{Beamulacrum.Ticker.get_tick_number()}\n")
+    IO.puts("Current tick: #{Beamulacrum.Ticker.get_tick_number()}\n")
   end
 
   defp actor_counts() do

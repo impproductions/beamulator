@@ -1,4 +1,4 @@
-defmodule Beamulacrum.ActorSupervisor do
+defmodule Beamulacrum.SupervisorActors do
   use DynamicSupervisor
 
   # alias Beamulacrum.Tools
