@@ -1,9 +1,5 @@
 defmodule Beamulacrum.ModuleLoader do
-  @moduledoc """
-  Loads user-defined modules dynamically from a given path.
-  Ensures that only modules implementing `Beamulacrum.Behavior` are kept.
-  Also loads the `Actions` module once.
-  """
+  require Logger
 
   def load_behaviors(path) do
     case File.ls(path) do
@@ -15,7 +11,7 @@ defmodule Beamulacrum.ModuleLoader do
         |> Enum.each(&compile_and_load_module/1)
 
       {:error, reason} ->
-        IO.puts("Failed to list directory #{path}: #{inspect(reason)}")
+        Logger.debug("Failed to list directory #{path}: #{inspect(reason)}")
     end
   end
 
@@ -23,21 +19,21 @@ defmodule Beamulacrum.ModuleLoader do
     modules_before = get_loaded_modules()
 
     try do
-      IO.puts("Loading file #{file}")
+      Logger.debug("Loading file #{file}")
       Code.compile_file(file)
       modules_after = get_loaded_modules()
       new_modules = modules_after -- modules_before
 
       Enum.each(new_modules, fn module ->
         if implements_behavior?(module) do
-          IO.puts("Loaded behavior module: #{inspect(module)}")
+          Logger.debug("Loaded behavior module: #{inspect(module)}")
         else
-          IO.puts("Skipping non-behavior module: #{inspect(module)}")
+          Logger.debug("Skipping non-behavior module: #{inspect(module)}")
         end
       end)
     rescue
       exception ->
-        IO.puts("Error loading #{file}: #{Exception.message(exception)}")
+        Logger.debug("Error loading #{file}: #{Exception.message(exception)}")
     end
   end
 
@@ -48,9 +44,11 @@ defmodule Beamulacrum.ModuleLoader do
   end
 
   defp get_loaded_modules do
-    :code.all_loaded()
+    found_modules_count = :code.all_loaded()
     |> Enum.count()
-    |> IO.inspect(label: "Loaded modules")
+
+    Logger.debug("Loaded modules: #{inspect(found_modules_count)}")
+
     :code.all_loaded()
     |> Enum.map(&elem(&1, 0))
   end

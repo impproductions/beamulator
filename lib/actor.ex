@@ -11,25 +11,26 @@ defmodule Beamulacrum.Actor.Data do
 end
 
 defmodule Beamulacrum.Actor do
-  alias Beamulacrum.Actor.Data
+  require Logger
   use GenServer
+  alias Beamulacrum.Actor.Data
 
   def start_link({name, behavior_module, config}) do
-    IO.puts("Attempting to start actor: #{name} with behavior #{inspect(behavior_module)}")
+    Logger.debug("Attempting to start actor: #{name} with behavior #{inspect(behavior_module)}")
 
     initial_state = behavior_module.default_state()
 
     case GenServer.start_link(__MODULE__, {name, behavior_module, config, initial_state}) do
       {:ok, pid} ->
-        IO.puts("Actor #{name} started successfully with PID #{inspect(pid)}")
+        Logger.debug("Actor #{name} started successfully with PID #{inspect(pid)}")
         {:ok, pid}
 
       {:error, reason} ->
-        IO.puts("Failed to start actor #{name}: #{inspect(reason)}")
+        Logger.debug("Failed to start actor #{name}: #{inspect(reason)}")
         {:error, reason}
 
       _ ->
-        IO.puts("Unknown error")
+        Logger.debug("Unknown error")
         {:error, "Unknown error"}
     end
 
@@ -37,7 +38,7 @@ defmodule Beamulacrum.Actor do
   end
 
   def init({name, behavior_module, config, initial_state}) do
-    IO.puts("Initializing actor: #{name}")
+    Logger.debug("Initializing actor: #{name}")
     selector = {behavior_module, Beamulacrum.Tools.increasing_int(), name}
     Registry.register(Beamulacrum.ActorRegistry, :actors, selector)
 
@@ -52,7 +53,7 @@ defmodule Beamulacrum.Actor do
   end
 
   def handle_cast({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
-    IO.puts("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
+    Logger.debug("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
     Logger.metadata(tick: tick_number)
 
     behavior_data = %Beamulacrum.Behavior.Data{
@@ -63,37 +64,37 @@ defmodule Beamulacrum.Actor do
 
     case behavior.act(tick_number, behavior_data) do
       {:ok, new_behavior_data} ->
-        IO.puts("Actor #{actor_data.name} acted successfully")
+        Logger.debug("Actor #{actor_data.name} acted successfully")
         new_state = %{actor_data | state: new_behavior_data.state}
         {:noreply, new_state}
 
       {:error, reason} ->
-        IO.puts("Actor #{actor_data.name} failed to act: #{reason}")
+        Logger.debug("Actor #{actor_data.name} failed to act: #{reason}")
         {:noreply, actor_data}
     end
 
   end
 
-  def handle_info({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
-    IO.puts("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
-    Logger.metadata(tick: tick_number)
+  # def handle_info({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
+  #   Logger.debug("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
+  #   Logger.metadata(tick: tick_number)
 
-    behavior_data = %Beamulacrum.Behavior.Data{
-      name: actor_data.name,
-      config: actor_data.config,
-      state: state
-    }
+  #   behavior_data = %Beamulacrum.Behavior.Data{
+  #     name: actor_data.name,
+  #     config: actor_data.config,
+  #     state: state
+  #   }
 
-    case behavior.act(tick_number, behavior_data) do
-      {:ok, new_behavior_data} ->
-        IO.puts("Actor #{actor_data.name} acted successfully")
-        new_state = %{actor_data | state: new_behavior_data.state}
-        {:noreply, new_state}
+  #   case behavior.act(tick_number, behavior_data) do
+  #     {:ok, new_behavior_data} ->
+  #       Logger.debug("Actor #{actor_data.name} acted successfully")
+  #       new_state = %{actor_data | state: new_behavior_data.state}
+  #       {:noreply, new_state}
 
-      {:error, reason} ->
-        IO.puts("Actor #{actor_data.name} failed to act: #{reason}")
-        {:noreply, actor_data}
-    end
-  end
+  #     {:error, reason} ->
+  #       Logger.debug("Actor #{actor_data.name} failed to act: #{reason}")
+  #       {:noreply, actor_data}
+  #   end
+  # end
 
 end

@@ -22,7 +22,7 @@ defmodule Beamulacrum.Behaviors.BigSpender do
     cond do
       state.catalog == [] ->
         # Step 1: Fetch available products
-        IO.puts("BigSpender #{name} is checking available products.")
+        Logger.debug("BigSpender #{name} is checking available products.")
 
         {:ok, products} = execute(name, &Actions.user_list_available_products/1, %{
           name: name,
@@ -36,7 +36,7 @@ defmodule Beamulacrum.Behaviors.BigSpender do
           | state: %{state | catalog: products, wait_ticks: new_wait_ticks}
         }
 
-        IO.puts("BigSpender #{state.name} received a catalog with #{length(products)} items.")
+        Logger.debug("BigSpender #{state.name} received a catalog with #{length(products)} items.")
         {:ok, new_data}
 
       state.wait_ticks > 0 ->
@@ -46,14 +46,14 @@ defmodule Beamulacrum.Behaviors.BigSpender do
           | state: %{state | wait_ticks: state.wait_ticks - 1}
         }
 
-        IO.puts("BigSpender #{state.name} is waiting to make a purchase (#{new_data.state.wait_ticks} ticks left).")
+        Logger.debug("BigSpender #{state.name} is waiting to make a purchase (#{new_data.state.wait_ticks} ticks left).")
         {:ok, new_data}
 
       true ->
         # Step 3: Pick a product and buy it
         chosen_product = Enum.random(state.catalog)
 
-        IO.puts("BigSpender #{state.name} decided to buy #{chosen_product.product} for $#{chosen_product.price}")
+        Logger.debug("BigSpender #{state.name} decided to buy #{chosen_product.product} for $#{chosen_product.price}")
 
         _ = execute(name, &Actions.user_purchase/1, %{
           name: name,
@@ -73,7 +73,7 @@ defmodule Beamulacrum.Behaviors.BigSpender do
         }
 
 
-        IO.puts("BigSpender #{state.name} has spent a total of $#{new_data.state.total_spent}")
+        Logger.debug("BigSpender #{state.name} has spent a total of $#{new_data.state.total_spent}")
         {:ok, new_data}
     end
   end

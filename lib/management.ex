@@ -1,4 +1,6 @@
 defmodule AlertFunctions do
+  require Logger
+
   defmacro defwithalert(head, do: body) do
     quote do
       def unquote(head) do
@@ -13,7 +15,7 @@ defmodule AlertFunctions do
   def alert_manual_command({mod, fun, arity}) do
     # only show warning in the main node
     if Node.self() == :beamulacrum do
-      IO.puts(
+      Logger.debug(
         "!!! ALERT !!! The function #{mod}.#{fun}/#{arity} is for manual use only. You're not supposed to use this in code. If you're seeing this message after manually running a Manage.[function] command in a shell, you can ignore it."
       )
     end
@@ -21,7 +23,9 @@ defmodule AlertFunctions do
 end
 
 defmodule Manage do
+  require Logger
   require AlertFunctions
+
   import AlertFunctions, only: [defwithalert: 2]
 
   defwithalert behavior_list() do
@@ -52,7 +56,7 @@ defmodule Manage do
       {pid, {behavior, serial_id, name}} ->
         actor_state = GenServer.call(pid, :state)
 
-        IO.puts("""
+        Logger.debug("""
         Actor #{name} (#{behavior}) (#{serial_id}) [#{inspect(pid)}]
         State: #{inspect(actor_state, pretty: true, syntax_colors: [number: :red, atom: :cyan, string: :green, identifier: :blue])}
         """)
@@ -86,7 +90,7 @@ defmodule Manage do
         pid_string
       end
 
-    IO.puts("Killing actor with PID #{pid_string}")
+    Logger.debug("Killing actor with PID #{pid_string}")
     pid = pid_string |> String.to_charlist() |> :erlang.list_to_pid()
 
     DynamicSupervisor.terminate_child(Beamulacrum.SupervisorActors, pid)

@@ -17,12 +17,12 @@ defmodule ActionLoggerPersistent do
 
     case test_connection(url) do
       :ok ->
-        IO.puts("Connected to QuestDB")
+        Logger.debug("Connected to QuestDB")
         create_table(url)
         {:ok, %{}}
 
       {:error, reason} ->
-        IO.puts("Failed to connect to Quest: #{inspect(reason)}")
+        Logger.debug("Failed to connect to Quest: #{inspect(reason)}")
         {:stop, reason}
     end
 
@@ -30,7 +30,7 @@ defmodule ActionLoggerPersistent do
   end
 
   defp test_connection(url) do
-    IO.puts("[ActionLogger] Testing connection to QuestDB at #{url}")
+    Logger.debug("[ActionLogger] Testing connection to QuestDB at #{url}")
 
     uri =
       (url <> "/exec")
@@ -43,15 +43,15 @@ defmodule ActionLoggerPersistent do
            {"Accept", "application/json"}
          ]) do
       {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
-        IO.puts("[ActionLogger] Successfully connected to QuestDB")
+        Logger.debug("[ActionLogger] Successfully connected to QuestDB")
         :ok
 
       {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        IO.puts("[ActionLogger] QuestDB returned status code #{code}. Body: #{body}")
+        Logger.debug("[ActionLogger] QuestDB returned status code #{code}. Body: #{body}")
         {:error, body}
 
       {:error, reason} ->
-        IO.puts("[ActionLogger] Failed to connect to QuestDB: #{inspect(reason)}")
+        Logger.debug("[ActionLogger] Failed to connect to QuestDB: #{inspect(reason)}")
         {:error, reason}
     end
   end
@@ -83,7 +83,7 @@ defmodule ActionLoggerPersistent do
     WAL
     """
 
-    IO.puts("[ActionLogger] Creating log table...")
+    Logger.debug("[ActionLogger] Creating log table...")
 
     uri =
       (url <> "/exec")
@@ -96,7 +96,7 @@ defmodule ActionLoggerPersistent do
       {"Accept", "application/json"}
     ])
 
-    IO.puts("[ActionLogger] Creating metadata table...")
+    Logger.debug("[ActionLogger] Creating metadata table...")
 
     uri =
       (url <> "/exec")
@@ -109,9 +109,9 @@ defmodule ActionLoggerPersistent do
       {"Accept", "application/json"}
     ])
 
-    IO.puts("[ActionLogger] Tables created successfully")
+    Logger.debug("[ActionLogger] Tables created successfully")
 
-    IO.puts("[ActionLogger] Filling metadata table...")
+    Logger.debug("[ActionLogger] Filling metadata table...")
     fill_metadata_table()
     :ok
   end
@@ -132,15 +132,15 @@ defmodule ActionLoggerPersistent do
 
     case HTTPoison.post(url, line, headers) do
       {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
-        IO.puts("[ActionLogger] Metadata successfully sent to QuestDB.")
+        Logger.debug("[ActionLogger] Metadata successfully sent to QuestDB.")
 
       {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        IO.puts("[ActionLogger] QuestDB returned status code #{code}. Body: #{body}")
-        IO.puts("[ActionLogger] Failed line: #{line}")
+        Logger.debug("[ActionLogger] QuestDB returned status code #{code}. Body: #{body}")
+        Logger.debug("[ActionLogger] Failed line: #{line}")
 
       {:error, reason} ->
-        IO.puts("[ActionLogger] Failed to send metadata to QuestDB: #{inspect(reason)}")
-        IO.puts("[ActionLogger] Failed line: #{line}")
+        Logger.debug("[ActionLogger] Failed to send metadata to QuestDB: #{inspect(reason)}")
+        Logger.debug("[ActionLogger] Failed line: #{line}")
     end
   end
 
@@ -157,7 +157,7 @@ defmodule ActionLoggerPersistent do
   end
 
   defp write_log(event_data) do
-    IO.puts("[ActionLogger] Writing log to QuestDB")
+    Logger.debug("[ActionLogger] Writing log to QuestDB")
 
     %{
       behavior: behavior,
@@ -194,15 +194,15 @@ defmodule ActionLoggerPersistent do
     case HTTPoison.post(url, line, headers) do
       {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
         nil
-        IO.puts("[ActionLogger] Log successfully sent to QuestDB: " <> line)
+        Logger.debug("[ActionLogger] Log successfully sent to QuestDB: " <> line)
 
       {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        IO.puts("[ActionLogger] QuestDB returned status code #{code}. Body: #{body}")
-        IO.puts("[ActionLogger] Failed line: #{line}")
+        Logger.debug("[ActionLogger] QuestDB returned status code #{code}. Body: #{body}")
+        Logger.debug("[ActionLogger] Failed line: #{line}")
 
       {:error, reason} ->
-        IO.puts("[ActionLogger] Failed to send log to QuestDB: #{inspect(reason)}")
-        IO.puts("[ActionLogger] Failed line: #{line}")
+        Logger.debug("[ActionLogger] Failed to send log to QuestDB: #{inspect(reason)}")
+        Logger.debug("[ActionLogger] Failed line: #{line}")
     end
   end
 

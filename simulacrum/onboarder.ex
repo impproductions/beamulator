@@ -27,7 +27,7 @@ defmodule Beamulacrum.Behaviors.Onboarder do
     if state.wait_ticks > 0 do
       # Step 1: Wait before onboarding a new user
       new_data = %{data | state: %{state | wait_ticks: state.wait_ticks - 1}}
-      IO.puts("Onboarder #{name} is waiting to onboard a new user (#{new_data.state.wait_ticks} ticks left).")
+      Logger.debug("Onboarder #{name} is waiting to onboard a new user (#{new_data.state.wait_ticks} ticks left).")
       {:ok, new_data}
     else
       # Step 2: Onboard a new user
@@ -45,11 +45,11 @@ defmodule Beamulacrum.Behaviors.Onboarder do
               wait_ticks: :rand.uniform(@next_onboard_hours * Time.hour())
           }
 
-          IO.puts("Successfully onboarded #{new_user_name}. Total onboarded: #{new_state.onboarded_users}")
+          Logger.debug("Successfully onboarded #{new_user_name}. Total onboarded: #{new_state.onboarded_users}")
           {:ok, %{data | state: new_state}}
 
         {:error, reason} ->
-          IO.puts("Failed to onboard #{new_user_name}: #{inspect(reason)}")
+          Logger.debug("Failed to onboard #{new_user_name}: #{inspect(reason)}")
           {:ok, %{data | state: %{state | wait_ticks: 1000}}}  # Retry sooner if failed
       end
     end

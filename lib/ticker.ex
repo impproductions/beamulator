@@ -2,8 +2,6 @@ defmodule Beamulacrum.Ticker do
   use GenServer
   require Logger
 
-  # Public API
-
   def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
@@ -20,20 +18,11 @@ defmodule Beamulacrum.Ticker do
     GenServer.call(__MODULE__, :get_fps)
   end
 
-  # GenServer callbacks
-
   def init(_) do
     start_time = DateTime.utc_now()
 
-    # Schedule the first tick.
     schedule_tick()
 
-    # Initialize state with:
-    # tick_number: overall tick count
-    # start_time: when ticker started
-    # fps_counter: count of ticks since last measurement
-    # last_fps_time: time at which fps counter was last reset
-    # last_fps: most recent fps measurement
     state = %{
       tick_number: 0,
       start_time: start_time,
@@ -49,13 +38,9 @@ defmodule Beamulacrum.Ticker do
     current_time = DateTime.utc_now()
     tick_number = state.tick_number
 
-    # Broadcast tick to actors
     broadcast_tick(state)
 
-    # Update FPS counters.
     new_fps_counter = state.fps_counter + 1
-
-    # Check if at least one second has elapsed.
     {updated_fps, updated_fps_counter, updated_last_fps_time} =
       if DateTime.diff(current_time, state.last_fps_time, :second) >= 1 do
         {new_fps_counter, 0, current_time}
@@ -63,7 +48,6 @@ defmodule Beamulacrum.Ticker do
         {state.last_fps, new_fps_counter, state.last_fps_time}
       end
 
-    # Schedule next tick.
     schedule_tick()
 
     new_state = %{
@@ -88,8 +72,6 @@ defmodule Beamulacrum.Ticker do
   def handle_call(:get_fps, _from, state) do
     {:reply, state.last_fps, state}
   end
-
-  # Private helper functions
 
   defp schedule_tick() do
     tick_interval =

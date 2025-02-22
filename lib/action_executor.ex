@@ -6,7 +6,7 @@ defmodule Beamulacrum.ActionExecutor do
   require Logger
 
   def exec({behavior, name}, action, args) when is_function(action) do
-    IO.puts("Executing action: #{inspect(action)} with args #{inspect(args)}")
+    Logger.info("Executing action: #{inspect(action)} with args #{inspect(args)}")
 
     result = apply_action(action, args)
 
@@ -26,7 +26,7 @@ defmodule Beamulacrum.ActionExecutor do
           do: GenServer.cast(ActionLoggerPersistent, {:log_event, {{behavior, name}, action, args, result}})
     end
 
-    IO.puts("Action result: #{inspect(result)}")
+    Logger.info("Action result: #{inspect(result)}")
 
     result
   end

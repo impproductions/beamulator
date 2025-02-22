@@ -18,16 +18,16 @@ defmodule Beamulacrum.Behaviors.Scanner do
     if state.wait_ticks > 0 do
       # Step 1: Wait before scanning
       new_data = %{data | state: %{state | wait_ticks: state.wait_ticks - 1}}
-      IO.puts("Scanner #{name} is waiting to scan (#{new_data.state.wait_ticks} ticks left).")
+      Logger.debug("Scanner #{name} is waiting to scan (#{new_data.state.wait_ticks} ticks left).")
       {:ok, new_data}
     else
       # Step 2: Scan
-      IO.puts("Scanner #{name} is scanning.")
+      Logger.debug("Scanner #{name} is scanning.")
       big_spender_actors = Tools.Actors.select_by_behavior(Beamulacrum.Behaviors.BigSpender)
-      IO.puts("Found #{length(big_spender_actors)} big spenders.")
+      Logger.debug("Found #{length(big_spender_actors)} big spenders.")
 
-      Tools.Logging.log(:info, "Scanner #{name} found #{length(big_spender_actors)} big spenders.")
-      Tools.Logging.log(:info, "Found actors: #{inspect(big_spender_actors)}")
+      Logger.debug(:info, "Scanner #{name} found #{length(big_spender_actors)} big spenders.")
+      Logger.debug(:info, "Found actors: #{inspect(big_spender_actors)}")
       {:ok, data}
     end
   end

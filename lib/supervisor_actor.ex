@@ -1,10 +1,12 @@
 defmodule Beamulacrum.SupervisorActors do
+  require Logger
+
   use DynamicSupervisor
 
   # alias Beamulacrum.Tools
 
   def start_link(_) do
-    IO.puts("Starting Actor Supervisor...")
+    Logger.debug("Starting Actor Supervisor...")
     DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
@@ -13,7 +15,7 @@ defmodule Beamulacrum.SupervisorActors do
   end
 
   def start_actor(name, behavior_module, config) do
-    IO.puts("Starting actor: #{name}")
+    Logger.debug("Starting actor: #{name}")
     spec = {Beamulacrum.Actor, {name, behavior_module, config}}
     DynamicSupervisor.start_child(__MODULE__, spec)
   end

@@ -1,4 +1,6 @@
 defmodule Beamulacrum.Worker do
+  require Logger
+
   use GenServer
 
   def start_link(_args) do
@@ -6,7 +8,7 @@ defmodule Beamulacrum.Worker do
   end
 
   def init(_) do
-    IO.puts("Beamulacrum has started. Press CTRL+C to stop.")
+    Logger.debug("Beamulacrum has started. Press CTRL+C to stop.")
     Process.sleep(:infinity) # Keeps the process alive
     {:ok, nil}
   end

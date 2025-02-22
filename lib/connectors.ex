@@ -1,4 +1,6 @@
 defmodule Beamulacrum.Connectors do
+  require Logger
+
   defmodule Internal do
     def create_actor(name, behavior_module, config) do
       Beamulacrum.SupervisorActors.start_actor(name, behavior_module, config)
@@ -25,7 +27,7 @@ defmodule Beamulacrum.Connectors do
 
       errors
       |> Enum.each(fn {:error, reason} ->
-        IO.puts("Error starting actor: #{inspect(reason)}")
+        Logger.debug("Error starting actor: #{inspect(reason)}")
       end)
 
       oks

@@ -27,12 +27,12 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
           | state: %{state | wait_ticks: state.wait_ticks - 1}
         }
 
-        IO.puts("CompulsiveBrowser #{state.name} is waiting to browse again (#{new_data.state.wait_ticks} ticks left).")
+        Logger.debug("CompulsiveBrowser #{state.name} is waiting to browse again (#{new_data.state.wait_ticks} ticks left).")
         {:ok, new_data}
 
       state.catalog == [] or :rand.uniform(3) == 1 ->
         # Step 2: Browse products frequently
-        IO.puts("CompulsiveBrowser #{name} is browsing available products.")
+        Logger.debug("CompulsiveBrowser #{name} is browsing available products.")
 
         {:ok, products} =
           execute(name, &Actions.user_list_available_products/1, %{
@@ -47,7 +47,7 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
           | state: %{state | catalog: products, wait_ticks: new_wait_ticks}
         }
 
-        IO.puts("CompulsiveBrowser #{state.name} refreshed their catalog with #{length(products)} items.")
+        Logger.debug("CompulsiveBrowser #{state.name} refreshed their catalog with #{length(products)} items.")
         {:ok, new_data}
 
       :rand.uniform(5) == 1 ->
@@ -55,12 +55,12 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
         small_items = Enum.filter(state.catalog, fn p -> p.price <= 100 end)
 
         if small_items == [] do
-          IO.puts("CompulsiveBrowser #{state.name} didn't find any small items to buy.")
+          Logger.debug("CompulsiveBrowser #{state.name} didn't find any small items to buy.")
           {:ok, data}
         else
           chosen_product = Enum.random(small_items)
 
-          IO.puts("CompulsiveBrowser #{state.name} decided to buy #{chosen_product.product} for $#{chosen_product.price}")
+          Logger.debug("CompulsiveBrowser #{state.name} decided to buy #{chosen_product.product} for $#{chosen_product.price}")
 
           _ = execute(name, &Actions.user_purchase/1, %{
             name: name,
@@ -78,7 +78,7 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
               }
           }
 
-          IO.puts("CompulsiveBrowser #{state.name} has spent a total of $#{new_data.state.total_spent}")
+          Logger.debug("CompulsiveBrowser #{state.name} has spent a total of $#{new_data.state.total_spent}")
           {:ok, new_data}
         end
 
@@ -87,7 +87,7 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
         new_wait_ticks = :rand.uniform(@browse_wait_ticks)
         new_data = %{data | state: %{state | wait_ticks: new_wait_ticks}}
 
-        IO.puts("CompulsiveBrowser #{state.name} is idly browsing and waiting.")
+        Logger.debug("CompulsiveBrowser #{state.name} is idly browsing and waiting.")
         {:ok, new_data}
     end
   end

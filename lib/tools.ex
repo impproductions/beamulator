@@ -11,14 +11,6 @@ defmodule Beamulacrum.Tools do
     Application.get_env(:beamulacrum, :simulation)[:random_seed]
   end
 
-  defmodule Logging do
-    require Logger
-
-    def log(level, message) do
-      Logger.log(level, message)
-    end
-  end
-
   defmodule Actors do
     def select_by_behavior(behavior_module) do
       Registry.match(Beamulacrum.ActorRegistry, :actors, {behavior_module, :_, :_})
