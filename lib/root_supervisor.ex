@@ -11,8 +11,8 @@ defmodule Beamulacrum.Supervisor do
       {Registry, keys: :duplicate, name: Beamulacrum.ActorRegistry},
       {Beamulacrum.Ticker, []},
       {Beamulacrum.Behavior.Registry, []},
+      {Beamulacrum.ActorSupervisor, []},
       # {Beamulacrum.Worker, []},
-      {Beamulacrum.ActorSupervisor, []}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
