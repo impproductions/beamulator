@@ -12,9 +12,9 @@ defmodule Beamulacrum.Application do
     IO.puts("Random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
 
-    children = [{Beamulacrum.Supervisor, []}]
+    children = [{Beamulacrum.SupervisorRoot, []}]
 
-    opts = [strategy: :one_for_one, name: Beamulacrum.RootSupervisor]
+    opts = [strategy: :one_for_one, name: Beamulacrum.Supervisor.Root]
 
     case Supervisor.start_link(children, opts) do
       {:ok, pid} ->

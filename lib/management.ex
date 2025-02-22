@@ -75,7 +75,7 @@ defmodule Manage do
   end
 
   defwithalert actor_spawn(name, behavior_module, config) do
-    Beamulacrum.ActorSupervisor.start_actor(name, behavior_module, config)
+    Beamulacrum.SupervisorActors.start_actor(name, behavior_module, config)
   end
 
   defwithalert actor_kill(pid_string) when is_binary(pid_string) do
@@ -89,7 +89,7 @@ defmodule Manage do
     IO.puts("Killing actor with PID #{pid_string}")
     pid = pid_string |> String.to_charlist() |> :erlang.list_to_pid()
 
-    DynamicSupervisor.terminate_child(Beamulacrum.ActorSupervisor, pid)
+    DynamicSupervisor.terminate_child(Beamulacrum.SupervisorActors, pid)
   end
 
   def actors_by_behavior(behavior_module) do
