@@ -13,7 +13,6 @@ defmodule Beamulacrum.Application do
     :rand.seed(:exsss, random_seed)
 
     children = [{Beamulacrum.SupervisorRoot, []}]
-
     opts = [strategy: :one_for_one, name: Beamulacrum.Supervisor.Root]
 
     case Supervisor.start_link(children, opts) do

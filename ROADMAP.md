@@ -6,19 +6,21 @@
 - manual controls
   - spawn actors at runtime ✅
   - monitor application (dashboard) ✅
-  - add new behaviours at runtime
 - connectors
   - rest
   - ws?
   - pg?
   - Opensearch?
-- better logging
-
-## Feature ideas
 - action logger on db
   - action replay?
+
+## Feature ideas
+- save state!!! (ugh)
 - fuzzer (fuzzy actor example?)
 - python behaviours
+- add new behaviours at runtime
+- restore state from target
 
 ## Improvements
+- better logging
 - dashboard: better terminal renderer
