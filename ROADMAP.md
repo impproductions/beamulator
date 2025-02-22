@@ -6,7 +6,7 @@
   - ws?
   - pg?
   - Opensearch?
-- better logging 🛠️
+- better logging ✅
 
 ## Feature ideas
 - save/restore state!!! (ugh)

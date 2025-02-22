@@ -15,7 +15,7 @@ defmodule AlertFunctions do
   def alert_manual_command({mod, fun, arity}) do
     # only show warning in the main node
     if Node.self() == :beamulacrum do
-      Logger.debug(
+      Logger.warning(
         "!!! ALERT !!! The function #{mod}.#{fun}/#{arity} is for manual use only. You're not supposed to use this in code. If you're seeing this message after manually running a Manage.[function] command in a shell, you can ignore it."
       )
     end
@@ -56,14 +56,16 @@ defmodule Manage do
       {pid, {behavior, serial_id, name}} ->
         actor_state = GenServer.call(pid, :state)
 
+        Logger.info("Fetched state for actor #{name} (#{behavior}) (#{serial_id}) [#{inspect(pid)}]")
+
         Logger.debug("""
-        Actor #{name} (#{behavior}) (#{serial_id}) [#{inspect(pid)}]
         State: #{inspect(actor_state, pretty: true, syntax_colors: [number: :red, atom: :cyan, string: :green, identifier: :blue])}
         """)
 
         :ok
 
       _ ->
+        Logger.error("Actor with PID #{pid_string} not found")
         "Actor not found"
     end
   end
@@ -71,14 +73,18 @@ defmodule Manage do
   defwithalert actor_spawn(behavior_module) do
     behaviour_name = behavior_module |> Atom.to_string() |> String.split(".") |> List.last()
     name = "#{behaviour_name} #{Beamulacrum.Tools.increasing_int()}"
+
+    Logger.info("Spawning actor: #{name} with behavior #{behavior_module}")
     actor_spawn(name, behavior_module, %{})
   end
 
   defwithalert actor_spawn(name, behavior_module) do
+    Logger.info("Spawning actor: #{name} with behavior #{behavior_module}")
     actor_spawn(name, behavior_module, %{})
   end
 
   defwithalert actor_spawn(name, behavior_module, config) do
+    Logger.info("Spawning actor: #{name} with behavior #{behavior_module} and config #{inspect(config)}")
     Beamulacrum.SupervisorActors.start_actor(name, behavior_module, config)
   end
 
@@ -90,10 +96,13 @@ defmodule Manage do
         pid_string
       end
 
-    Logger.debug("Killing actor with PID #{pid_string}")
+    Logger.info("Killing actor with PID #{pid_string}")
     pid = pid_string |> String.to_charlist() |> :erlang.list_to_pid()
 
-    DynamicSupervisor.terminate_child(Beamulacrum.SupervisorActors, pid)
+    case DynamicSupervisor.terminate_child(Beamulacrum.SupervisorActors, pid) do
+      :ok -> Logger.info("Successfully killed actor #{pid}")
+      {:error, reason} -> Logger.error("Failed to kill actor #{pid}: #{inspect(reason)}")
+    end
   end
 
   def actors_by_behavior(behavior_module) do

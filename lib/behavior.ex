@@ -13,6 +13,7 @@ defmodule Beamulacrum.Behavior do
   @moduledoc """
   A behavior that all actor behaviors must implement.
   """
+  require Logger
   @callback default_state() :: map()
   @callback act(tick :: integer(), Beamulacrum.Behavior.Data.t()) ::
               {:ok, Beamulacrum.Behavior.Data.t()} | {:error, String.t()}
@@ -26,7 +27,11 @@ defmodule Beamulacrum.Behavior do
       alias Beamulacrum.ActionExecutor
 
       def execute(name, action, args) do
-        ActionExecutor.exec({__MODULE__, name}, action, args)
+        Logger.debug("#{name} executing action #{inspect(action)} with args #{inspect(args)}")
+        result = ActionExecutor.exec({__MODULE__, name}, action, args)
+        Logger.info("#{name} executed action #{inspect(action)} with args #{inspect(args)}")
+
+        result
       end
     end
   end
@@ -50,20 +55,12 @@ defmodule Beamulacrum.Behavior.Registry do
   end
 
   def scan_and_register_all_behaviors do
-    Logger.debug("Scanning and registering all behaviors...")
+    Logger.info("Scanning and registering all behaviors...")
 
     :code.all_loaded()
     |> Enum.map(fn {module, _file} -> module end)
     |> Enum.filter(&module_in_behaviors_namespace?/1)
-    |> Enum.map(fn module ->
-      if function_exported?(module, :register, 0) do
-        Logger.debug("Registering #{module}")
-        module
-      else
-        Logger.debug("Module #{module} does not implement register/0")
-      end
-    end)
-    |> Enum.each(fn module -> register(module) end)
+    |> Enum.each(&register/1)
   end
 
   defp module_in_behaviors_namespace?(module) do

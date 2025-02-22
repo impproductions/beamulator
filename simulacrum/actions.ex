@@ -9,36 +9,36 @@ defmodule Beamulacrum.Actions do
     new_user_name = Faker.Person.name() <> " " <> to_string(Beamulacrum.Tools.increasing_int())
     new_email = Faker.Internet.email()
 
-    Logger.debug("Onboarder #{onboarder} created a new user: #{new_user_name} with email #{new_email}")
+    Logger.info("Onboarder #{onboarder} created a new user: #{new_user_name} with email #{new_email}")
     {:ok, %{name: new_user_name, email: new_email}}
   end
 
   def user_purchase(%{name: name, email: email, product: product, price: price}) do
-    Logger.debug("User #{name} (#{email}) purchased product #{product} for #{price}")
+    Logger.info("User #{name} (#{email}) purchased product #{product} for #{price}")
     {:ok, nil}
   end
 
   def user_refund(%{name: name, email: email, product: product, price: price}) do
-    Logger.debug("User #{name} (#{email}) requested a refund for product #{product} worth #{price}")
+    Logger.info("User #{name} (#{email}) requested a refund for product #{product} worth #{price}")
 
     case :rand.uniform(2) do
       1 ->
-        Logger.debug("Refund request for user #{email} failed")
+        Logger.info("Refund request for user #{email} refused")
         {:error, "Refund request failed"}
       _ ->
-        Logger.debug("Refund request for user #{email} succeeded")
+        Logger.info("Refund request for user #{email} accepted")
         {:ok, nil}
     end
-    {:ok, nil}
   end
 
   def user_change_email(%{name: name, email: email, new_email: new_email}) do
-    Logger.debug("User #{name} (#{email}) changed their email to #{new_email}")
+    Logger.info("User #{name} changed their email from #{email} to #{new_email}")
     {:ok, nil}
   end
 
   def user_list_available_products(%{name: name, email: email}) do
     Logger.debug("User #{name} (#{email}) is browsing available products")
+
     all_products = [
       %{product: "Luxury Watch", price: 5000},
       %{product: "Sports Car", price: 75000},
@@ -56,10 +56,12 @@ defmodule Beamulacrum.Actions do
       %{product: "Jeans", price: 100},
       %{product: "Jacket", price: 200},
       %{product: "Smartphone", price: 1000},
-      %{product: "Laptop", price: 1500},
+      %{product: "Laptop", price: 1500}
     ]
+
     product_list = Enum.take_random(all_products, :rand.uniform(Enum.count(all_products)))
-    Logger.debug("User #{email} received a list of #{length(product_list)} available products")
+    Logger.debug("User #{email} received #{length(product_list)} available products")
+
     {:ok, product_list}
   end
 end

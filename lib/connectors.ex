@@ -25,10 +25,9 @@ defmodule Beamulacrum.Connectors do
       {oks, errors} = results
       |> Enum.split_with(fn {:ok, _} -> true; _ -> false end)
 
-      errors
-      |> Enum.each(fn {:error, reason} ->
-        Logger.debug("Error starting actor: #{inspect(reason)}")
-      end)
+      unless Enum.empty?(errors) do
+        Logger.error("Failed to start #{length(errors)} actors.")
+      end
 
       oks
       |> Enum.map(fn {:ok, pid} -> pid end)

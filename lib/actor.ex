@@ -22,19 +22,17 @@ defmodule Beamulacrum.Actor do
 
     case GenServer.start_link(__MODULE__, {name, behavior_module, config, initial_state}) do
       {:ok, pid} ->
-        Logger.debug("Actor #{name} started successfully with PID #{inspect(pid)}")
+        Logger.info("Actor #{name} started successfully")
         {:ok, pid}
 
       {:error, reason} ->
-        Logger.debug("Failed to start actor #{name}: #{inspect(reason)}")
+        Logger.error("Failed to start actor #{name}: #{inspect(reason)}")
         {:error, reason}
 
       _ ->
-        Logger.debug("Unknown error")
+        Logger.error("Unknown error occurred while starting actor #{name}")
         {:error, "Unknown error"}
     end
-
-
   end
 
   def init({name, behavior_module, config, initial_state}) do
@@ -53,7 +51,7 @@ defmodule Beamulacrum.Actor do
   end
 
   def handle_cast({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
-    Logger.debug("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
+    Logger.debug("Actor #{actor_data.name} received simulation tick #{tick_number}")
     Logger.metadata(tick: tick_number)
 
     behavior_data = %Beamulacrum.Behavior.Data{
@@ -64,15 +62,17 @@ defmodule Beamulacrum.Actor do
 
     case behavior.act(tick_number, behavior_data) do
       {:ok, new_behavior_data} ->
-        Logger.debug("Actor #{actor_data.name} acted successfully")
+        Logger.debug("Actor #{actor_data.name} acted successfully on tick #{tick_number}")
         new_state = %{actor_data | state: new_behavior_data.state}
         {:noreply, new_state}
 
       {:error, reason} ->
-        Logger.debug("Actor #{actor_data.name} failed to act: #{reason}")
+        Logger.warning(
+          "Actor #{actor_data.name} failed to act on tick #{tick_number}: #{inspect(reason)}"
+        )
+
         {:noreply, actor_data}
     end
-
   end
 
   # def handle_info({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
@@ -87,14 +87,13 @@ defmodule Beamulacrum.Actor do
 
   #   case behavior.act(tick_number, behavior_data) do
   #     {:ok, new_behavior_data} ->
-  #       Logger.debug("Actor #{actor_data.name} acted successfully")
+  #       Logger.info("Actor #{actor_data.name} acted successfully on tick #{tick_number}")
   #       new_state = %{actor_data | state: new_behavior_data.state}
   #       {:noreply, new_state}
 
   #     {:error, reason} ->
-  #       Logger.debug("Actor #{actor_data.name} failed to act: #{reason}")
+  #       Logger.warn("Actor #{actor_data.name} failed to act on tick #{tick_number}: #{inspect(reason)}")
   #       {:noreply, actor_data}
   #   end
   # end
-
 end

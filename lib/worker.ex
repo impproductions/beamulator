@@ -8,7 +8,7 @@ defmodule Beamulacrum.Worker do
   end
 
   def init(_) do
-    Logger.debug("Beamulacrum has started. Press CTRL+C to stop.")
+    Logger.info("Beamulacrum has started.")
     Process.sleep(:infinity) # Keeps the process alive
     {:ok, nil}
   end
