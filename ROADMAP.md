@@ -11,7 +11,7 @@
   - ws?
   - pg?
   - Opensearch?
-- action logger on db
+- action logger on db ✅
   - action replay?
 
 ## Feature ideas

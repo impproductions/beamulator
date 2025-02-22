@@ -1,14 +1,14 @@
 import Config
 
 config :beamulacrum,
-  start_action_logger: true,
+  enable_action_logger: true,
   questdb: %{
     url: "http://localhost",
     port: 9000
   },
   simulation: [
     random_seed: 1,
-    tick_interval_ms: 10,
+    tick_interval_ms: 1000,
     tick_to_seconds: 1
   ],
   actors: [

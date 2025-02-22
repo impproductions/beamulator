@@ -56,7 +56,7 @@ defmodule Beamulacrum.Application do
   end
 
   defp maybe_add_action_logger(children) do
-    if Application.get_env(:beamulacrum, :start_action_logger, false) do
+    if Application.get_env(:beamulacrum, :enable_action_logger, false) do
       IO.puts("Starting ActionLoggerPersistent...")
       children ++ [{ActionLoggerPersistent, []}]
     else
