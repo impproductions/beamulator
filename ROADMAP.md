@@ -23,6 +23,7 @@
 
 ## Improvements
 - use pubsub for tick
-- action logger interface requires knowledge about {__MODULE, name}, make it more explicit in typing (struct?)
+- action logger interface requires knowledge about {__MODULE, name}, make it more explicit in typing (struct?) <- macro?
+- uniform error handling
 - better logging
 - dashboard: better terminal renderer

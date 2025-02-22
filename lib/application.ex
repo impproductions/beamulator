@@ -11,11 +11,16 @@ defmodule Beamulacrum.Application do
     IO.puts("Random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
 
+    run_uuid = UUID.uuid4()
+    IO.puts("Run UUID: #{run_uuid}")
+    Application.put_env(:beamulacrum, :run_uuid, run_uuid)
+
     # Build the children list
-    children = [
-      {Beamulacrum.SupervisorRoot, []}
-    ]
-    |> maybe_add_action_logger()
+    children =
+      [
+        {Beamulacrum.SupervisorRoot, []}
+      ]
+      |> maybe_add_action_logger()
 
     opts = [strategy: :one_for_one, name: Beamulacrum.Supervisor.Root]
 
