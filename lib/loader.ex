@@ -11,7 +11,7 @@ defmodule Beamulacrum.ModuleLoader do
         |> Enum.each(&compile_and_load_module/1)
 
       {:error, reason} ->
-        Logger.debug("Failed to list directory #{path}: #{inspect(reason)}")
+        Logger.warning("Failed to list directory #{path}: #{inspect(reason)}")
     end
   end
 
@@ -26,14 +26,14 @@ defmodule Beamulacrum.ModuleLoader do
 
       Enum.each(new_modules, fn module ->
         if implements_behavior?(module) do
-          Logger.debug("Loaded behavior module: #{inspect(module)}")
+          Logger.info("Loaded behavior module: #{inspect(module)}")
         else
           Logger.debug("Skipping non-behavior module: #{inspect(module)}")
         end
       end)
     rescue
       exception ->
-        Logger.debug("Error loading #{file}: #{Exception.message(exception)}")
+        Logger.error("Error loading #{file}: #{Exception.message(exception)}")
     end
   end
 
@@ -47,7 +47,7 @@ defmodule Beamulacrum.ModuleLoader do
     found_modules_count = :code.all_loaded()
     |> Enum.count()
 
-    Logger.debug("Loaded modules: #{inspect(found_modules_count)}")
+    Logger.debug("Loaded modules count: #{found_modules_count}")
 
     :code.all_loaded()
     |> Enum.map(&elem(&1, 0))

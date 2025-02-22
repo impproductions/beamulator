@@ -1,12 +1,8 @@
 defmodule Beamulacrum.ActionExecutor do
-  @moduledoc """
-  Executes user-defined actions from the Beamulacrum.Actions module.
-  """
-
   require Logger
 
   def exec({behavior, name}, action, args) when is_function(action) do
-    Logger.info("Executing action: #{inspect(action)} with args #{inspect(args)}")
+    Logger.debug("Executing action: #{inspect(action)} with args #{inspect(args)}")
 
     result = apply_action(action, args)
 
@@ -26,7 +22,7 @@ defmodule Beamulacrum.ActionExecutor do
           do: GenServer.cast(ActionLoggerPersistent, {:log_event, {{behavior, name}, action, args, result}})
     end
 
-    Logger.info("Action result: #{inspect(result)}")
+    Logger.debug("Action #{inspect(action)} finished executing with result #{inspect(result)}")
 
     result
   end

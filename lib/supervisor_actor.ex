@@ -6,7 +6,7 @@ defmodule Beamulacrum.SupervisorActors do
   # alias Beamulacrum.Tools
 
   def start_link(_) do
-    Logger.debug("Starting Actor Supervisor...")
+    Logger.info("Actor Supervisor started")
     DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
@@ -17,6 +17,13 @@ defmodule Beamulacrum.SupervisorActors do
   def start_actor(name, behavior_module, config) do
     Logger.debug("Starting actor: #{name}")
     spec = {Beamulacrum.Actor, {name, behavior_module, config}}
-    DynamicSupervisor.start_child(__MODULE__, spec)
+    case DynamicSupervisor.start_child(__MODULE__, spec) do
+      {:ok, pid} ->
+        Logger.debug("Child (actor #{name}) started successfully")
+        {:ok, pid}
+      {:error, reason} ->
+        Logger.error("Failed to start child (actor #{name}): #{inspect(reason)}")
+        {:error, reason}
+    end
   end
 end

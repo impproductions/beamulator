@@ -1,8 +1,10 @@
 defmodule Beamulacrum.Ticker do
+  alias Beamulacrum.Tools
   use GenServer
   require Logger
 
   def start_link(_) do
+    Logger.debug("Starting ticker process")
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
@@ -21,6 +23,8 @@ defmodule Beamulacrum.Ticker do
   def init(_) do
     start_time = DateTime.utc_now()
 
+    Logger.info("Ticker initialized at #{DateTime.to_iso8601(start_time)}")
+
     schedule_tick()
 
     state = %{
@@ -35,6 +39,13 @@ defmodule Beamulacrum.Ticker do
   end
 
   def handle_info(:tick, state) do
+    tick_interval =
+      Tools.Time.tick_interval_ms() || 1000
+
+    if rem(state.tick_number, div(1000, tick_interval)) == 0 do
+      Logger.info("Tick #{state.tick_number} (#{Tools.Time.as_duration(state.tick_number)})")
+    end
+
     current_time = DateTime.utc_now()
     tick_number = state.tick_number
 
@@ -58,6 +69,8 @@ defmodule Beamulacrum.Ticker do
         last_fps: updated_fps
     }
 
+    Logger.debug("Tick #{tick_number + 1} processed")
+
     {:noreply, new_state}
   end
 
@@ -77,6 +90,7 @@ defmodule Beamulacrum.Ticker do
     tick_interval =
       Application.get_env(:beamulacrum, :simulation)[:tick_interval_ms] || 1000
 
+    Logger.debug("Scheduling next tick in #{tick_interval}ms")
     Process.send_after(self(), :tick, tick_interval)
   end
 
@@ -87,11 +101,19 @@ defmodule Beamulacrum.Ticker do
       Registry.lookup(Beamulacrum.ActorRegistry, :actors)
       |> Enum.map(fn {pid, _} -> pid end)
 
+    if Enum.empty?(actors) do
+      Logger.warning("No actors found to receive tick #{tick_number}")
+    else
+      Logger.debug("Broadcasting tick #{tick_number} to #{length(actors)} actors")
+    end
+
     actors
     |> Task.async_stream(
       fn actor_pid ->
         if Process.alive?(actor_pid) do
           GenServer.cast(actor_pid, {:tick, tick_number})
+        else
+          Logger.warning("Actor process #{inspect(actor_pid)} is not alive during tick #{tick_number}")
         end
       end,
       max_concurrency: 5,
