@@ -28,7 +28,6 @@
   - extract behavior creation to lab
 
 ## Improvements
-- refactor questdb writer
 - document/enforce simulation folder/namespacing
 - tests
 - uniform error handling
@@ -40,6 +39,7 @@
 - rename behavior to personality to avoid confusion with elixir's behaviour keyword
 
 ## Done
+- refactor questdb writer ✅
 - behaviors in dashboard are broken ✅
 - actor complaint ✅
 - rename project to beamulator ✅
