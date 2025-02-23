@@ -89,7 +89,7 @@ defmodule Beamulator.ActionLoggerPersistent do
       action STRING,
       args STRING,
       result STRING,
-      checker STRING,
+      trigger STRING,
       start_time TIMESTAMP,
       run_id STRING
     ) TIMESTAMP(timestamp)
@@ -213,7 +213,7 @@ defmodule Beamulator.ActionLoggerPersistent do
 
     action_as_string = inspect(action)
     args_as_string = Jason.encode!(args) |> escape_field()
-    checker_code = actual.checker |> escape_field()
+    trigger_code = actual.trigger |> escape_field()
 
     actual_as_string =
       Jason.encode!(%{
@@ -233,7 +233,7 @@ defmodule Beamulator.ActionLoggerPersistent do
 
     line =
       "complaints_log,behavior=#{escape_tag(behavior)},actor=#{escape_tag(actor)},severity=#{escape_tag(severity_as_string)} " <>
-        "message=\"#{message}\",action=\"#{escape_field(action_as_string)}\",args=\"#{args_as_string}\",result=\"#{actual_as_string}\",checker=\"#{checker_code}\",start_time=#{start_timestamp}i,run_id=\"#{run_id}\" " <>
+        "message=\"#{message}\",action=\"#{escape_field(action_as_string)}\",args=\"#{args_as_string}\",result=\"#{actual_as_string}\",trigger=\"#{trigger_code}\",start_time=#{start_timestamp}i,run_id=\"#{run_id}\" " <>
         "#{timestamp}"
 
     url = "http://localhost:9000/write"
@@ -305,14 +305,5 @@ defmodule Beamulator.ActionLoggerPersistent do
     field
     |> String.replace(~s("), ~s(\\"))
     |> String.replace("\n", "\\n")
-  end
-
-  defp escape_elixir_code(string) do
-    escaped =
-      string
-      |> String.replace("\\", "\\\\")
-      |> String.replace("\"", "\\\"")
-
-    "\"#{escaped}\""
   end
 end

@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Next
-- actor complaint
 - multi-tenant todo example
+- graphic dashboard
 - action log should include failed requests
 - check if one actor dying kills all other actors
 - find a way to store runtime config along with simulation
@@ -14,8 +14,7 @@
   - Opensearch?
 
 ## Fix
-- behaviors in dashboard are broken
-- find a controlled way to handle behavior loading
+- find a controlled way to handle behavior loading?
 
 ## Feature ideas
 - save/restore state!!! (ugh)
@@ -24,24 +23,25 @@
 - action replay?
 - restore state from target
 - add new behaviours at runtime
-- graphic dashboard
+- limit run duration
 - configure simulations at runtime
   - extract behavior creation to lab
 
 ## Improvements
+- refactor questdb writer
 - document/enforce simulation folder/namespacing
 - tests
-- use pubsub for tick
 - uniform error handling
 - dashboard: better terminal renderer
-- fix module redefinition
 
 ## Just thinking
-- should executor be a process (or set of processes) and execute asynchronously?
+- ~~should executor be a process (or set of processes) and execute asynchronously?~~
 - remove behavior registry altogether?
 - rename behavior to personality to avoid confusion with elixir's behaviour keyword
 
 ## Done
+- behaviors in dashboard are broken ✅
+- actor complaint ✅
 - rename project to beamulator ✅
 - switch to self-scheduling actors ✅
 - inject actor data in logger ✅

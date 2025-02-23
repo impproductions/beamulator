@@ -10,11 +10,11 @@ defmodule Beamulator.Behavior.Data do
 end
 
 defmodule Beamulator.Behavior.Complaint do
-  @enforce_keys [:checker, :message, :severity, :code]
-  defstruct [:checker, :message, :severity, :code]
+  @enforce_keys [:trigger, :message, :severity, :code]
+  defstruct [:trigger, :message, :severity, :code]
 
   @type t :: %__MODULE__{
-          checker: fun(),
+          trigger: fun(),
           message: String.t(),
           severity: :urgent | :annoying | :justsayin,
           code: String.t()
@@ -22,11 +22,11 @@ defmodule Beamulator.Behavior.Complaint do
 end
 
 defmodule Beamulator.Behavior.ComplaintBuilder do
-  defmacro build_complaint(checker, message, severity) do
-    code = Macro.to_string(checker)
+  defmacro build_complaint(trigger, message, severity) do
+    code = Macro.to_string(trigger)
     quote do
       %Beamulator.Behavior.Complaint{
-        checker: unquote(checker),
+        trigger: unquote(trigger),
         message: unquote(message),
         severity: unquote(severity),
         code: unquote(code)
@@ -79,11 +79,11 @@ defmodule Beamulator.Behavior do
 
         complaints
         |> Enum.each(fn complaint ->
-          condition = complaint.checker.({status, result})
+          condition = complaint.trigger.({status, result})
 
           if condition do
             Logger.error(
-              "Complaint triggered: #{complaint.message}. Checker code: #{complaint.code}"
+              "Complaint triggered: #{complaint.message}. trigger code: #{complaint.code}"
             )
 
             GenServer.cast(Beamulator.ActionLoggerPersistent, {
@@ -96,7 +96,7 @@ defmodule Beamulator.Behavior do
                 action,
                 args,
                 %{
-                  checker: complaint.code,
+                  trigger: complaint.code,
                   status: status,
                   result: result
                 }
