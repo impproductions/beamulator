@@ -1,11 +1,12 @@
 # Roadmap
 
 ## Next
-- executor should be a process and execute asynchronously
+- executor should be a process and execute asynchronously?
+- actor complaint
 - verify message queueing
 - monitor actor internals (ie mailbox)
 - dispatch ticks through registry
-- configure example/simulation path
+- stagger actor starts
 - connectors
   - rest 🛠️
   - ws?
@@ -19,8 +20,12 @@
 - action replay?
 - restore state from target
 - add new behaviours at runtime
+- configure simulations at runtime
+  - extract behavior creation to lab
 
 ## Improvements
+- document/enforce simulation folder/namespacing
+- tests
 - use pubsub for tick
 - uniform error handling
 - dashboard: better terminal renderer
@@ -31,6 +36,7 @@
 - rename project to beamulator
 
 ## Done
+- single source for example/simulation path ✅
 - better logging ✅
 - query actors tool + example ✅
 - destroy actors tool + example ✅

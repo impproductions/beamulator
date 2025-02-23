@@ -10,6 +10,8 @@ defmodule Beamulacrum.Application do
     Logger.debug("Random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
 
+    Beamulacrum.Actions.source_code() |> IO.puts()
+
     run_uuid = UUID.uuid4()
     Logger.debug("Run UUID: #{run_uuid}")
     Application.put_env(:beamulacrum, :run_uuid, run_uuid)
@@ -28,7 +30,6 @@ defmodule Beamulacrum.Application do
         actors_config = Application.fetch_env!(:beamulacrum, :actors)
 
         Logger.debug("Loading behaviors...")
-        # Beamulacrum.ModuleLoader.load_behaviors("./simulacrum")
         Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
         Logger.debug("Behaviors loaded.")
 

@@ -1,4 +1,5 @@
 defmodule Beamulacrum.Actions do
+  use SourceInjector
   require Logger
   alias HTTPoison
 

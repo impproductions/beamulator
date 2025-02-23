@@ -36,5 +36,7 @@ defmodule Beamulacrum.MixProject do
     [main_module: Beamulacrum]
   end
 
-  defp elixirc_paths(), do: ["lib", "simulacrum"]
+  defp elixirc_paths(), do: ["lib", simulation_path()]
+
+  defp simulation_path(), do: "example-todo/simulation"
 end

@@ -114,7 +114,7 @@ defmodule ActionLoggerPersistent do
     run_id = Application.get_env(:beamulacrum, :run_uuid)
     random_seed = Application.get_env(:beamulacrum, :simulation)[:random_seed]
 
-    actions_file = File.read!("simulacrum/actions.ex") |> Base.encode64()
+    actions_file = Beamulacrum.Actions.source_code |> Base.encode64()
 
     url = "http://localhost:9000/write"
     headers = [{"Content-Type", "text/plain"}]
