@@ -2,6 +2,7 @@
 
 ## Next
 - actor complaint
+- multi-tenant todo example
 - action log should include failed requests
 - check if one actor dying kills all other actors
 - find a way to store runtime config along with simulation
@@ -39,9 +40,9 @@
 - should executor be a process (or set of processes) and execute asynchronously?
 - remove behavior registry altogether?
 - rename behavior to personality to avoid confusion with elixir's behaviour keyword
-- rename project to beamulator
 
 ## Done
+- rename project to beamulator ✅
 - switch to self-scheduling actors ✅
 - inject actor data in logger ✅
 - store uuid before setting random seed ✅
