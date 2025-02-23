@@ -2,6 +2,7 @@
 
 ## Next
 - switch to self-scheduling actors 🛠️
+- inject actor data in logger
 - actor complaint
 - ~~dispatch ticks through registry~~
 - stagger actor starts

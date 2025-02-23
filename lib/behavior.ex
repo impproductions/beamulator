@@ -14,9 +14,23 @@ defmodule Beamulacrum.Behavior do
   A behavior that all actor behaviors must implement.
   """
   require Logger
+
+  @doc """
+  The default_state function should return the initial state of the behavior.
+  """
   @callback default_state() :: map()
-  @callback act(tick :: integer(), Beamulacrum.Behavior.Data.t()) ::
-              {:ok, Beamulacrum.Behavior.Data.t()} | {:error, String.t()}
+
+  @doc """
+  The act function is called by the ActionExecutor to execute an action.
+
+  The function should return a tuple with:
+  - the result of the action, either `:ok` or `:error`
+  - the number of ticks to wait before the next action
+  - the updated behavior data
+  """
+  @callback act(tick :: integer(), actor_data :: Beamulacrum.Behavior.Data.t()) ::
+              {result :: :ok, wait_ticks :: integer(), new_data :: Beamulacrum.Behavior.Data.t()}
+              | {:error, integer(), String.t()}
 
   defmacro __using__(_opts) do
     quote do
@@ -61,9 +75,10 @@ defmodule Beamulacrum.Behavior.Registry do
   def scan_and_register_all_behaviors do
     Logger.info("Scanning and registering all behaviors...")
 
-    found = :code.all_loaded()
-    |> Enum.map(fn {module, _file} -> module end)
-    |> Enum.filter(&module_in_behaviors_namespace?/1)
+    found =
+      :code.all_loaded()
+      |> Enum.map(fn {module, _file} -> module end)
+      |> Enum.filter(&module_in_behaviors_namespace?/1)
 
     Logger.info("Found behaviors: #{inspect(found)}")
 

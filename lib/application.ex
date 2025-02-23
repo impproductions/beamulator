@@ -30,7 +30,11 @@ defmodule Beamulacrum.Application do
       {:ok, pid} ->
         Logger.debug("Loading behaviors...")
         Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
-        Logger.debug("Behaviors loaded.")
+        Logger.info("Behaviors loaded.")
+
+        Logger.debug("Starting actors...")
+        start_actors()
+        Logger.info("Actors started.")
         {:ok, pid}
 
       {:error, reason} ->

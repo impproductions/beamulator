@@ -12,6 +12,7 @@ config :beamulacrum,
     tick_to_seconds: 1
   ],
   actors: [
+    # %{behavior: Beamulacrum.Behaviors.Fooizer, name: "Fooizer", amt: 1000, config: %{}}
     %{behavior: Beamulacrum.Behaviors.Organizer, name: "Organizer", amt: 1, config: %{}},
     %{behavior: Beamulacrum.Behaviors.Procrastinator, name: "Procrastinator", amt: 100, config: %{}},
     # %{behavior: Beamulacrum.Behaviors.BigSpender, name: "Big Spender", amt: 2, config: %{}},

@@ -49,7 +49,7 @@ defmodule Beamulacrum.Ticker do
     current_time = DateTime.utc_now()
     tick_number = state.tick_number
 
-    broadcast_tick_through_pg(state)
+    # broadcast_tick_through_pg(state)
     # broadcast_tick(state)
 
     new_fps_counter = state.fps_counter + 1

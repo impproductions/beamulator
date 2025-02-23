@@ -16,42 +16,33 @@ defmodule Beamulacrum.Behaviors.Organizer do
       name: Faker.Person.name(),
       email: Faker.Internet.email(),
       tasks: [],
-      tick_counter: 0,
-      wait_ticks: 0
     }
   end
 
   @impl Beamulacrum.Behavior
-  def act(_tick, %{name: name, state: state} = data) do
-    if state.wait_ticks > 0 do
-      new_state = %{state | wait_ticks: state.wait_ticks - 1}
-      {:ok, %{data | state: new_state}}
-    else
-      {:ok, tasks} = execute(name, &Actions.list_tasks/0)
-      # Decide with equal likelihood whether to add or remove a task.
-      new_data =
-        if :rand.uniform() < 0.5 do
-          # Attempt to add a task if not over the maximum.
-          if length(tasks) < @max_tasks do
-            {:ok, new_data} = add_task(name, data)
-            new_data
-          else
-            Logger.info("#{name} has reached the maximum number of tasks. Not adding a new task.")
-            data
-          end
-        else
-          # Attempt to remove a task if any exist.
-          if length(tasks) > @min_tasks do
-            {:ok, new_data} = remove_task(name, data, tasks)
-            new_data
-          else
-            Logger.info("#{name} has no tasks to remove.")
-            data
-          end
-        end
+  def act(_tick, %{name: name, state: _} = data) do
+    {:ok, tasks} = execute(name, &Actions.list_tasks/0)
 
-      wait(name, new_data)
-    end
+    new_data =
+      if :rand.uniform() < 0.5 do
+        if length(tasks) < @max_tasks do
+          {:ok, new_data} = add_task(name, data)
+          new_data
+        else
+          Logger.info("#{name} has reached the maximum number of tasks. Not adding a new task.")
+          data
+        end
+      else
+        if length(tasks) > @min_tasks do
+          {:ok, new_data} = remove_task(name, data, tasks)
+          new_data
+        else
+          Logger.info("#{name} has no tasks to remove.")
+          data
+        end
+      end
+
+    wait(name, new_data)
   end
 
   defp add_task(name, data) do
@@ -68,22 +59,20 @@ defmodule Beamulacrum.Behaviors.Organizer do
     refresh_tasks(name, data)
   end
 
-  defp wait(name, data) do
-    Logger.info("#{name} is waiting.")
-    to_wait = Tools.random_int(div(@decision_wait_ticks, 2), @decision_wait_ticks)
-    new_state = Map.put(data.state, :wait_ticks, to_wait)
-    {:ok, %{data | state: new_state}}
-  end
-
   defp refresh_tasks(name, data) do
     Logger.info("#{name} is refreshing their task list.")
     {:ok, tasks} = execute(name, &Actions.list_tasks/0)
 
-    new_state = data.state
-    |> Map.put(:tasks, tasks)
-    |> Map.update!(:tick_counter, &(&1 + 1))
-    |> Map.put(:wait_ticks, @decision_wait_ticks)
+    new_state =
+      data.state
+      |> Map.put(:tasks, tasks)
 
     {:ok, %{data | state: new_state}}
+  end
+
+  defp wait(name, data) do
+    Logger.info("#{name} is waiting.")
+    to_wait = Tools.random_int(div(@decision_wait_ticks, 2), @decision_wait_ticks)
+    {:ok, to_wait, data}
   end
 end
