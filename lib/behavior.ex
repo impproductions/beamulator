@@ -10,18 +10,29 @@ defmodule Beamulator.Behavior.Data do
 end
 
 defmodule Beamulator.Behavior.Complaint do
-  @enforce_keys [:message, :severity, :behavior, :actor, :action, :expected, :actual]
-  defstruct [:message, :severity, :behavior, :actor, :action, :expected, :actual]
+  @enforce_keys [:checker, :message, :severity, :code]
+  defstruct [:checker, :message, :severity, :code]
 
   @type t :: %__MODULE__{
+          checker: fun(),
           message: String.t(),
           severity: :urgent | :annoying | :justsayin,
-          behavior: module(),
-          actor: String.t(),
-          action: fun(),
-          expected: any(),
-          actual: any()
+          code: String.t()
         }
+end
+
+defmodule Beamulator.Behavior.ComplaintBuilder do
+  defmacro build_complaint(checker, message, severity) do
+    code = Macro.to_string(checker)
+    quote do
+      %Beamulator.Behavior.Complaint{
+        checker: unquote(checker),
+        message: unquote(message),
+        severity: unquote(severity),
+        code: unquote(code)
+      }
+    end
+  end
 end
 
 defmodule Beamulator.Behavior do
@@ -32,11 +43,10 @@ defmodule Beamulator.Behavior do
 
   @doc """
   The act function is called by the ActionExecutor to execute an action.
-
-  The function should return a tuple with:
-  - the result of the action, either `:ok` or `:error`
-  - the number of ticks to wait before the next action
-  - the updated behavior data
+  It returns a tuple with:
+    - the result of the action, either `:ok` or `:error`
+    - the number of ticks to wait before the next action
+    - the updated behavior data
   """
   @callback act(tick :: integer(), actor_data :: Beamulator.Behavior.Data.t()) ::
               {result :: :ok, wait_ticks :: integer(), new_data :: Beamulator.Behavior.Data.t()}
@@ -47,7 +57,6 @@ defmodule Beamulator.Behavior do
       @behaviour Beamulator.Behavior
 
       require Logger
-
       alias Beamulator.ActionExecutor
 
       def execute(name, action) do
@@ -58,32 +67,45 @@ defmodule Beamulator.Behavior do
         Logger.debug("#{name} executing action #{inspect(action)} with args #{inspect(args)}")
         result = ActionExecutor.exec({__MODULE__, name}, action, args)
         Logger.info("#{name} executed action #{inspect(action)} with args #{inspect(args)}")
-
         result
       end
 
-      @spec complain_when(condition :: boolean(), complaint :: Beamulator.Behavior.Complaint.t()) ::
-              {:ok, Beamulator.Behavior.Complaint.t()} | {:error, any()}
-      def complain_when(condition, complaint) do
-        if condition do
-          Logger.error("Complaint: #{inspect(complaint, pretty: true)}")
+      def execute(name, action, args, complaint) when is_struct(complaint) do
+        execute(name, action, args, [complaint])
+      end
 
-          GenServer.cast(Beamulator.ActionLoggerPersistent, {
-            :log_complaint,
-            {
-              complaint.behavior,
-              complaint.actor,
-              complaint.message,
-              complaint.severity,
-              complaint.action,
-              complaint.expected,
-              complaint.actual
-            }
-          })
-        else
-          nil
-        end
-        {:ok, complaint}
+      def execute(name, action, args, complaints) when is_list(complaints) do
+        {status, result} = execute(name, action, args)
+
+        complaints
+        |> Enum.each(fn complaint ->
+          condition = complaint.checker.({status, result})
+
+          if condition do
+            Logger.error(
+              "Complaint triggered: #{complaint.message}. Checker code: #{complaint.code}"
+            )
+
+            GenServer.cast(Beamulator.ActionLoggerPersistent, {
+              :log_complaint,
+              {
+                __MODULE__,
+                name,
+                complaint.message,
+                complaint.severity,
+                action,
+                args,
+                %{
+                  checker: complaint.code,
+                  status: status,
+                  result: result
+                }
+              }
+            })
+          end
+        end)
+
+        result
       end
     end
   end

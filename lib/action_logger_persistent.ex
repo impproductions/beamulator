@@ -87,8 +87,9 @@ defmodule Beamulator.ActionLoggerPersistent do
       message STRING,
       severity SYMBOL,
       action STRING,
-      expected STRING,
-      actual STRING,
+      args STRING,
+      result STRING,
+      checker STRING,
       start_time TIMESTAMP,
       run_id STRING
     ) TIMESTAMP(timestamp)
@@ -126,10 +127,11 @@ defmodule Beamulator.ActionLoggerPersistent do
       |> URI.append_query(URI.encode_query(query: ddl_complaints))
       |> URI.to_string()
 
-    res = HTTPoison.get!(uri, [
-      {"Content-Type", "application/json"},
-      {"Accept", "application/json"}
-    ])
+    res =
+      HTTPoison.get!(uri, [
+        {"Content-Type", "application/json"},
+        {"Accept", "application/json"}
+      ])
 
     Logger.info("response: #{inspect(res, pretty: true)}")
 
@@ -137,7 +139,6 @@ defmodule Beamulator.ActionLoggerPersistent do
 
     Logger.info("Tables created successfully")
     fill_metadata_table()
-
 
     :ok
   end
@@ -171,7 +172,7 @@ defmodule Beamulator.ActionLoggerPersistent do
   end
 
   def handle_cast(
-        {:log_complaint, {behavior, actor, message, severity, action, expected, actual}},
+        {:log_complaint, {behavior, actor, message, severity, action, args, actual}},
         state
       ) do
     write_complaint(%{
@@ -180,7 +181,7 @@ defmodule Beamulator.ActionLoggerPersistent do
       message: message,
       severity: severity,
       action: action,
-      expected: expected,
+      args: args,
       actual: actual
     })
 
@@ -206,13 +207,20 @@ defmodule Beamulator.ActionLoggerPersistent do
       message: message,
       severity: severity,
       action: action,
-      expected: expected,
+      args: args,
       actual: actual
     } = complaint_data
 
     action_as_string = inspect(action)
-    expected_as_string = Jason.encode!(expected) |> escape_field()
-    actual_as_string = Jason.encode!(actual) |> escape_field()
+    args_as_string = Jason.encode!(args) |> escape_field()
+    checker_code = actual.checker |> escape_field()
+
+    actual_as_string =
+      Jason.encode!(%{
+        status: actual.status,
+        result: actual.result
+      })
+      |> escape_field()
 
     severity_as_string = inspect(severity)
 
@@ -225,7 +233,7 @@ defmodule Beamulator.ActionLoggerPersistent do
 
     line =
       "complaints_log,behavior=#{escape_tag(behavior)},actor=#{escape_tag(actor)},severity=#{escape_tag(severity_as_string)} " <>
-        "message=\"#{message}\",action=\"#{escape_field(action_as_string)}\",expected=\"#{expected_as_string}\",actual=\"#{actual_as_string}\",start_time=#{start_timestamp}i,run_id=\"#{run_id}\" " <>
+        "message=\"#{message}\",action=\"#{escape_field(action_as_string)}\",args=\"#{args_as_string}\",result=\"#{actual_as_string}\",checker=\"#{checker_code}\",start_time=#{start_timestamp}i,run_id=\"#{run_id}\" " <>
         "#{timestamp}"
 
     url = "http://localhost:9000/write"
@@ -297,5 +305,14 @@ defmodule Beamulator.ActionLoggerPersistent do
     field
     |> String.replace(~s("), ~s(\\"))
     |> String.replace("\n", "\\n")
+  end
+
+  defp escape_elixir_code(string) do
+    escaped =
+      string
+      |> String.replace("\\", "\\\\")
+      |> String.replace("\"", "\\\"")
+
+    "\"#{escaped}\""
   end
 end

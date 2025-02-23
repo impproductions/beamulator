@@ -1,7 +1,7 @@
 defmodule Beamulator.Behaviors.Procrastinator do
-  alias Beamulator.Behavior.Complaint
   alias Beamulator.Tools
   use Beamulator.Behavior
+  import Beamulator.Behavior.ComplaintBuilder
 
   require Logger
   alias Beamulator.Actions
@@ -32,28 +32,19 @@ defmodule Beamulator.Behaviors.Procrastinator do
             task = Enum.random(tasks)
             Logger.info("#{name} is marking task '#{task["title"]}' as complete.")
 
-            {:ok, updated_task} =
-              execute(name, &Actions.update_task/1, %{
+            execute(
+              name,
+              &Actions.update_task/1,
+              %{
                 id: task["id"],
                 title: task["title"],
                 completed: true
-              })
-
-            complain_when(
-              not updated_task["completed"],
-              %Complaint{
-                message: "I marked a task complete but it's still marked incomplete",
-                severity: :annoying,
-                behavior: __MODULE__,
-                actor: name,
-                action: &Actions.update_task/1,
-                expected: %{
-                  id: task["id"],
-                  title: task["title"],
-                  completed: true
-                },
-                actual: updated_task
-              }
+              },
+              build_complaint(
+                fn {_, result} -> result["completed"] end,
+                "I marked a task incomplete but it's still marked complete",
+                :annoying
+              )
             )
 
             refresh_tasks(name, data)
@@ -67,26 +58,20 @@ defmodule Beamulator.Behaviors.Procrastinator do
             task = Enum.random(tasks)
             Logger.info("#{name} is marking task '#{task["title"]}' as incomplete.")
 
-            {:ok, updated_task} =
-              execute(name, &Actions.update_task/1, %{
-                id: task["id"],
-                title: task["title"],
-                completed: false
-              })
-
-            complain_when(updated_task["completed"], %Complaint{
-              message: "I marked a task incomplete but it's still marked complete",
-              severity: :annoying,
-              behavior: __MODULE__,
-              actor: name,
-              action: &Actions.update_task/1,
-              expected: %{
+            execute(
+              name,
+              &Actions.update_task/1,
+              %{
                 id: task["id"],
                 title: task["title"],
                 completed: false
               },
-              actual: updated_task
-            })
+              build_complaint(
+                fn {_, result} -> not result["completed"] end,
+                "I marked a task incomplete but it's still marked complete",
+                :annoying
+              )
+            )
 
             refresh_tasks(name, data)
           else
