@@ -1,12 +1,16 @@
 # Roadmap
 
 ## Next
+- executor should be a process and execute asynchronously
+- verify message queueing
+- monitor actor internals (ie mailbox)
+- dispatch ticks through registry
+- configure example/simulation path
 - connectors
-  - rest
+  - rest 🛠️
   - ws?
   - pg?
   - Opensearch?
-- better logging ✅
 
 ## Feature ideas
 - save/restore state!!! (ugh)
@@ -27,6 +31,7 @@
 - rename project to beamulator
 
 ## Done
+- better logging ✅
 - query actors tool + example ✅
 - destroy actors tool + example ✅
 - spawn actors at runtime ✅

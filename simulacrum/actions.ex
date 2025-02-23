@@ -1,67 +1,69 @@
 defmodule Beamulacrum.Actions do
-  @moduledoc "User-defined actions."
-
   require Logger
+  alias HTTPoison
 
-  def onboard_user(%{onboarder: onboarder}) do
-    Logger.debug("Onboarder #{onboarder} is creating a new user")
+  @api_base_url "http://127.0.0.1:8000"
 
-    new_user_name = Faker.Person.name() <> " " <> to_string(Beamulacrum.Tools.increasing_int())
-    new_email = Faker.Internet.email()
+  def list_tasks() do
+    Logger.debug("Fetching all tasks from the server")
 
-    Logger.info("Onboarder #{onboarder} created a new user: #{new_user_name} with email #{new_email}")
-    {:ok, %{name: new_user_name, email: new_email}}
-  end
+    case HTTPoison.get("#{@api_base_url}/tasks") do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        tasks = Jason.decode!(body)
+        Logger.info("Retrieved #{length(tasks)} tasks")
+        {:ok, tasks}
 
-  def user_purchase(%{name: name, email: email, product: product, price: price}) do
-    Logger.info("User #{name} (#{email}) purchased product #{product} for #{price}")
-    {:ok, nil}
-  end
-
-  def user_refund(%{name: name, email: email, product: product, price: price}) do
-    Logger.info("User #{name} (#{email}) requested a refund for product #{product} worth #{price}")
-
-    case :rand.uniform(2) do
-      1 ->
-        Logger.info("Refund request for user #{email} refused")
-        {:error, "Refund request failed"}
-      _ ->
-        Logger.info("Refund request for user #{email} accepted")
-        {:ok, nil}
+      {:error, reason} ->
+        Logger.error("Failed to fetch tasks: #{inspect(reason)}")
+        {:error, "Could not retrieve tasks"}
     end
   end
 
-  def user_change_email(%{name: name, email: email, new_email: new_email}) do
-    Logger.info("User #{name} changed their email from #{email} to #{new_email}")
-    {:ok, nil}
+  def add_task(%{title: title}) do
+    Logger.debug("Adding a new task: #{title}")
+
+    payload = Jason.encode!(%{id: "", title: title, completed: false})
+
+    case HTTPoison.post("#{@api_base_url}/tasks", payload, [{"Content-Type", "application/json"}]) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        task = Jason.decode!(body)
+        Logger.info("Task added successfully: #{inspect(task)}")
+        {:ok, task}
+
+      {:error, reason} ->
+        Logger.error("Failed to add task: #{inspect(reason)}")
+        {:error, "Could not add task"}
+    end
   end
 
-  def user_list_available_products(%{name: name, email: email}) do
-    Logger.debug("User #{name} (#{email}) is browsing available products")
+  def update_task(%{id: id, title: title, completed: completed}) do
+    Logger.debug("Updating task #{id} with title '#{title}' and completed status #{completed}")
 
-    all_products = [
-      %{product: "Luxury Watch", price: 5000},
-      %{product: "Sports Car", price: 75000},
-      %{product: "Private Jet Rental", price: 200000},
-      %{product: "Designer Handbag", price: 12000},
-      %{product: "High-End Gaming PC", price: 8000},
-      %{product: "Exclusive Club Membership", price: 15000},
-      %{product: "Fine Art Piece", price: 50000},
-      %{product: "Luxury Watch", price: 5000},
-      %{product: "Sports Car", price: 75000},
-      %{product: "Private Jet Rental", price: 200000},
-      %{product: "Socks", price: 5},
-      %{product: "T-Shirt", price: 10},
-      %{product: "Sneakers", price: 50},
-      %{product: "Jeans", price: 100},
-      %{product: "Jacket", price: 200},
-      %{product: "Smartphone", price: 1000},
-      %{product: "Laptop", price: 1500}
-    ]
+    payload = Jason.encode!(%{id: id, title: title, completed: completed})
 
-    product_list = Enum.take_random(all_products, :rand.uniform(Enum.count(all_products)))
-    Logger.debug("User #{email} received #{length(product_list)} available products")
+    case HTTPoison.put("#{@api_base_url}/tasks/#{id}", payload, [{"Content-Type", "application/json"}]) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        task = Jason.decode!(body)
+        Logger.info("Task updated successfully: #{inspect(task)}")
+        {:ok, task}
 
-    {:ok, product_list}
+      {:error, reason} ->
+        Logger.error("Failed to update task: #{inspect(reason)}")
+        {:error, "Could not update task"}
+    end
+  end
+
+  def delete_task(%{id: id}) do
+    Logger.debug("Deleting task with ID: #{id}")
+
+    case HTTPoison.delete("#{@api_base_url}/tasks/#{id}") do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        Logger.info("Task deleted successfully: #{inspect(body)}")
+        {:ok, "Task deleted"}
+
+      {:error, reason} ->
+        Logger.error("Failed to delete task: #{inspect(reason)}")
+        {:error, "Could not delete task"}
+    end
   end
 end

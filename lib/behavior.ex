@@ -26,6 +26,10 @@ defmodule Beamulacrum.Behavior do
 
       alias Beamulacrum.ActionExecutor
 
+      def execute(name, action) do
+        execute(name, action, nil)
+      end
+
       def execute(name, action, args) do
         Logger.debug("#{name} executing action #{inspect(action)} with args #{inspect(args)}")
         result = ActionExecutor.exec({__MODULE__, name}, action, args)

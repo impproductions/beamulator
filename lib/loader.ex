@@ -10,6 +10,8 @@ defmodule Beamulacrum.ModuleLoader do
         |> Enum.map(&Path.join(path, &1))
         |> Enum.each(&compile_and_load_module/1)
 
+        nil
+
       {:error, reason} ->
         Logger.warning("Failed to list directory #{path}: #{inspect(reason)}")
     end
