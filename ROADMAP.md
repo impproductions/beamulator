@@ -1,9 +1,14 @@
 # Roadmap
 
 ## Next
+- switch to self-scheduling actors 🛠️
 - actor complaint
-- dispatch ticks through registry
+- ~~dispatch ticks through registry~~
 - stagger actor starts
+- action log should include failed requests
+- check if one actor dying kills all other actors
+- find a way to store runtime config along with simulation
+- reintroduce actor config into the mix
 - connectors
   - rest 🛠️
   - ws?

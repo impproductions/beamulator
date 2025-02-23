@@ -14,6 +14,10 @@ defmodule Beamulacrum.Actions do
         Logger.info("Retrieved #{length(tasks)} tasks")
         {:ok, tasks}
 
+      {:ok, resp} ->
+        Logger.error("Failed to fetch tasks: #{inspect(resp)}")
+        {:error, "Tasks not found"}
+
       {:error, reason} ->
         Logger.error("Failed to fetch tasks: #{inspect(reason)}")
         {:error, "Could not retrieve tasks"}
@@ -30,6 +34,10 @@ defmodule Beamulacrum.Actions do
         task = Jason.decode!(body)
         Logger.info("Task added successfully: #{inspect(task)}")
         {:ok, task}
+
+      {:ok, resp} ->
+        Logger.error("Failed to add task: #{inspect(resp)}")
+        {:error, "Task not added"}
 
       {:error, reason} ->
         Logger.error("Failed to add task: #{inspect(reason)}")
@@ -48,6 +56,10 @@ defmodule Beamulacrum.Actions do
         Logger.info("Task updated successfully: #{inspect(task)}")
         {:ok, task}
 
+      {:ok, resp } ->
+        Logger.error("Failed to update task: #{inspect(resp)}")
+        {:error, "Task not found"}
+
       {:error, reason} ->
         Logger.error("Failed to update task: #{inspect(reason)}")
         {:error, "Could not update task"}
@@ -61,6 +73,10 @@ defmodule Beamulacrum.Actions do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         Logger.info("Task deleted successfully: #{inspect(body)}")
         {:ok, "Task deleted"}
+
+      {:ok, resp} ->
+        Logger.error("Failed to delete task: #{inspect(resp)}")
+        {:error, "Task not found"}
 
       {:error, reason} ->
         Logger.error("Failed to delete task: #{inspect(reason)}")

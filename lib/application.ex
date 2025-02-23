@@ -6,6 +6,10 @@ defmodule Beamulacrum.Application do
   def start(_type, _args) do
     Logger.info("Starting Beamulacrum...")
 
+    Logger.info("Starting process group...")
+    res = :pg.start(:actor_group)
+    Logger.info("Process group started with result: #{inspect(res)}")
+
     random_seed = Beamulacrum.Tools.random_seed()
     Logger.debug("Random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
@@ -24,23 +28,6 @@ defmodule Beamulacrum.Application do
 
     case Supervisor.start_link(children, opts) do
       {:ok, pid} ->
-        actors_config = Application.fetch_env!(:beamulacrum, :actors)
-
-        actors_to_create =
-          actors_config
-          |> Enum.map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
-            for _ <- 1..amt,
-                do: %{
-                  name: name <> " " <> to_string(Beamulacrum.Tools.increasing_int()),
-                  behavior: behavior,
-                  config: config
-                }
-          end)
-          |> List.flatten()
-
-        _pids = Beamulacrum.Connectors.Internal.create_actors(actors_to_create)
-        Logger.info("Actors initialized successfully.")
-
         Logger.debug("Loading behaviors...")
         Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
         Logger.debug("Behaviors loaded.")
@@ -50,6 +37,25 @@ defmodule Beamulacrum.Application do
         Logger.error("Failed to start supervisor: #{inspect(reason)}")
         {:error, reason}
     end
+  end
+
+  def start_actors() do
+    actors_config = Application.fetch_env!(:beamulacrum, :actors)
+
+    actors_to_create =
+      actors_config
+      |> Enum.map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
+        for _ <- 1..amt,
+            do: %{
+              name: name <> " " <> to_string(Beamulacrum.Tools.increasing_int()),
+              behavior: behavior,
+              config: config
+            }
+      end)
+      |> List.flatten()
+
+    _pids = Beamulacrum.Connectors.Internal.create_actors(actors_to_create)
+    Logger.info("Actors initialized successfully.")
   end
 
   defp maybe_add_action_logger(children) do

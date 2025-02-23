@@ -40,6 +40,9 @@ defmodule Beamulacrum.Actor do
     selector = {behavior_module, Beamulacrum.Tools.increasing_int(), name}
     Registry.register(Beamulacrum.ActorRegistry, :actors, selector)
 
+    Logger.debug("Actor #{name} joining group")
+    Beamulacrum.ActorProcessGroup.join()
+
     actor_state = %Data{
       name: name,
       behavior: behavior_module,
@@ -78,26 +81,4 @@ defmodule Beamulacrum.Actor do
   def handle_call(:state, _from, state) do
     {:reply, state, state}
   end
-
-  # def handle_info({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
-  #   Logger.debug("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
-  #   Logger.metadata(tick: tick_number)
-
-  #   behavior_data = %Beamulacrum.Behavior.Data{
-  #     name: actor_data.name,
-  #     config: actor_data.config,
-  #     state: state
-  #   }
-
-  #   case behavior.act(tick_number, behavior_data) do
-  #     {:ok, new_behavior_data} ->
-  #       Logger.info("Actor #{actor_data.name} acted successfully on tick #{tick_number}")
-  #       new_state = %{actor_data | state: new_behavior_data.state}
-  #       {:noreply, new_state}
-
-  #     {:error, reason} ->
-  #       Logger.warn("Actor #{actor_data.name} failed to act on tick #{tick_number}: #{inspect(reason)}")
-  #       {:noreply, actor_data}
-  #   end
-  # end
 end

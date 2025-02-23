@@ -49,7 +49,8 @@ defmodule Beamulacrum.Ticker do
     current_time = DateTime.utc_now()
     tick_number = state.tick_number
 
-    broadcast_tick(state)
+    broadcast_tick_through_pg(state)
+    # broadcast_tick(state)
 
     new_fps_counter = state.fps_counter + 1
     {updated_fps, updated_fps_counter, updated_last_fps_time} =
@@ -120,5 +121,11 @@ defmodule Beamulacrum.Ticker do
       timeout: 5000
     )
     |> Stream.run()
+  end
+
+  defp broadcast_tick_through_pg(state) do
+    tick_number = state.tick_number
+
+    Beamulacrum.ActorProcessGroup.broadcast({:tick, tick_number})
   end
 end

@@ -1,15 +1,11 @@
 defmodule Beamulacrum.Behaviors.Procrastinator do
+  alias Beamulacrum.Tools
   use Beamulacrum.Behavior
 
   require Logger
-
   alias Beamulacrum.Actions
 
-  @decision_wait_ticks 500
-  @max_active_tasks 12
-  @min_active_tasks 8
-  @completion_chance 0.1
-  @task_add_frequency 3
+  @decision_wait_ticks 50
 
   @impl Beamulacrum.Behavior
   def default_state() do
@@ -25,72 +21,67 @@ defmodule Beamulacrum.Behaviors.Procrastinator do
   @impl Beamulacrum.Behavior
   def act(_tick, %{name: name, state: state} = data) do
     if state.wait_ticks > 0 do
-      new_data = %{data | state: %{state | wait_ticks: state.wait_ticks - 1}}
-      {:ok, new_data}
+      new_state = %{state | wait_ticks: state.wait_ticks - 1}
+      {:ok, %{data | state: new_state}}
     else
       {:ok, tasks} = execute(name, &Actions.list_tasks/0)
-      active_tasks = Enum.filter(tasks, fn task -> !task["completed"] end)
 
-      cond do
-        rem(state.tick_counter, @task_add_frequency) == 0 ->
-          add_task(name, data)
-
-        :rand.uniform() < @completion_chance && active_tasks != [] and length(active_tasks) >= @min_active_tasks ->
-          complete_task(name, data, active_tasks)
-
-        length(active_tasks) > @max_active_tasks ->
-          delete_task(name, data, active_tasks)
-
-        true ->
+      # With 50% chance, do nothing; otherwise, mark a task as complete or incomplete equally.
+      case :rand.uniform() do
+        r when r < 0.5 ->
+          Logger.info("#{name} is procrastinating and doing nothing.")
           wait(name, data)
+
+        r when r < 0.75 ->
+          if tasks != [] do
+            task = Enum.random(tasks)
+            Logger.info("#{name} is marking task '#{task["title"]}' as complete.")
+            _ = execute(name, &Actions.update_task/1, %{
+              id: task["id"],
+              title: task["title"],
+              completed: true
+            })
+            refresh_tasks(name, data)
+          else
+            Logger.info("#{name} has no tasks to mark complete.")
+            wait(name, data)
+          end
+
+        _ ->
+          if tasks != [] do
+            task = Enum.random(tasks)
+            Logger.info("#{name} is marking task '#{task["title"]}' as incomplete.")
+            _ = execute(name, &Actions.update_task/1, %{
+              id: task["id"],
+              title: task["title"],
+              completed: false
+            })
+            refresh_tasks(name, data)
+          else
+            Logger.info("#{name} has no tasks to mark incomplete.")
+            wait(name, data)
+          end
       end
     end
   end
 
-  defp add_task(name, data) do
-    new_task_title = Faker.Lorem.sentence(3)
-    Logger.info("#{name} is adding a new task: #{new_task_title}")
-
-    _ = execute(name, &Actions.add_task/1, %{title: new_task_title})
-    refresh_tasks(name, data)
-  end
-
-  defp complete_task(name, data, active_tasks) do
-    task = Enum.random(active_tasks)
-    Logger.info("#{name} is reluctantly completing a task: #{task["title"]}")
-
-    _ = execute(name, &Actions.update_task/1, %{id: task["id"], title: task["title"], completed: true})
-    refresh_tasks(name, data)
-  end
-
-  defp delete_task(name, data, active_tasks) do
-    task = Enum.random(active_tasks)
-    Logger.info("#{name} is overwhelmed and deleting task: #{task["title"]}")
-
-    _ = execute(name, &Actions.delete_task/1, %{id: task["id"]})
-    refresh_tasks(name, data)
-  end
-
   defp wait(name, data) do
-    Logger.info("#{name} is doing nothing and avoiding responsibilities.")
-    new_data = %{data | state: %{data.state | wait_ticks: @decision_wait_ticks}}
-    {:ok, new_data}
+    Logger.info("#{name} is waiting.")
+    to_wait = Tools.random_int(div(@decision_wait_ticks, 2), @decision_wait_ticks)
+    new_state = Map.put(data.state, :wait_ticks, to_wait)
+    {:ok, %{data | state: new_state}}
   end
 
   defp refresh_tasks(name, data) do
     Logger.info("#{name} is refreshing their task list.")
     {:ok, tasks} = execute(name, &Actions.list_tasks/0)
 
-    new_data = %{
-      data
-      | state: %{
-          data.state
-          | tasks: tasks,
-            tick_counter: data.state.tick_counter + 1,
-            wait_ticks: @decision_wait_ticks
-        }
-    }
+    new_state =
+      data.state
+      |> Map.put(:tasks, tasks)
+      |> Map.update!(:tick_counter, &(&1 + 1))
+      |> Map.put(:wait_ticks, @decision_wait_ticks)
 
-    {:ok, new_data}
+    {:ok, %{data | state: new_state}}
   end
 end
