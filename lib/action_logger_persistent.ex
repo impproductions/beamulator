@@ -17,12 +17,10 @@ defmodule ActionLoggerPersistent do
 
     case test_connection(url) do
       :ok ->
-        Logger.info("Connected to QuestDB")
         create_table(url)
         {:ok, %{}}
 
       {:error, reason} ->
-        Logger.error("Failed to connect to QuestDB: #{inspect(reason)}")
         {:stop, reason}
     end
   end
@@ -41,7 +39,7 @@ defmodule ActionLoggerPersistent do
            {"Accept", "application/json"}
          ]) do
       {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
-        Logger.info("Successfully connected to QuestDB")
+        Logger.info("Successfully connected to QuestDB.")
         :ok
 
       {:ok, %HTTPoison.Response{status_code: code, body: body}} ->

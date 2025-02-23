@@ -2,7 +2,8 @@
 
 ## Next
 - switch to self-scheduling actors ✅
-- inject actor data in logger
+- inject actor data in logger ✅
+- store uuid before setting random seed ✅
 - actor complaint
 - stagger actor starts ✅
 - action log should include failed requests

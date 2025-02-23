@@ -6,17 +6,18 @@ defmodule Beamulacrum.Application do
   def start(_type, _args) do
     Logger.info("Starting Beamulacrum...")
 
-    Logger.info("Starting process group...")
-    res = :pg.start(:actor_group)
-    Logger.info("Process group started with result: #{inspect(res)}")
-
-    random_seed = Beamulacrum.Tools.random_seed()
-    Logger.debug("Random seed: #{random_seed}")
-    :rand.seed(:exsss, random_seed)
-
     run_uuid = UUID.uuid4()
     Logger.debug("Run UUID: #{run_uuid}")
     Application.put_env(:beamulacrum, :run_uuid, run_uuid)
+
+    random_seed = Beamulacrum.Tools.random_seed()
+    Logger.debug("Setting random seed: #{random_seed}")
+    :rand.seed(:exsss, random_seed)
+    Logger.info("Random seed set to: #{random_seed}")
+
+    Logger.debug("Starting process group...")
+    {:ok, _} = :pg.start(:actor)
+    Logger.info("Process group scope :actor started")
 
     children =
       [
@@ -28,13 +29,13 @@ defmodule Beamulacrum.Application do
 
     case Supervisor.start_link(children, opts) do
       {:ok, pid} ->
-        Logger.debug("Loading behaviors...")
-        Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
-        Logger.info("Behaviors loaded.")
-
         Logger.debug("Creating actors...")
         create_actors()
         Logger.info("Actors created.")
+
+        Logger.debug("Registering behaviors...")
+        Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
+        Logger.info("Behaviors registered.")
 
         Logger.debug("Starting actors...")
         start_actors(:staggered)
@@ -77,8 +78,11 @@ defmodule Beamulacrum.Application do
 
   defp maybe_add_action_logger(children) do
     if Application.get_env(:beamulacrum, :enable_action_logger, false) do
-      Logger.info("Starting ActionLoggerPersistent...")
-      children ++ [{ActionLoggerPersistent, []}]
+      Logger.info("Action logger enabled, starting...")
+      children = children ++ [{ActionLoggerPersistent, []}]
+      Logger.info("Action logger started.")
+
+      children
     else
       children
     end

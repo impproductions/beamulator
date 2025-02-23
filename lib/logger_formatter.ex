@@ -1,9 +1,16 @@
 defmodule Beamulacrum.LoggerFormatter do
-  def format(_, message, timestamp, metadata) do
-    tick = Keyword.get(metadata, :tick, 0) |> as_duration()
+  def format(level, message, timestamp, metadata) do
     time = format_timestamp(timestamp)
+    tick = as_duration(Keyword.get(metadata, :tick, nil))
+    actor = Keyword.get(metadata, :actor, nil)
+    pid = Keyword.get(metadata, :pid, nil)
 
-    "[#{time}] [#{tick}] #{message}\n"
+    "|#{time}|#{level}|" <>
+      if(tick != nil && actor != nil,
+        do: " (#{tick}|#{actor}|#{pid})",
+        else: ""
+      ) <>
+      " #{message}\n"
   end
 
   defp format_timestamp({{year, month, day}, {hour, min, sec, _}}) do
@@ -14,7 +21,7 @@ defmodule Beamulacrum.LoggerFormatter do
     Beamulacrum.Tools.Time.as_duration(tick, :shorten)
   end
 
-  defp as_duration(_), do: "N/A"
+  defp as_duration(_), do: nil
 
   defp pad(num) when num < 10, do: "0#{num}"
   defp pad(num), do: "#{num}"

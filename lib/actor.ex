@@ -56,12 +56,14 @@ defmodule Beamulacrum.Actor do
   end
 
   def handle_info(:start, state) do
+    Logger.metadata(actor: state.name, pid: inspect(self()))
     Logger.info("Actor #{state.name} started. Scheduling first action.")
     send(self(), :act)
     {:noreply, state}
   end
 
   def handle_info(:act, %{behavior: behavior, state: state} = actor_data) do
+    Logger.metadata(actor: actor_data.name, pid: inspect(self()))
     Logger.debug("Actor #{actor_data.name} received action request")
     tick_number = Clock.get_tick_number()
     Logger.metadata(tick: tick_number)

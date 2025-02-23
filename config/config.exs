@@ -6,5 +6,5 @@ config :logger,
 config :logger, :console,
   path: "log/simulation.log",
   level: :info,
-  format: "|$time|$level| $message\n",
-  metadata: [:module, :function, :line, :tick]
+  format: {Beamulacrum.LoggerFormatter, :format},
+  metadata: [:module, :function, :line, :tick, :actor, :pid]
