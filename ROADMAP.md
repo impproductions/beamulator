@@ -1,10 +1,7 @@
 # Roadmap
 
 ## Next
-- executor should be a process and execute asynchronously?
 - actor complaint
-- verify message queueing
-- monitor actor internals (ie mailbox)
 - dispatch ticks through registry
 - stagger actor starts
 - connectors
@@ -13,6 +10,14 @@
   - pg?
   - Opensearch?
 
+## Fix
+- behaviors in dashboard are broken
+- find a controlled way to handle behavior loading
+
+## Think about this
+- should executor be a process (or set of processes) and execute asynchronously?
+- remove behavior registry altogether?
+
 ## Feature ideas
 - save/restore state!!! (ugh)
 - python behaviours
@@ -20,6 +25,7 @@
 - action replay?
 - restore state from target
 - add new behaviours at runtime
+- graphic dashboard
 - configure simulations at runtime
   - extract behavior creation to lab
 
@@ -36,6 +42,8 @@
 - rename project to beamulator
 
 ## Done
+- verify message queueing ✅
+- monitor actor internals (ie mailbox) ✅
 - single source for example/simulation path ✅
 - better logging ✅
 - query actors tool + example ✅

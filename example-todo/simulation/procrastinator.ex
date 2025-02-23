@@ -24,11 +24,8 @@ defmodule Beamulacrum.Behaviors.Procrastinator do
 
   @impl Beamulacrum.Behavior
   def act(_tick, %{name: name, state: state} = data) do
-    {:ok, data}
-    Logger.info("Procrastinator #{name} is deciding what to do...")
     if state.wait_ticks > 0 do
       new_data = %{data | state: %{state | wait_ticks: state.wait_ticks - 1}}
-      Logger.info("#{name} is procrastinating... (#{new_data.state.wait_ticks} ticks left)")
       {:ok, new_data}
     else
       {:ok, tasks} = execute(name, &Actions.list_tasks/0)

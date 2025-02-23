@@ -61,9 +61,13 @@ defmodule Beamulacrum.Behavior.Registry do
   def scan_and_register_all_behaviors do
     Logger.info("Scanning and registering all behaviors...")
 
-    :code.all_loaded()
+    found = :code.all_loaded()
     |> Enum.map(fn {module, _file} -> module end)
     |> Enum.filter(&module_in_behaviors_namespace?/1)
+
+    Logger.info("Found behaviors: #{inspect(found)}")
+
+    found
     |> Enum.each(&register/1)
   end
 

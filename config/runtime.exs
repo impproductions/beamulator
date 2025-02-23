@@ -12,7 +12,7 @@ config :beamulacrum,
     tick_to_seconds: 1
   ],
   actors: [
-    %{behavior: Beamulacrum.Behaviors.Overachiever, name: "Procrastinator", amt: 1, config: %{}},
+    %{behavior: Beamulacrum.Behaviors.Procrastinator, name: "Procrastinator", amt: 1, config: %{}},
     # %{behavior: Beamulacrum.Behaviors.BigSpender, name: "Big Spender", amt: 2, config: %{}},
     # %{behavior: Beamulacrum.Behaviors.CompulsiveBrowser, name: "Compulsive browser", amt: 10, config: %{}},
     # %{behavior: Beamulacrum.Behaviors.Scammer, name: "Scammer", amt: 1, config: %{}},

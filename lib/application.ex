@@ -10,8 +10,6 @@ defmodule Beamulacrum.Application do
     Logger.debug("Random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
 
-    Beamulacrum.Actions.source_code() |> IO.puts()
-
     run_uuid = UUID.uuid4()
     Logger.debug("Run UUID: #{run_uuid}")
     Application.put_env(:beamulacrum, :run_uuid, run_uuid)
@@ -26,12 +24,7 @@ defmodule Beamulacrum.Application do
 
     case Supervisor.start_link(children, opts) do
       {:ok, pid} ->
-        Logger.info("Application started successfully.")
         actors_config = Application.fetch_env!(:beamulacrum, :actors)
-
-        Logger.debug("Loading behaviors...")
-        Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
-        Logger.debug("Behaviors loaded.")
 
         actors_to_create =
           actors_config
@@ -47,6 +40,10 @@ defmodule Beamulacrum.Application do
 
         _pids = Beamulacrum.Connectors.Internal.create_actors(actors_to_create)
         Logger.info("Actors initialized successfully.")
+
+        Logger.debug("Loading behaviors...")
+        Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
+        Logger.debug("Behaviors loaded.")
         {:ok, pid}
 
       {:error, reason} ->

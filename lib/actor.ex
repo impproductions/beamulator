@@ -75,6 +75,10 @@ defmodule Beamulacrum.Actor do
     end
   end
 
+  def handle_call(:state, _from, state) do
+    {:reply, state, state}
+  end
+
   # def handle_info({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
   #   Logger.debug("Actor #{actor_data.name} reacting to simulation tick #{tick_number}")
   #   Logger.metadata(tick: tick_number)

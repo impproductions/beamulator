@@ -42,21 +42,24 @@ defmodule Manage do
   end
 
   defwithalert actor_state(pid_string) when is_binary(pid_string) do
-    pid_string =
-      if String.starts_with?(pid_string, "#PID") do
-        String.slice(pid_string, 4..-1//1)
-      else
-        pid_string
-      end
-
-    p_id = pid_string |> String.to_charlist() |> :erlang.list_to_pid()
+    pid = extract_pid(pid_string)
 
     case Registry.lookup(Beamulacrum.ActorRegistry, :actors)
-         |> Enum.find(fn {pid, _} -> pid == p_id end) do
+         |> Enum.find(fn {p_id, _} -> pid == p_id end) do
       {pid, {behavior, serial_id, name}} ->
         actor_state = GenServer.call(pid, :state)
+        {:message_queue_len, mailbox_length} = Process.info(pid, :message_queue_len)
 
-        Logger.info("Fetched state for actor #{name} (#{behavior}) (#{serial_id}) [#{inspect(pid)}]")
+        housekeeping = %{
+          pid: pid,
+          mailbox_length: mailbox_length,
+        }
+
+        actor_state = Map.put(actor_state, :_housekeeping, housekeeping)
+
+        Logger.info(
+          "Fetched state for actor #{name} (#{behavior}) (#{serial_id}) [#{inspect(pid)}]"
+        )
 
         Logger.debug("""
         State: #{inspect(actor_state, pretty: true, syntax_colors: [number: :red, atom: :cyan, string: :green, identifier: :blue])}
@@ -84,11 +87,39 @@ defmodule Manage do
   end
 
   defwithalert actor_spawn(name, behavior_module, config) do
-    Logger.info("Spawning actor: #{name} with behavior #{behavior_module} and config #{inspect(config)}")
+    Logger.info(
+      "Spawning actor: #{name} with behavior #{behavior_module} and config #{inspect(config)}"
+    )
+
     Beamulacrum.SupervisorActors.start_actor(name, behavior_module, config)
   end
 
   defwithalert actor_kill(pid_string) when is_binary(pid_string) do
+    pid = extract_pid(pid_string)
+    Logger.info("Killing actor with PID #{inspect(pid)}")
+
+    case DynamicSupervisor.terminate_child(Beamulacrum.SupervisorActors, pid) do
+      :ok -> Logger.info("Successfully killed actor #{inspect(pid)}")
+      {:error, reason} -> Logger.error("Failed to kill actor #{inspect(pid)}: #{inspect(reason)}")
+    end
+  end
+
+  defwithalert actor_mailbox_length(pid_string) when is_binary(pid_string) do
+    pid = extract_pid(pid_string)
+    Logger.info("Fetching mailbox length for actor with PID #{inspect(pid)}")
+
+    mailbox_length = Process.info(pid, :message_queue_len)
+
+    Logger.info("Mailbox length for actor #{inspect(pid)}: #{inspect(mailbox_length)}")
+  end
+
+  def actors_by_behavior(behavior_module) do
+    Registry.lookup(Beamulacrum.ActorRegistry, :actors)
+    |> Enum.filter(fn {_, {behavior, _, _}} -> behavior == behavior_module end)
+    |> Enum.map(&simplify_actor_data/1)
+  end
+
+  defp extract_pid(pid_string) do
     pid_string =
       if String.starts_with?(pid_string, "#PID") do
         String.slice(pid_string, 4..-1//1)
@@ -96,18 +127,6 @@ defmodule Manage do
         pid_string
       end
 
-    Logger.info("Killing actor with PID #{pid_string}")
-    pid = pid_string |> String.to_charlist() |> :erlang.list_to_pid()
-
-    case DynamicSupervisor.terminate_child(Beamulacrum.SupervisorActors, pid) do
-      :ok -> Logger.info("Successfully killed actor #{pid}")
-      {:error, reason} -> Logger.error("Failed to kill actor #{pid}: #{inspect(reason)}")
-    end
-  end
-
-  def actors_by_behavior(behavior_module) do
-    Registry.lookup(Beamulacrum.ActorRegistry, :actors)
-    |> Enum.filter(fn {_, {behavior, _, _}} -> behavior == behavior_module end)
-    |> Enum.map(&simplify_actor_data/1)
+    pid_string |> String.to_charlist() |> :erlang.list_to_pid()
   end
 end

@@ -8,10 +8,10 @@ defmodule Beamulacrum.SupervisorRoot do
   @impl true
   def init(_opts) do
     children = [
-      {Registry, keys: :duplicate, name: Beamulacrum.ActorRegistry},
-      {Beamulacrum.Ticker, []},
       {Beamulacrum.Behavior.Registry, []},
+      {Registry, keys: :duplicate, name: Beamulacrum.ActorRegistry},
       {Beamulacrum.SupervisorActors, []},
+      {Beamulacrum.Ticker, []},
       # {Beamulacrum.Worker, []},
     ]
 
