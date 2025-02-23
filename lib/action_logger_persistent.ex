@@ -1,6 +1,6 @@
 defmodule ActionLoggerPersistent do
   alias Beamulacrum.Tools
-  alias Beamulacrum.Ticker
+  alias Beamulacrum.Clock
   use GenServer
   require Logger
 
@@ -164,8 +164,8 @@ defmodule ActionLoggerPersistent do
     {status, content} = result
     result_as_string = Jason.encode!(%{status: status, content: content}) |> escape_field()
 
-    tick_number = Ticker.get_tick_number()
-    start_time = Ticker.get_start_time()
+    tick_number = Clock.get_tick_number()
+    start_time = Clock.get_start_time()
     tick_as_duration = tick_number * Tools.Time.tick_interval_ms() * 10_000
     timestamp = (start_time |> DateTime.to_unix(:nanosecond)) + tick_as_duration
     start_timestamp = DateTime.to_unix(start_time, :microsecond)

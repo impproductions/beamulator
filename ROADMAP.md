@@ -1,11 +1,10 @@
 # Roadmap
 
 ## Next
-- switch to self-scheduling actors 🛠️
+- switch to self-scheduling actors ✅
 - inject actor data in logger
 - actor complaint
-- ~~dispatch ticks through registry~~
-- stagger actor starts
+- stagger actor starts ✅
 - action log should include failed requests
 - check if one actor dying kills all other actors
 - find a way to store runtime config along with simulation

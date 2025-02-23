@@ -5,7 +5,7 @@ defmodule Beamulacrum.ActorProcessGroup do
     Logger.debug("Actor #{inspect(self())} joining group #{:actor_group}")
 
     :ok = :pg.join(:actor_group, :actor_group, self())
-    Logger.info("Actor #{inspect(self())} joined group #{:actor_group}")
+    Logger.debug("Actor #{inspect(self())} joined group #{:actor_group}")
   end
 
   def broadcast(message) do

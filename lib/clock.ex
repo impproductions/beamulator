@@ -1,10 +1,10 @@
-defmodule Beamulacrum.Ticker do
+defmodule Beamulacrum.Clock do
   alias Beamulacrum.Tools
   use GenServer
   require Logger
 
   def start_link(_) do
-    Logger.debug("Starting ticker process")
+    Logger.debug("Starting clock process")
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
@@ -23,7 +23,7 @@ defmodule Beamulacrum.Ticker do
   def init(_) do
     start_time = DateTime.utc_now()
 
-    Logger.info("Ticker initialized at #{DateTime.to_iso8601(start_time)}")
+    Logger.info("Clock initialized at #{DateTime.to_iso8601(start_time)}")
 
     schedule_tick()
 
@@ -49,9 +49,6 @@ defmodule Beamulacrum.Ticker do
     current_time = DateTime.utc_now()
     tick_number = state.tick_number
 
-    # broadcast_tick_through_pg(state)
-    # broadcast_tick(state)
-
     new_fps_counter = state.fps_counter + 1
     {updated_fps, updated_fps_counter, updated_last_fps_time} =
       if DateTime.diff(current_time, state.last_fps_time, :second) >= 1 do
@@ -69,8 +66,6 @@ defmodule Beamulacrum.Ticker do
         last_fps_time: updated_last_fps_time,
         last_fps: updated_fps
     }
-
-    Logger.debug("Tick #{tick_number + 1} processed")
 
     {:noreply, new_state}
   end
@@ -93,39 +88,5 @@ defmodule Beamulacrum.Ticker do
 
     Logger.debug("Scheduling next tick in #{tick_interval}ms")
     Process.send_after(self(), :tick, tick_interval)
-  end
-
-  defp broadcast_tick(state) do
-    tick_number = state.tick_number
-
-    actors =
-      Registry.lookup(Beamulacrum.ActorRegistry, :actors)
-      |> Enum.map(fn {pid, _} -> pid end)
-
-    if Enum.empty?(actors) do
-      Logger.warning("No actors found to receive tick #{tick_number}")
-    else
-      Logger.debug("Broadcasting tick #{tick_number} to #{length(actors)} actors")
-    end
-
-    actors
-    |> Task.async_stream(
-      fn actor_pid ->
-        if Process.alive?(actor_pid) do
-          GenServer.cast(actor_pid, {:tick, tick_number})
-        else
-          Logger.warning("Actor process #{inspect(actor_pid)} is not alive during tick #{tick_number}")
-        end
-      end,
-      max_concurrency: 5,
-      timeout: 5000
-    )
-    |> Stream.run()
-  end
-
-  defp broadcast_tick_through_pg(state) do
-    tick_number = state.tick_number
-
-    Beamulacrum.ActorProcessGroup.broadcast({:tick, tick_number})
   end
 end

@@ -14,7 +14,7 @@ defmodule Beamulacrum.Actor do
   require Logger
   use GenServer
   alias Beamulacrum.Tools
-  alias Beamulacrum.Ticker
+  alias Beamulacrum.Clock
   alias Beamulacrum.Actor.Data
 
   def start_link({name, behavior_module, config}) do
@@ -24,7 +24,7 @@ defmodule Beamulacrum.Actor do
 
     case GenServer.start_link(__MODULE__, {name, behavior_module, config, initial_state}) do
       {:ok, pid} ->
-        Logger.info("Actor #{name} started successfully")
+        Logger.debug("Actor #{name} started successfully")
         {:ok, pid}
 
       {:error, reason} ->
@@ -52,39 +52,18 @@ defmodule Beamulacrum.Actor do
       state: initial_state
     }
 
-    Process.send_after(self(), :act, 1)
-
     {:ok, actor_state}
   end
 
-  def handle_cast({:tick, tick_number}, %{behavior: behavior, state: state} = actor_data) do
-    Logger.debug("Actor #{actor_data.name} received simulation tick #{tick_number}")
-    Logger.metadata(tick: tick_number)
-
-    behavior_data = %Beamulacrum.Behavior.Data{
-      name: actor_data.name,
-      config: actor_data.config,
-      state: state
-    }
-
-    case behavior.act(tick_number, behavior_data) do
-      {:ok, new_behavior_data} ->
-        Logger.debug("Actor #{actor_data.name} acted successfully on tick #{tick_number}")
-        new_state = %{actor_data | state: new_behavior_data.state}
-        {:noreply, new_state}
-
-      {:error, reason} ->
-        Logger.warning(
-          "Actor #{actor_data.name} failed to act on tick #{tick_number}: #{inspect(reason)}"
-        )
-
-        {:noreply, actor_data}
-    end
+  def handle_info(:start, state) do
+    Logger.info("Actor #{state.name} started. Scheduling first action.")
+    send(self(), :act)
+    {:noreply, state}
   end
 
   def handle_info(:act, %{behavior: behavior, state: state} = actor_data) do
     Logger.debug("Actor #{actor_data.name} received action request")
-    tick_number = Ticker.get_tick_number()
+    tick_number = Clock.get_tick_number()
     Logger.metadata(tick: tick_number)
 
     behavior_data = %Beamulacrum.Behavior.Data{

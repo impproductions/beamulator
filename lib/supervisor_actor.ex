@@ -14,12 +14,12 @@ defmodule Beamulacrum.SupervisorActors do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  def start_actor(name, behavior_module, config) do
-    Logger.debug("Starting actor: #{name}")
+  def create_actor(name, behavior_module, config) do
+    Logger.debug("create actor: #{name}")
     spec = {Beamulacrum.Actor, {name, behavior_module, config}}
     case DynamicSupervisor.start_child(__MODULE__, spec) do
       {:ok, pid} ->
-        Logger.debug("Child (actor #{name}) started successfully")
+        Logger.debug("Child (actor #{name}) create successfully")
         {:ok, pid}
       {:error, reason} ->
         Logger.error("Failed to start child (actor #{name}): #{inspect(reason)}")

@@ -11,7 +11,7 @@ defmodule Beamulacrum.SupervisorRoot do
       {Beamulacrum.Behavior.Registry, []},
       {Registry, keys: :duplicate, name: Beamulacrum.ActorRegistry},
       {Beamulacrum.SupervisorActors, []},
-      {Beamulacrum.Ticker, []},
+      {Beamulacrum.Clock, []},
       # {Beamulacrum.Worker, []},
     ]
 

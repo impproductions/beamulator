@@ -32,8 +32,12 @@ defmodule Beamulacrum.Application do
         Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
         Logger.info("Behaviors loaded.")
 
+        Logger.debug("Creating actors...")
+        create_actors()
+        Logger.info("Actors created.")
+
         Logger.debug("Starting actors...")
-        start_actors()
+        start_actors(:staggered)
         Logger.info("Actors started.")
         {:ok, pid}
 
@@ -43,7 +47,7 @@ defmodule Beamulacrum.Application do
     end
   end
 
-  def start_actors() do
+  def create_actors() do
     actors_config = Application.fetch_env!(:beamulacrum, :actors)
 
     actors_to_create =
@@ -60,6 +64,15 @@ defmodule Beamulacrum.Application do
 
     _pids = Beamulacrum.Connectors.Internal.create_actors(actors_to_create)
     Logger.info("Actors initialized successfully.")
+  end
+
+  def start_actors(stagger \\ :staggered) do
+    actors = Registry.lookup(Beamulacrum.ActorRegistry, :actors)
+
+    for {pid, _} <- actors do
+      send(pid, :start)
+      if stagger == :staggered, do: Process.sleep(:rand.uniform(10))
+    end
   end
 
   defp maybe_add_action_logger(children) do

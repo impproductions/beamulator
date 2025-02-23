@@ -91,7 +91,7 @@ defmodule Manage do
       "Spawning actor: #{name} with behavior #{behavior_module} and config #{inspect(config)}"
     )
 
-    Beamulacrum.SupervisorActors.start_actor(name, behavior_module, config)
+    Beamulacrum.SupervisorActors.create_actor(name, behavior_module, config)
   end
 
   defwithalert actor_kill(pid_string) when is_binary(pid_string) do
