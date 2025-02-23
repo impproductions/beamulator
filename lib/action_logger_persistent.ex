@@ -1,4 +1,4 @@
-defmodule ActionLoggerPersistent do
+defmodule Beamulator.ActionLoggerPersistent do
   alias Beamulator.Tools
   alias Beamulator.Clock
   use GenServer
@@ -79,6 +79,23 @@ defmodule ActionLoggerPersistent do
     WAL
     """
 
+    ddl_complaints = """
+    CREATE TABLE IF NOT EXISTS complaints_log (
+      timestamp TIMESTAMP,
+      behavior SYMBOL,
+      actor STRING,
+      message STRING,
+      severity SYMBOL,
+      action STRING,
+      expected STRING,
+      actual STRING,
+      start_time TIMESTAMP,
+      run_id STRING
+    ) TIMESTAMP(timestamp)
+    PARTITION BY DAY
+    WAL
+    """
+
     Logger.info("Creating log and metadata tables...")
 
     uri =
@@ -103,8 +120,25 @@ defmodule ActionLoggerPersistent do
       {"Accept", "application/json"}
     ])
 
+    uri =
+      (url <> "/exec")
+      |> URI.new!()
+      |> URI.append_query(URI.encode_query(query: ddl_complaints))
+      |> URI.to_string()
+
+    res = HTTPoison.get!(uri, [
+      {"Content-Type", "application/json"},
+      {"Accept", "application/json"}
+    ])
+
+    Logger.info("response: #{inspect(res, pretty: true)}")
+
+    Logger.info("Complaints table created successfully")
+
     Logger.info("Tables created successfully")
     fill_metadata_table()
+
+
     :ok
   end
 
@@ -112,7 +146,7 @@ defmodule ActionLoggerPersistent do
     run_id = Application.get_env(:beamulator, :run_uuid)
     random_seed = Application.get_env(:beamulator, :simulation)[:random_seed]
 
-    actions_file = Beamulator.Actions.source_code |> Base.encode64()
+    actions_file = Beamulator.Actions.source_code() |> Base.encode64()
 
     url = "http://localhost:9000/write"
     headers = [{"Content-Type", "text/plain"}]
@@ -136,6 +170,23 @@ defmodule ActionLoggerPersistent do
     end
   end
 
+  def handle_cast(
+        {:log_complaint, {behavior, actor, message, severity, action, expected, actual}},
+        state
+      ) do
+    write_complaint(%{
+      behavior: behavior,
+      actor: actor,
+      message: message,
+      severity: severity,
+      action: action,
+      expected: expected,
+      actual: actual
+    })
+
+    {:noreply, state}
+  end
+
   def handle_cast({:log_event, {{behavior, name}, action, args, result}}, state) do
     write_log(%{
       behavior: behavior,
@@ -146,6 +197,52 @@ defmodule ActionLoggerPersistent do
     })
 
     {:noreply, state}
+  end
+
+  defp write_complaint(complaint_data) do
+    %{
+      behavior: behavior,
+      actor: actor,
+      message: message,
+      severity: severity,
+      action: action,
+      expected: expected,
+      actual: actual
+    } = complaint_data
+
+    action_as_string = inspect(action)
+    expected_as_string = Jason.encode!(expected) |> escape_field()
+    actual_as_string = Jason.encode!(actual) |> escape_field()
+
+    severity_as_string = inspect(severity)
+
+    tick_number = Clock.get_tick_number()
+    start_time = Clock.get_start_time()
+    tick_as_duration = tick_number * Tools.Time.tick_interval_ms() * 10_000
+    timestamp = (start_time |> DateTime.to_unix(:nanosecond)) + tick_as_duration
+    start_timestamp = DateTime.to_unix(start_time, :microsecond)
+    run_id = Application.get_env(:beamulator, :run_uuid)
+
+    line =
+      "complaints_log,behavior=#{escape_tag(behavior)},actor=#{escape_tag(actor)},severity=#{escape_tag(severity_as_string)} " <>
+        "message=\"#{message}\",action=\"#{escape_field(action_as_string)}\",expected=\"#{expected_as_string}\",actual=\"#{actual_as_string}\",start_time=#{start_timestamp}i,run_id=\"#{run_id}\" " <>
+        "#{timestamp}"
+
+    url = "http://localhost:9000/write"
+    headers = [{"Content-Type", "text/plain"}]
+
+    case HTTPoison.post(url, line, headers) do
+      {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
+        Logger.info("Successfully logged complaint by #{actor}.")
+
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
+        Logger.error("QuestDB returned status code #{code}. Body: #{body}")
+        Logger.debug("Failed line: #{line}")
+
+      {:error, reason} ->
+        Logger.error("Failed to send complaint to QuestDB: #{inspect(reason)}")
+        Logger.debug("Failed line: #{line}")
+    end
   end
 
   defp write_log(event_data) do

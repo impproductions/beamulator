@@ -79,7 +79,7 @@ defmodule Beamulator.Application do
   defp maybe_add_action_logger(children) do
     if Application.get_env(:beamulator, :enable_action_logger, false) do
       Logger.info("Action logger enabled, starting...")
-      children = children ++ [{ActionLoggerPersistent, []}]
+      children = children ++ [{Beamulator.ActionLoggerPersistent, []}]
       Logger.info("Action logger started.")
 
       children

@@ -1,4 +1,5 @@
 defmodule Beamulator.Behaviors.Procrastinator do
+  alias Beamulator.Behavior.Complaint
   alias Beamulator.Tools
   use Beamulator.Behavior
 
@@ -12,7 +13,7 @@ defmodule Beamulator.Behaviors.Procrastinator do
     %{
       name: Faker.Person.name(),
       email: Faker.Internet.email(),
-      tasks: [],
+      tasks: []
     }
   end
 
@@ -31,12 +32,29 @@ defmodule Beamulator.Behaviors.Procrastinator do
             task = Enum.random(tasks)
             Logger.info("#{name} is marking task '#{task["title"]}' as complete.")
 
-            _ =
+            {:ok, updated_task} =
               execute(name, &Actions.update_task/1, %{
                 id: task["id"],
                 title: task["title"],
                 completed: true
               })
+
+            complain_when(
+              not updated_task["completed"],
+              %Complaint{
+                message: "I marked a task complete but it's still marked incomplete",
+                severity: :annoying,
+                behavior: __MODULE__,
+                actor: name,
+                action: &Actions.update_task/1,
+                expected: %{
+                  id: task["id"],
+                  title: task["title"],
+                  completed: true
+                },
+                actual: updated_task
+              }
+            )
 
             refresh_tasks(name, data)
           else
@@ -49,12 +67,26 @@ defmodule Beamulator.Behaviors.Procrastinator do
             task = Enum.random(tasks)
             Logger.info("#{name} is marking task '#{task["title"]}' as incomplete.")
 
-            _ =
+            {:ok, updated_task} =
               execute(name, &Actions.update_task/1, %{
                 id: task["id"],
                 title: task["title"],
                 completed: false
               })
+
+            complain_when(updated_task["completed"], %Complaint{
+              message: "I marked a task incomplete but it's still marked complete",
+              severity: :annoying,
+              behavior: __MODULE__,
+              actor: name,
+              action: &Actions.update_task/1,
+              expected: %{
+                id: task["id"],
+                title: task["title"],
+                completed: false
+              },
+              actual: updated_task
+            })
 
             refresh_tasks(name, data)
           else

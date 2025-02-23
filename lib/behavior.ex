@@ -9,12 +9,22 @@ defmodule Beamulator.Behavior.Data do
         }
 end
 
-defmodule Beamulator.Behavior do
-  @moduledoc """
-  A behavior that all actor behaviors must implement.
-  """
-  require Logger
+defmodule Beamulator.Behavior.Complaint do
+  @enforce_keys [:message, :severity, :behavior, :actor, :action, :expected, :actual]
+  defstruct [:message, :severity, :behavior, :actor, :action, :expected, :actual]
 
+  @type t :: %__MODULE__{
+          message: String.t(),
+          severity: :urgent | :annoying | :justsayin,
+          behavior: module(),
+          actor: String.t(),
+          action: fun(),
+          expected: any(),
+          actual: any()
+        }
+end
+
+defmodule Beamulator.Behavior do
   @doc """
   The default_state function should return the initial state of the behavior.
   """
@@ -50,6 +60,30 @@ defmodule Beamulator.Behavior do
         Logger.info("#{name} executed action #{inspect(action)} with args #{inspect(args)}")
 
         result
+      end
+
+      @spec complain_when(condition :: boolean(), complaint :: Beamulator.Behavior.Complaint.t()) ::
+              {:ok, Beamulator.Behavior.Complaint.t()} | {:error, any()}
+      def complain_when(condition, complaint) do
+        if condition do
+          Logger.error("Complaint: #{inspect(complaint, pretty: true)}")
+
+          GenServer.cast(Beamulator.ActionLoggerPersistent, {
+            :log_complaint,
+            {
+              complaint.behavior,
+              complaint.actor,
+              complaint.message,
+              complaint.severity,
+              complaint.action,
+              complaint.expected,
+              complaint.actual
+            }
+          })
+        else
+          nil
+        end
+        {:ok, complaint}
       end
     end
   end

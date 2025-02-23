@@ -19,7 +19,7 @@ defmodule Beamulator.ActionExecutor do
 
       _ ->
         if logger_enabled,
-          do: GenServer.cast(ActionLoggerPersistent, {:log_event, {{behavior, name}, action, args, result}})
+          do: GenServer.cast(Beamulator.ActionLoggerPersistent, {:log_event, {{behavior, name}, action, args, result}})
     end
 
     Logger.debug("Action #{inspect(action)} finished executing with result #{inspect(result)}")
