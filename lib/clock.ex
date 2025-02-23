@@ -1,5 +1,5 @@
-defmodule Beamulacrum.Clock do
-  alias Beamulacrum.Tools
+defmodule Beamulator.Clock do
+  alias Beamulator.Tools
   use GenServer
   require Logger
 
@@ -84,7 +84,7 @@ defmodule Beamulacrum.Clock do
 
   defp schedule_tick() do
     tick_interval =
-      Application.get_env(:beamulacrum, :simulation)[:tick_interval_ms] || 1000
+      Application.get_env(:beamulator, :simulation)[:tick_interval_ms] || 1000
 
     Logger.debug("Scheduling next tick in #{tick_interval}ms")
     Process.send_after(self(), :tick, tick_interval)

@@ -1,11 +1,7 @@
 # Roadmap
 
 ## Next
-- switch to self-scheduling actors ✅
-- inject actor data in logger ✅
-- store uuid before setting random seed ✅
 - actor complaint
-- stagger actor starts ✅
 - action log should include failed requests
 - check if one actor dying kills all other actors
 - find a way to store runtime config along with simulation
@@ -19,10 +15,6 @@
 ## Fix
 - behaviors in dashboard are broken
 - find a controlled way to handle behavior loading
-
-## Think about this
-- should executor be a process (or set of processes) and execute asynchronously?
-- remove behavior registry altogether?
 
 ## Feature ideas
 - save/restore state!!! (ugh)
@@ -44,10 +36,16 @@
 - fix module redefinition
 
 ## Just thinking
+- should executor be a process (or set of processes) and execute asynchronously?
+- remove behavior registry altogether?
 - rename behavior to personality to avoid confusion with elixir's behaviour keyword
 - rename project to beamulator
 
 ## Done
+- switch to self-scheduling actors ✅
+- inject actor data in logger ✅
+- store uuid before setting random seed ✅
+- stagger actor starts ✅
 - verify message queueing ✅
 - monitor actor internals (ie mailbox) ✅
 - single source for example/simulation path ✅

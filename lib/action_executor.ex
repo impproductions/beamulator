@@ -1,4 +1,4 @@
-defmodule Beamulacrum.ActionExecutor do
+defmodule Beamulator.ActionExecutor do
   require Logger
 
   def exec({behavior, name}, action, args) when is_function(action) do
@@ -11,7 +11,7 @@ defmodule Beamulacrum.ActionExecutor do
             "Action must return {:ok, any()} or {:error, String.t()}, got: #{inspect(result)}"
     end
 
-    logger_enabled = Application.get_env(:beamulacrum, :enable_action_logger, false)
+    logger_enabled = Application.get_env(:beamulator, :enable_action_logger, false)
 
     case result do
       {:error, reason} ->

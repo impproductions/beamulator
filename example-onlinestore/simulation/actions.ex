@@ -1,4 +1,4 @@
-defmodule Beamulacrum.Actions do
+defmodule Beamulator.Actions do
   @moduledoc "User-defined actions."
 
   require Logger
@@ -6,7 +6,7 @@ defmodule Beamulacrum.Actions do
   def onboard_user(%{onboarder: onboarder}) do
     Logger.debug("Onboarder #{onboarder} is creating a new user")
 
-    new_user_name = Faker.Person.name() <> " " <> to_string(Beamulacrum.Tools.increasing_int())
+    new_user_name = Faker.Person.name() <> " " <> to_string(Beamulator.Tools.increasing_int())
     new_email = Faker.Internet.email()
 
     Logger.info("Onboarder #{onboarder} created a new user: #{new_user_name} with email #{new_email}")

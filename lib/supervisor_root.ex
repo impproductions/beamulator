@@ -1,4 +1,4 @@
-defmodule Beamulacrum.SupervisorRoot do
+defmodule Beamulator.SupervisorRoot do
   use Supervisor
 
   def start_link(opts) do
@@ -8,11 +8,11 @@ defmodule Beamulacrum.SupervisorRoot do
   @impl true
   def init(_opts) do
     children = [
-      {Beamulacrum.Behavior.Registry, []},
-      {Registry, keys: :duplicate, name: Beamulacrum.ActorRegistry},
-      {Beamulacrum.SupervisorActors, []},
-      {Beamulacrum.Clock, []},
-      # {Beamulacrum.Worker, []},
+      {Beamulator.Behavior.Registry, []},
+      {Registry, keys: :duplicate, name: Beamulator.ActorRegistry},
+      {Beamulator.SupervisorActors, []},
+      {Beamulator.Clock, []},
+      # {Beamulator.Worker, []},
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

@@ -1,12 +1,12 @@
-defmodule Beamulacrum.Behaviors.BigSpender do
-  use Beamulacrum.Behavior
+defmodule Beamulator.Behaviors.BigSpender do
+  use Beamulator.Behavior
 
-  alias Beamulacrum.Actions
+  alias Beamulator.Actions
 
   @next_buy_wait_ticks 3600
   @decision_wait_ticks 300
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def default_state() do
     %{
       name: Faker.Person.name(),
@@ -17,7 +17,7 @@ defmodule Beamulacrum.Behaviors.BigSpender do
     }
   end
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def act(_tick, %{name: name, state: state} = data) do
     cond do
       state.catalog == [] ->

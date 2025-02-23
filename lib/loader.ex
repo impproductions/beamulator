@@ -1,4 +1,4 @@
-defmodule Beamulacrum.ModuleLoader do
+defmodule Beamulator.ModuleLoader do
   require Logger
 
   def load_behaviors(path) do
@@ -42,7 +42,7 @@ defmodule Beamulacrum.ModuleLoader do
   def implements_behavior?(module) do
     module
     |> Atom.to_string()
-    |> String.starts_with?("Elixir.Beamulacrum.Behaviors.")
+    |> String.starts_with?("Elixir.Beamulator.Behaviors.")
   end
 
   defp get_loaded_modules do

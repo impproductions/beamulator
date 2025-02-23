@@ -1,16 +1,16 @@
-defmodule Beamulacrum.Application do
+defmodule Beamulator.Application do
   require Logger
 
   use Application
 
   def start(_type, _args) do
-    Logger.info("Starting Beamulacrum...")
+    Logger.info("Starting Beamulator...")
 
     run_uuid = UUID.uuid4()
     Logger.debug("Run UUID: #{run_uuid}")
-    Application.put_env(:beamulacrum, :run_uuid, run_uuid)
+    Application.put_env(:beamulator, :run_uuid, run_uuid)
 
-    random_seed = Beamulacrum.Tools.random_seed()
+    random_seed = Beamulator.Tools.random_seed()
     Logger.debug("Setting random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
     Logger.info("Random seed set to: #{random_seed}")
@@ -21,11 +21,11 @@ defmodule Beamulacrum.Application do
 
     children =
       [
-        {Beamulacrum.SupervisorRoot, []}
+        {Beamulator.SupervisorRoot, []}
       ]
       |> maybe_add_action_logger()
 
-    opts = [strategy: :one_for_one, name: Beamulacrum.Supervisor.Root]
+    opts = [strategy: :one_for_one, name: Beamulator.Supervisor.Root]
 
     case Supervisor.start_link(children, opts) do
       {:ok, pid} ->
@@ -34,7 +34,7 @@ defmodule Beamulacrum.Application do
         Logger.info("Actors created.")
 
         Logger.debug("Registering behaviors...")
-        Beamulacrum.Behavior.Registry.scan_and_register_all_behaviors()
+        Beamulator.Behavior.Registry.scan_and_register_all_behaviors()
         Logger.info("Behaviors registered.")
 
         Logger.debug("Starting actors...")
@@ -49,26 +49,26 @@ defmodule Beamulacrum.Application do
   end
 
   def create_actors() do
-    actors_config = Application.fetch_env!(:beamulacrum, :actors)
+    actors_config = Application.fetch_env!(:beamulator, :actors)
 
     actors_to_create =
       actors_config
       |> Enum.map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
         for _ <- 1..amt,
             do: %{
-              name: name <> " " <> to_string(Beamulacrum.Tools.increasing_int()),
+              name: name <> " " <> to_string(Beamulator.Tools.increasing_int()),
               behavior: behavior,
               config: config
             }
       end)
       |> List.flatten()
 
-    _pids = Beamulacrum.Connectors.Internal.create_actors(actors_to_create)
+    _pids = Beamulator.Connectors.Internal.create_actors(actors_to_create)
     Logger.info("Actors initialized successfully.")
   end
 
   def start_actors(stagger \\ :staggered) do
-    actors = Registry.lookup(Beamulacrum.ActorRegistry, :actors)
+    actors = Registry.lookup(Beamulator.ActorRegistry, :actors)
 
     for {pid, _} <- actors do
       send(pid, :start)
@@ -77,7 +77,7 @@ defmodule Beamulacrum.Application do
   end
 
   defp maybe_add_action_logger(children) do
-    if Application.get_env(:beamulacrum, :enable_action_logger, false) do
+    if Application.get_env(:beamulator, :enable_action_logger, false) do
       Logger.info("Action logger enabled, starting...")
       children = children ++ [{ActionLoggerPersistent, []}]
       Logger.info("Action logger started.")

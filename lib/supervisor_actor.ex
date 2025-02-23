@@ -1,9 +1,9 @@
-defmodule Beamulacrum.SupervisorActors do
+defmodule Beamulator.SupervisorActors do
   require Logger
 
   use DynamicSupervisor
 
-  # alias Beamulacrum.Tools
+  # alias Beamulator.Tools
 
   def start_link(_) do
     Logger.info("Actor Supervisor started")
@@ -16,7 +16,7 @@ defmodule Beamulacrum.SupervisorActors do
 
   def create_actor(name, behavior_module, config) do
     Logger.debug("create actor: #{name}")
-    spec = {Beamulacrum.Actor, {name, behavior_module, config}}
+    spec = {Beamulator.Actor, {name, behavior_module, config}}
     case DynamicSupervisor.start_child(__MODULE__, spec) do
       {:ok, pid} ->
         Logger.debug("Child (actor #{name}) create successfully")

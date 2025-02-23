@@ -1,4 +1,4 @@
-defmodule Beamulacrum.Actor.Data do
+defmodule Beamulator.Actor.Data do
   @enforce_keys [:name, :behavior, :config, :state]
   defstruct [:name, :behavior, :config, :state]
 
@@ -10,12 +10,12 @@ defmodule Beamulacrum.Actor.Data do
         }
 end
 
-defmodule Beamulacrum.Actor do
+defmodule Beamulator.Actor do
   require Logger
   use GenServer
-  alias Beamulacrum.Tools
-  alias Beamulacrum.Clock
-  alias Beamulacrum.Actor.Data
+  alias Beamulator.Tools
+  alias Beamulator.Clock
+  alias Beamulator.Actor.Data
 
   def start_link({name, behavior_module, config}) do
     Logger.debug("Attempting to start actor: #{name} with behavior #{inspect(behavior_module)}")
@@ -39,11 +39,11 @@ defmodule Beamulacrum.Actor do
 
   def init({name, behavior_module, config, initial_state}) do
     Logger.debug("Initializing actor: #{name}")
-    selector = {behavior_module, Beamulacrum.Tools.increasing_int(), name}
-    Registry.register(Beamulacrum.ActorRegistry, :actors, selector)
+    selector = {behavior_module, Beamulator.Tools.increasing_int(), name}
+    Registry.register(Beamulator.ActorRegistry, :actors, selector)
 
     Logger.debug("Actor #{name} joining group")
-    Beamulacrum.ActorProcessGroup.join()
+    Beamulator.ActorProcessGroup.join()
 
     actor_state = %Data{
       name: name,
@@ -68,7 +68,7 @@ defmodule Beamulacrum.Actor do
     tick_number = Clock.get_tick_number()
     Logger.metadata(tick: tick_number)
 
-    behavior_data = %Beamulacrum.Behavior.Data{
+    behavior_data = %Beamulator.Behavior.Data{
       name: actor_data.name,
       config: actor_data.config,
       state: state

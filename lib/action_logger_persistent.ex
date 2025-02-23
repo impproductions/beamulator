@@ -1,6 +1,6 @@
 defmodule ActionLoggerPersistent do
-  alias Beamulacrum.Tools
-  alias Beamulacrum.Clock
+  alias Beamulator.Tools
+  alias Beamulator.Clock
   use GenServer
   require Logger
 
@@ -9,7 +9,7 @@ defmodule ActionLoggerPersistent do
   end
 
   def init(_opts) do
-    questdb_config = Application.get_env(:beamulacrum, :questdb)
+    questdb_config = Application.get_env(:beamulator, :questdb)
 
     port = questdb_config[:port]
 
@@ -109,10 +109,10 @@ defmodule ActionLoggerPersistent do
   end
 
   def fill_metadata_table() do
-    run_id = Application.get_env(:beamulacrum, :run_uuid)
-    random_seed = Application.get_env(:beamulacrum, :simulation)[:random_seed]
+    run_id = Application.get_env(:beamulator, :run_uuid)
+    random_seed = Application.get_env(:beamulator, :simulation)[:random_seed]
 
-    actions_file = Beamulacrum.Actions.source_code |> Base.encode64()
+    actions_file = Beamulator.Actions.source_code |> Base.encode64()
 
     url = "http://localhost:9000/write"
     headers = [{"Content-Type", "text/plain"}]
@@ -167,7 +167,7 @@ defmodule ActionLoggerPersistent do
     tick_as_duration = tick_number * Tools.Time.tick_interval_ms() * 10_000
     timestamp = (start_time |> DateTime.to_unix(:nanosecond)) + tick_as_duration
     start_timestamp = DateTime.to_unix(start_time, :microsecond)
-    run_id = Application.get_env(:beamulacrum, :run_uuid)
+    run_id = Application.get_env(:beamulator, :run_uuid)
 
     tick_interval = Tools.Time.tick_interval_ms()
 

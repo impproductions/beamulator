@@ -1,12 +1,12 @@
-defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
-  use Beamulacrum.Behavior
+defmodule Beamulator.Behaviors.CompulsiveBrowser do
+  use Beamulator.Behavior
 
-  alias Beamulacrum.Actions
+  alias Beamulator.Actions
 
   @next_buy_wait_ticks 5000  # Long delay between small purchases
   @browse_wait_ticks 200      # Shorter delay before browsing again
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def default_state() do
     %{
       name: Faker.Person.name(),
@@ -17,7 +17,7 @@ defmodule Beamulacrum.Behaviors.CompulsiveBrowser do
     }
   end
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def act(_tick, %{name: name, state: state} = data) do
     cond do
       state.wait_ticks > 0 ->

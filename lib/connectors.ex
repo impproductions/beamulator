@@ -1,9 +1,9 @@
-defmodule Beamulacrum.Connectors do
+defmodule Beamulator.Connectors do
   require Logger
 
   defmodule Internal do
     def create_actor(name, behavior_module, config) do
-      Beamulacrum.SupervisorActors.create_actor(name, behavior_module, config)
+      Beamulator.SupervisorActors.create_actor(name, behavior_module, config)
     end
 
     def create_actors(actors) do
@@ -12,7 +12,7 @@ defmodule Beamulacrum.Connectors do
         |> Enum.map(fn conf ->
           %{name: name, behavior: behavior, config: config} = conf
 
-          case Beamulacrum.SupervisorActors.create_actor(
+          case Beamulator.SupervisorActors.create_actor(
                  name,
                  behavior,
                  config

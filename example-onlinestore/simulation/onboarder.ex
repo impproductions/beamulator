@@ -1,19 +1,19 @@
-defmodule Beamulacrum.Behaviors.Onboarder do
-  use Beamulacrum.Behavior
+defmodule Beamulator.Behaviors.Onboarder do
+  use Beamulator.Behavior
 
-  alias Beamulacrum.Actions
-  alias Beamulacrum.Connectors.Internal
-  alias Beamulacrum.Tools.Time
+  alias Beamulator.Actions
+  alias Beamulator.Connectors.Internal
+  alias Beamulator.Tools.Time
 
   @next_onboard_hours 3  # Time before onboarding a new user
 
   @user_behaviors [
-    Beamulacrum.Behaviors.BigSpender,
-    Beamulacrum.Behaviors.CompulsiveBrowser,
-    Beamulacrum.Behaviors.Scammer
+    Beamulator.Behaviors.BigSpender,
+    Beamulator.Behaviors.CompulsiveBrowser,
+    Beamulator.Behaviors.Scammer
   ]
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def default_state() do
     %{
       name: Faker.Person.name(),
@@ -22,7 +22,7 @@ defmodule Beamulacrum.Behaviors.Onboarder do
     }
   end
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def act(_tick, %{name: name, state: state} = data) do
     if state.wait_ticks > 0 do
       # Step 1: Wait before onboarding a new user

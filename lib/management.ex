@@ -14,7 +14,7 @@ defmodule AlertFunctions do
 
   def alert_manual_command({mod, fun, arity}) do
     # only show warning in the main node
-    if Node.self() == :beamulacrum do
+    if Node.self() == :beamulator do
       Logger.warning(
         "!!! ALERT !!! The function #{mod}.#{fun}/#{arity} is for manual use only. You're not supposed to use this in code. If you're seeing this message after manually running a Manage.[function] command in a shell, you can ignore it."
       )
@@ -29,11 +29,11 @@ defmodule Manage do
   import AlertFunctions, only: [defwithalert: 2]
 
   defwithalert behavior_list() do
-    Beamulacrum.Behavior.Registry.list_behaviors()
+    Beamulator.Behavior.Registry.list_behaviors()
   end
 
   defwithalert actor_list() do
-    Registry.lookup(Beamulacrum.ActorRegistry, :actors)
+    Registry.lookup(Beamulator.ActorRegistry, :actors)
     |> Enum.map(&simplify_actor_data/1)
   end
 
@@ -44,7 +44,7 @@ defmodule Manage do
   defwithalert actor_state(pid_string) when is_binary(pid_string) do
     pid = extract_pid(pid_string)
 
-    case Registry.lookup(Beamulacrum.ActorRegistry, :actors)
+    case Registry.lookup(Beamulator.ActorRegistry, :actors)
          |> Enum.find(fn {p_id, _} -> pid == p_id end) do
       {pid, {behavior, serial_id, name}} ->
         actor_state = GenServer.call(pid, :state)
@@ -75,7 +75,7 @@ defmodule Manage do
 
   defwithalert actor_spawn(behavior_module) do
     behaviour_name = behavior_module |> Atom.to_string() |> String.split(".") |> List.last()
-    name = "#{behaviour_name} #{Beamulacrum.Tools.increasing_int()}"
+    name = "#{behaviour_name} #{Beamulator.Tools.increasing_int()}"
 
     Logger.info("Spawning actor: #{name} with behavior #{behavior_module}")
     actor_spawn(name, behavior_module, %{})
@@ -91,14 +91,14 @@ defmodule Manage do
       "Spawning actor: #{name} with behavior #{behavior_module} and config #{inspect(config)}"
     )
 
-    Beamulacrum.SupervisorActors.create_actor(name, behavior_module, config)
+    Beamulator.SupervisorActors.create_actor(name, behavior_module, config)
   end
 
   defwithalert actor_kill(pid_string) when is_binary(pid_string) do
     pid = extract_pid(pid_string)
     Logger.info("Killing actor with PID #{inspect(pid)}")
 
-    case DynamicSupervisor.terminate_child(Beamulacrum.SupervisorActors, pid) do
+    case DynamicSupervisor.terminate_child(Beamulator.SupervisorActors, pid) do
       :ok -> Logger.info("Successfully killed actor #{inspect(pid)}")
       {:error, reason} -> Logger.error("Failed to kill actor #{inspect(pid)}: #{inspect(reason)}")
     end
@@ -114,7 +114,7 @@ defmodule Manage do
   end
 
   def actors_by_behavior(behavior_module) do
-    Registry.lookup(Beamulacrum.ActorRegistry, :actors)
+    Registry.lookup(Beamulator.ActorRegistry, :actors)
     |> Enum.filter(fn {_, {behavior, _, _}} -> behavior == behavior_module end)
     |> Enum.map(&simplify_actor_data/1)
   end

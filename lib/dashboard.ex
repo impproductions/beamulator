@@ -115,8 +115,8 @@ defmodule Dashboard do
     IO.write(IO.ANSI.home())
     IO.puts("Dashboard #{Map.get(state, :page)} #{Map.get(state, :page_arg)}\t\t available pages: [#{@pages |> Enum.map(&inspect/1) |> Enum.join(", ")}]")
     IO.puts("\n--------- Clock ---------")
-    IO.puts("Current tick: #{Beamulacrum.Clock.get_tick_number()}" <>
-    "\t\tRunning at #{Beamulacrum.Clock.get_fps()} TPS\n")
+    IO.puts("Current tick: #{Beamulator.Clock.get_tick_number()}" <>
+    "\t\tRunning at #{Beamulator.Clock.get_fps()} TPS\n")
   end
 
   defp actor_counts() do

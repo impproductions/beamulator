@@ -1,4 +1,4 @@
-defmodule Beamulacrum.Tools do
+defmodule Beamulator.Tools do
   def increasing_int() do
     :erlang.unique_integer([:monotonic, :positive])
   end
@@ -8,18 +8,18 @@ defmodule Beamulacrum.Tools do
   end
 
   def random_seed() do
-    Application.get_env(:beamulacrum, :simulation)[:random_seed]
+    Application.get_env(:beamulator, :simulation)[:random_seed]
   end
 
   defmodule Actors do
     def select_by_behavior(behavior_module) do
-      Registry.match(Beamulacrum.ActorRegistry, :actors, {behavior_module, :_, :_})
+      Registry.match(Beamulator.ActorRegistry, :actors, {behavior_module, :_, :_})
     end
   end
 
   defmodule Time do
     def second() do
-      Application.get_env(:beamulacrum, :simulation)[:tick_to_seconds]
+      Application.get_env(:beamulator, :simulation)[:tick_to_seconds]
     end
 
     def minute() do
@@ -47,7 +47,7 @@ defmodule Beamulacrum.Tools do
     end
 
     def tick_interval_ms() do
-      Application.get_env(:beamulacrum, :simulation)[:tick_interval_ms]
+      Application.get_env(:beamulator, :simulation)[:tick_interval_ms]
     end
 
     def time_speed_multiplier() do

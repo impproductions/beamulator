@@ -1,16 +1,16 @@
-defmodule Beamulacrum.Behaviors.Organizer do
-  alias Beamulacrum.Tools
-  use Beamulacrum.Behavior
+defmodule Beamulator.Behaviors.Organizer do
+  alias Beamulator.Tools
+  use Beamulator.Behavior
 
   require Logger
 
-  alias Beamulacrum.Actions
+  alias Beamulator.Actions
 
   @decision_wait_ticks 50
   @max_tasks 50
   @min_tasks 10
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def default_state() do
     %{
       name: Faker.Person.name(),
@@ -19,7 +19,7 @@ defmodule Beamulacrum.Behaviors.Organizer do
     }
   end
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def act(_tick, %{name: name, state: _} = data) do
     {:ok, tasks} = execute(name, &Actions.list_tasks/0)
 

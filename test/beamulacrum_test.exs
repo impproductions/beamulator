@@ -1,6 +1,6 @@
-defmodule BeamulacrumTest do
+defmodule BeamulatorTest do
   use ExUnit.Case
-  doctest Beamulacrum
+  doctest Beamulator
 
   test "create me" do
     assert true = true

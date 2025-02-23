@@ -1,13 +1,13 @@
-defmodule Beamulacrum.Behaviors.Procrastinator do
-  alias Beamulacrum.Tools
-  use Beamulacrum.Behavior
+defmodule Beamulator.Behaviors.Procrastinator do
+  alias Beamulator.Tools
+  use Beamulator.Behavior
 
   require Logger
-  alias Beamulacrum.Actions
+  alias Beamulator.Actions
 
   @decision_wait_ticks 50
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def default_state() do
     %{
       name: Faker.Person.name(),
@@ -16,7 +16,7 @@ defmodule Beamulacrum.Behaviors.Procrastinator do
     }
   end
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def act(_tick, %{name: name, state: _} = data) do
     {:ok, tasks} = execute(name, &Actions.list_tasks/0)
 

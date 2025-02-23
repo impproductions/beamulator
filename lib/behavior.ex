@@ -1,4 +1,4 @@
-defmodule Beamulacrum.Behavior.Data do
+defmodule Beamulator.Behavior.Data do
   @enforce_keys [:name, :config, :state]
   defstruct [:name, :config, :state]
 
@@ -9,7 +9,7 @@ defmodule Beamulacrum.Behavior.Data do
         }
 end
 
-defmodule Beamulacrum.Behavior do
+defmodule Beamulator.Behavior do
   @moduledoc """
   A behavior that all actor behaviors must implement.
   """
@@ -28,17 +28,17 @@ defmodule Beamulacrum.Behavior do
   - the number of ticks to wait before the next action
   - the updated behavior data
   """
-  @callback act(tick :: integer(), actor_data :: Beamulacrum.Behavior.Data.t()) ::
-              {result :: :ok, wait_ticks :: integer(), new_data :: Beamulacrum.Behavior.Data.t()}
+  @callback act(tick :: integer(), actor_data :: Beamulator.Behavior.Data.t()) ::
+              {result :: :ok, wait_ticks :: integer(), new_data :: Beamulator.Behavior.Data.t()}
               | {:error, integer(), String.t()}
 
   defmacro __using__(_opts) do
     quote do
-      @behaviour Beamulacrum.Behavior
+      @behaviour Beamulator.Behavior
 
       require Logger
 
-      alias Beamulacrum.ActionExecutor
+      alias Beamulator.ActionExecutor
 
       def execute(name, action) do
         execute(name, action, nil)
@@ -55,7 +55,7 @@ defmodule Beamulacrum.Behavior do
   end
 end
 
-defmodule Beamulacrum.Behavior.Registry do
+defmodule Beamulator.Behavior.Registry do
   require Logger
 
   use GenServer
@@ -87,7 +87,7 @@ defmodule Beamulacrum.Behavior.Registry do
   defp module_in_behaviors_namespace?(module) do
     module
     |> Atom.to_string()
-    |> String.starts_with?("Elixir.Beamulacrum.Behaviors.")
+    |> String.starts_with?("Elixir.Beamulator.Behaviors.")
   end
 
   @impl true

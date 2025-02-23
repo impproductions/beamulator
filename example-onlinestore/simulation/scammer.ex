@@ -1,12 +1,12 @@
-defmodule Beamulacrum.Behaviors.Scammer do
-  use Beamulacrum.Behavior
+defmodule Beamulator.Behaviors.Scammer do
+  use Beamulator.Behavior
 
-  alias Beamulacrum.Actions
+  alias Beamulator.Actions
 
   @scam_delay_ticks 2000
   @next_buy_wait_ticks 2000
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def default_state() do
     %{
       name: Faker.Person.name(),
@@ -19,7 +19,7 @@ defmodule Beamulacrum.Behaviors.Scammer do
     }
   end
 
-  @impl Beamulacrum.Behavior
+  @impl Beamulator.Behavior
   def act(_tick, %{name: name, state: state} = data) do
     cond do
       state.scam_ticks > 0 ->

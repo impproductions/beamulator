@@ -1,4 +1,4 @@
-defmodule Beamulacrum.ActorProcessGroup do
+defmodule Beamulator.ActorProcessGroup do
   require Logger
 
   def join() do

@@ -1,4 +1,4 @@
-defmodule Beamulacrum.LoggerFormatter do
+defmodule Beamulator.LoggerFormatter do
   def format(level, message, timestamp, metadata) do
     time = format_timestamp(timestamp)
     tick = as_duration(Keyword.get(metadata, :tick, nil))
@@ -18,7 +18,7 @@ defmodule Beamulacrum.LoggerFormatter do
   end
 
   defp as_duration(tick) when is_integer(tick) do
-    Beamulacrum.Tools.Time.as_duration(tick, :shorten)
+    Beamulator.Tools.Time.as_duration(tick, :shorten)
   end
 
   defp as_duration(_), do: nil
