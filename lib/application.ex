@@ -1,6 +1,5 @@
 defmodule Beamulator.Application do
   require Logger
-
   use Application
 
   def start(_type, _args) do
@@ -19,9 +18,24 @@ defmodule Beamulator.Application do
     {:ok, _} = :pg.start(:actor)
     Logger.info("Process group scope :actor started")
 
+    # Define Cowboy dispatch for websockets
+    dispatch = :cowboy_router.compile([
+      {:_, [
+        {"/ws", Beamulator.WebSocketHandler, []}
+      ]}
+    ])
+    cowboy_opts = %{env: %{dispatch: dispatch}}
+
     children =
       [
-        {Beamulator.SupervisorRoot, []}
+        {Beamulator.SupervisorRoot, []},
+        %{
+          id: :cowboy_listener,
+          start: {:cowboy, :start_clear, [:http_listener, [{:port, 8080}], cowboy_opts]},
+          type: :worker,
+          restart: :permanent,
+          shutdown: 5000
+        }
       ]
       |> maybe_add_action_logger()
 
@@ -38,7 +52,7 @@ defmodule Beamulator.Application do
         Logger.info("Behaviors registered.")
 
         Logger.debug("Starting actors...")
-        start_actors(:staggered)
+        # start_actors(:staggered)
         Logger.info("Actors started.")
         {:ok, pid}
 
@@ -46,6 +60,15 @@ defmodule Beamulator.Application do
         Logger.error("Failed to start supervisor: #{inspect(reason)}")
         {:error, reason}
     end
+
+    case Beamulator.Dashboard.StaticServer.start_link([]) do
+      {:ok, _} ->
+        Logger.info("Dashboard started.")
+      {:error, reason} ->
+        Logger.error("Failed to start dashboard: #{inspect(reason)}")
+    end
+
+    {:ok, self()}
   end
 
   def create_actors() do

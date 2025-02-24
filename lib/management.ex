@@ -51,11 +51,14 @@ defmodule Manage do
         {:message_queue_len, mailbox_length} = Process.info(pid, :message_queue_len)
 
         housekeeping = %{
-          pid: pid,
-          mailbox_length: mailbox_length,
+          pid: inspect(pid),
+          mailbox_length: mailbox_length
         }
 
-        actor_state = Map.put(actor_state, :_housekeeping, housekeeping)
+        actor_state =
+          Map.put(actor_state, :__housekeeping__, housekeeping)
+          |> Map.put(:__struct__, inspect(Map.get(actor_state, :__struct__)))
+          |> Map.put(:__behavior__, behavior)
 
         Logger.info(
           "Fetched state for actor #{name} (#{behavior}) (#{serial_id}) [#{inspect(pid)}]"
@@ -65,7 +68,7 @@ defmodule Manage do
         State: #{inspect(actor_state, pretty: true, syntax_colors: [number: :red, atom: :cyan, string: :green, identifier: :blue])}
         """)
 
-        :ok
+        actor_state
 
       _ ->
         Logger.error("Actor with PID #{pid_string} not found")

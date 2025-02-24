@@ -16,8 +16,8 @@ defmodule Beamulator.Clock do
     GenServer.call(__MODULE__, :get_tick_number)
   end
 
-  def get_fps() do
-    GenServer.call(__MODULE__, :get_fps)
+  def get_tps() do
+    GenServer.call(__MODULE__, :get_tps)
   end
 
   def init(_) do
@@ -78,7 +78,7 @@ defmodule Beamulator.Clock do
     {:reply, state.start_time, state}
   end
 
-  def handle_call(:get_fps, _from, state) do
+  def handle_call(:get_tps, _from, state) do
     {:reply, state.last_fps, state}
   end
 

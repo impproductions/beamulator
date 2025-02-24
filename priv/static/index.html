@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard</title>
+  <style>
+    body {
+      font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande',
+        'Lucida Sans', Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #35495e;
+      color: #fff;
+      padding: 20px 40px;
+      text-align: center;
+    }
+
+    .content {
+      display: flex;
+      gap: 1rem;
+      margin: 20px;
+      padding: 20px;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      flex-wrap: wrap;
+    }
+
+    .status {
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .island {
+      display: flex;
+      font-size: 1em;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
+      background-color: #35495e;
+      color: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      min-width: fit-content;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    code {
+      font-size: 0.8em;
+      color: #fff;
+      background: #35495e;
+      padding: 10px;
+      border-radius: 5px;
+      overflow: auto;
+      max-height: 200px;
+      text-align: left;
+      line-height: 1.5em;
+      min-height: fit-content;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="asdsa"></div>
+  <div id="app"></div>
+  <!-- Include Preact and hooks -->
+  <script src="https://unpkg.com/preact@10.11.2/dist/preact.min.js"></script>
+  <script src="https://unpkg.com/preact@10.11.2/hooks/dist/hooks.umd.js"></script>
+  <script type="text/javascript">
+    const { h, render } = preact;
+    const { useState, useEffect } = preactHooks;
+
+    function Dashboard() {
+      const [status, setStatus] = useState("Disconnected");
+      const [duration, setDuration] = useState("n/a");
+      const [tps, setTps] = useState(0);
+      const [actorCounts, setActorCounts] = useState([]);
+      const [ticks, setTicks] = useState(0);
+      const [actorStates, setActorStates] = useState([]);
+
+      useEffect(() => {
+        let ws;
+        let reconnectTimeout;
+
+        function connect() {
+          ws = new WebSocket("ws://localhost:8080/ws");
+
+          ws.onopen = () => {
+            setStatus("Connected");
+          };
+
+          ws.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.duration !== undefined) {
+                setDuration(data.duration);
+              }
+              if (data.tps !== undefined) {
+                setTps(data.tps);
+              }
+              if (data.actor_counts !== undefined) {
+                setActorCounts(data.actor_counts);
+              }
+              if (data.tick_number !== undefined) {
+                setTicks(data.tick_number);
+              }
+              if (data.actor_states !== undefined) {
+                setActorStates(data.actor_states);
+              }
+            } catch (e) {
+              console.error("Failed to parse message:", e);
+            }
+          };
+
+          ws.onclose = () => {
+            setStatus("Disconnected");
+            // Try reconnecting after 3 seconds
+            reconnectTimeout = setTimeout(connect, 3000);
+          };
+
+          ws.onerror = (err) => {
+            console.error("WebSocket error:", err);
+          };
+        }
+
+        connect();
+
+        return () => {
+          if (ws) ws.close();
+          if (reconnectTimeout) clearTimeout(reconnectTimeout);
+        };
+      }, []);
+
+      return h("div", null, [
+        h("div", { className: "header" }, [
+          h("h1", null, "Dashboard"),
+          h("div", { className: "status" }, status),
+        ]),
+        h("div", { className: "content" }, [
+          h("div", { className: "island", id: "ticks" }, [
+            h("span", null, "ticks: ", ticks),
+          ]),
+          h("div", { className: "island", id: "tps" }, [
+            h("span", null, "tps: ", tps),
+          ]),
+          h("div", { className: "island", id: "time" }, [
+            h("span", null, "simulation time: ", duration),
+          ]),
+        ]),
+        h("div", { className: "content" }, [
+          h(
+            "div",
+            { className: "island", id: "behaviors" },
+            h("div", { className: "list" }, [
+              h("div", null, "behaviors"),
+              actorCounts.map(([name, count]) =>
+                h("div", { key: name }, name + ": " + count)
+              ),
+            ])
+          ),
+        ]),
+        h("div", { className: "content" }, [
+          actorStates.map((actorState, i) =>
+            h("div", { className: "island", id: "state" + i }, [
+              h("code", null, [
+                h("pre", null, [
+                  JSON.stringify(actorState, null, 2)
+                ]),
+              ]),
+            ])
+          ),
+        ]),
+      ]);
+    }
+
+    render(h(Dashboard), document.getElementById("app"));
+  </script>
+</body>
+
+</html>
