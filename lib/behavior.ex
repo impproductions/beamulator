@@ -105,7 +105,7 @@ defmodule Beamulator.Behavior do
           end
         end)
 
-        result
+        {status, result}
       end
     end
   end

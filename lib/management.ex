@@ -60,7 +60,7 @@ defmodule Manage do
           |> Map.put(:__struct__, inspect(Map.get(actor_state, :__struct__)))
           |> Map.put(:__behavior__, behavior)
 
-        Logger.info(
+        Logger.debug(
           "Fetched state for actor #{name} (#{behavior}) (#{serial_id}) [#{inspect(pid)}]"
         )
 

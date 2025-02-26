@@ -6,7 +6,7 @@ defmodule Beamulator.Behaviors.Procrastinator do
   require Logger
   alias Beamulator.Actions
 
-  @decision_wait_ticks 50
+  @decision_wait_ticks 5000
 
   @impl Beamulator.Behavior
   def default_state() do

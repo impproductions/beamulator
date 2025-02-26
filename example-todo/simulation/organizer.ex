@@ -6,7 +6,7 @@ defmodule Beamulator.Behaviors.Organizer do
 
   alias Beamulator.Actions
 
-  @decision_wait_ticks 50
+  @decision_wait_ticks 500
   @max_tasks 50
   @min_tasks 10
 

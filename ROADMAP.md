@@ -4,6 +4,7 @@
 - multi-tenant todo example
 - graphic dashboard
 - action log should include failed requests
+- normalize wait times to "simulated time" instead of ticks
 - check if one actor dying kills all other actors
 - find a way to store runtime config along with simulation
 - reintroduce actor config into the mix

@@ -1,4 +1,6 @@
 defmodule Beamulator.WebSocketHandler do
+  require Logger
+  alias Beamulator.ActorStatesProvider
   alias Beamulator.Tools
   alias Beamulator.Clock
   @behaviour :cowboy_websocket
@@ -9,8 +11,7 @@ defmodule Beamulator.WebSocketHandler do
   end
 
   @impl true
-  def websocket_init(_state) do
-    state = %{counter: 0}
+  def websocket_init(state) do
     Process.send_after(self(), :tick, 1000)
     {:ok, state}
   end
@@ -38,7 +39,13 @@ defmodule Beamulator.WebSocketHandler do
   end
 
   @impl true
-  def terminate(_reason, _req, _state), do: :ok
+  def terminate(reason, req, _state) do
+    Logger.info(
+      "WebSocket connection terminated with reason: #{inspect(reason)} req: #{inspect(req)}"
+    )
+
+    :ok
+  end
 
   def gather_data(:overview) do
     tick_number = Clock.get_tick_number()
@@ -50,12 +57,19 @@ defmodule Beamulator.WebSocketHandler do
       |> Enum.group_by(fn {behavior, _id, _name, _pid} -> behavior end)
       |> Enum.map(fn {behavior, actors} -> [strip_namespace(behavior), length(actors)] end)
 
+    # actor_states =
     actor_states =
-      Manage.actor_list()
-      |> Enum.map(fn {_, _, _, pid} ->
-        Manage.actor_state(inspect(pid))
+      ActorStatesProvider.get_actor_states()
+      |> Enum.map(fn {_, state} -> state end)
+      |> Enum.map(fn state ->
+        %{
+          behavior: strip_namespace(state.behavior),
+          name: state.name,
+          state: state.state,
+          config: state.config,
+          started: state.started
+        }
       end)
-      |> Enum.slice(0, 10)
 
     data = %{
       tick_number: tick_number,

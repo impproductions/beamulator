@@ -40,10 +40,11 @@
 
     .island {
       display: flex;
+      flex-direction: column;
       font-size: 1em;
-      text-align: center;
-      justify-content: center;
-      align-items: center;
+      text-align: left;
+      justify-content: flex-start;
+      align-items: flex-start;
       background-color: #35495e;
       color: #fff;
       padding: 20px;
@@ -71,6 +72,14 @@
       line-height: 1.5em;
       min-height: fit-content;
     }
+
+    .tag {
+      background: #666;
+      color: #fff;
+      padding: 5px;
+      border-radius: 5px;
+      margin: 2px;
+    }
   </style>
 </head>
 
@@ -83,6 +92,38 @@
   <script type="text/javascript">
     const { h, render } = preact;
     const { useState, useEffect } = preactHooks;
+
+    function jsonToHtml(json, nesting = 0) {
+      if (typeof json !== "object") {
+        return json.toString();
+      }
+
+      if (Array.isArray(json)) {
+        return h("div", null, [
+          "[",
+          h("div", null, [
+            h("ul", null,
+              json.map((item) =>
+                h("li", null, jsonToHtml(item, nesting + 1))
+              ),
+            ),
+          ]),
+          "]",
+        ]);
+      }
+
+      if (json === null) {
+        return "null";
+      }
+
+      return Object.entries(json).map(([key, value]) => {
+        return h("div", { key: key }, [
+          " ".repeat(nesting * 2),
+          h("span", null, key + ": "),
+          jsonToHtml(value, nesting + 1),
+        ]);
+      });
+    }
 
     function Dashboard() {
       const [status, setStatus] = useState("Disconnected");
@@ -176,12 +217,18 @@
         h("div", { className: "content" }, [
           actorStates.map((actorState, i) =>
             h("div", { className: "island", id: "state" + i }, [
+              h("div", { className: "tag", id: "state-name" + i }, [actorState.name]),
+              h("div", { className: "tag", id: "state-behavior" + i }, [actorState.behavior]),
+              h("div", { className: "tag", id: "state-started" + i }, [
+                actorState.started ? "started" : "stopped",
+              ]),
               h("code", null, [
                 h("pre", null, [
-                  JSON.stringify(actorState, null, 2)
+                  jsonToHtml(actorState.state),
+                  // JSON.stringify(actorState, null, 2)
                 ]),
               ]),
-            ])
+            ]),
           ),
         ]),
       ]);

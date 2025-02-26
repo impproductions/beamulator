@@ -19,16 +19,20 @@ defmodule Beamulator.Application do
     Logger.info("Process group scope :actor started")
 
     # Define Cowboy dispatch for websockets
-    dispatch = :cowboy_router.compile([
-      {:_, [
-        {"/ws", Beamulator.WebSocketHandler, []}
-      ]}
-    ])
+    dispatch =
+      :cowboy_router.compile([
+        {:_,
+         [
+           {"/ws", Beamulator.WebSocketHandler, []}
+         ]}
+      ])
+
     cowboy_opts = %{env: %{dispatch: dispatch}}
 
     children =
       [
         {Beamulator.SupervisorRoot, []},
+        {Beamulator.ActorStatesProvider, []},
         %{
           id: :cowboy_listener,
           start: {:cowboy, :start_clear, [:http_listener, [{:port, 8080}], cowboy_opts]},
@@ -52,7 +56,7 @@ defmodule Beamulator.Application do
         Logger.info("Behaviors registered.")
 
         Logger.debug("Starting actors...")
-        # start_actors(:staggered)
+        start_actors(:staggered)
         Logger.info("Actors started.")
         {:ok, pid}
 
@@ -64,6 +68,7 @@ defmodule Beamulator.Application do
     case Beamulator.Dashboard.StaticServer.start_link([]) do
       {:ok, _} ->
         Logger.info("Dashboard started.")
+
       {:error, reason} ->
         Logger.error("Failed to start dashboard: #{inspect(reason)}")
     end
@@ -93,9 +98,14 @@ defmodule Beamulator.Application do
   def start_actors(stagger \\ :staggered) do
     actors = Registry.lookup(Beamulator.ActorRegistry, :actors)
 
-    for {pid, _} <- actors do
-      send(pid, :start)
-      if stagger == :staggered, do: Process.sleep(:rand.uniform(10))
+    chunked_actors = Enum.chunk_every(actors, 30)
+
+    for chunk <- chunked_actors do
+      for {pid, _} <- chunk do
+        send(pid, :start)
+      end
+
+      if stagger == :staggered, do: Process.sleep(:rand.uniform(100) + 50)
     end
   end
 

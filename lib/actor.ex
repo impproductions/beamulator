@@ -1,10 +1,11 @@
 defmodule Beamulator.Actor.Data do
-  @enforce_keys [:name, :behavior, :config, :state]
-  defstruct [:name, :behavior, :config, :state]
+  @enforce_keys [:name, :behavior, :config, :state, :started]
+  defstruct [:name, :behavior, :config, :state, :started]
 
   @type t :: %__MODULE__{
           name: String.t(),
           behavior: module(),
+          started: boolean(),
           config: map(),
           state: map()
         }
@@ -48,6 +49,7 @@ defmodule Beamulator.Actor do
     actor_state = %Data{
       name: name,
       behavior: behavior_module,
+      started: false,
       config: config,
       state: initial_state
     }
@@ -59,10 +61,13 @@ defmodule Beamulator.Actor do
     Logger.metadata(actor: state.name, pid: inspect(self()))
     Logger.info("Actor #{state.name} started. Scheduling first action.")
     send(self(), :act)
-    {:noreply, state}
+
+    new_state = %{state | started: true}
+
+    {:noreply, new_state}
   end
 
-  def handle_info(:act, %{behavior: behavior, state: state} = actor_data) do
+  def handle_info(:act, %{behavior: behavior, state: state, started: started} = actor_data) do
     Logger.metadata(actor: actor_data.name, pid: inspect(self()))
     Logger.debug("Actor #{actor_data.name} received action request")
     tick_number = Clock.get_tick_number()
@@ -74,27 +79,37 @@ defmodule Beamulator.Actor do
       state: state
     }
 
-    {wait, new_actor_data} = case behavior.act(tick_number, behavior_data) do
-      {:ok, wait, new_behavior_data} ->
-        Logger.debug("Actor #{actor_data.name} acted successfully on tick #{tick_number}")
-        new_actor_data = %{actor_data | state: new_behavior_data.state}
-        {wait, new_actor_data}
+    if started do
+      Logger.info("Actor started and acting")
 
-      {:error, wait, reason} ->
-        Logger.warning(
-          "Actor #{actor_data.name} failed to act on tick #{tick_number}: #{inspect(reason)}"
-        )
+      {wait, new_actor_data} =
+        case behavior.act(tick_number, behavior_data) do
+          {:ok, wait, new_behavior_data} ->
+            Logger.debug("Actor #{actor_data.name} acted successfully on tick #{tick_number}")
+            new_actor_data = %{actor_data | state: new_behavior_data.state}
+            {wait, new_actor_data}
 
-        {wait, actor_data}
+          {:error, wait, reason} ->
+            Logger.warning(
+              "Actor #{actor_data.name} failed to act on tick #{tick_number}: #{inspect(reason)}"
+            )
+
+            {wait, actor_data}
+        end
+
+      GenServer.cast(Beamulator.ActorStatesProvider, {:update_actor_state, new_actor_data})
+
+      wait_in_ms = wait * Tools.Time.tick_interval_ms()
+      Logger.debug("Actor #{actor_data.name} scheduling next action in #{wait_in_ms}ms")
+      Process.send_after(self(), :act, wait_in_ms)
+      {:noreply, new_actor_data}
+    else
+      Logger.warning(
+        "Actor #{actor_data.name} is not started yet, so it can't act. Start it with send(:start)"
+      )
+
+      {:noreply, actor_data}
     end
-
-    wait_in_ms = wait * Tools.Time.tick_interval_ms()
-
-    Logger.debug("Actor #{actor_data.name} scheduling next action in #{wait_in_ms}ms")
-
-    Process.send_after(self(), :act, wait_in_ms)
-
-    {:noreply, new_actor_data}
   end
 
   def handle_call(:state, _from, state) do
