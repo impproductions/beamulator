@@ -31,6 +31,7 @@ defmodule Beamulator.Application do
 
     children =
       [
+        {Registry, keys: :duplicate, name: Beamulator.WebsocketRegistry},
         {Beamulator.SupervisorRoot, []},
         {Beamulator.ActorStatesProvider, []},
         %{
@@ -47,17 +48,27 @@ defmodule Beamulator.Application do
 
     case Supervisor.start_link(children, opts) do
       {:ok, pid} ->
-        Logger.debug("Creating actors...")
-        create_actors()
-        Logger.info("Actors created.")
+        simulation_config = Application.fetch_env!(:beamulator, :simulation)
+        Logger.info("Simulation configuration: #{inspect(simulation_config)}")
+
+        begin_on_start = simulation_config[:begin_on_start]
+
+        if begin_on_start do
+          Logger.debug("Creating actors...")
+          create_actors()
+          Logger.info("Actors created.")
+        end
 
         Logger.debug("Registering behaviors...")
         Beamulator.Behavior.Registry.scan_and_register_all_behaviors()
         Logger.info("Behaviors registered.")
 
-        Logger.debug("Starting actors...")
-        start_actors(:staggered)
-        Logger.info("Actors started.")
+        if begin_on_start do
+          Logger.debug("Starting actors...")
+          start_actors(:staggered)
+          Logger.info("Actors started.")
+        end
+
         {:ok, pid}
 
       {:error, reason} ->

@@ -4,172 +4,45 @@
 <head>
   <meta charset="utf-8" />
   <title>Dashboard</title>
-  <style>
-    body {
-      font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande',
-        'Lucida Sans', Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #35495e;
-      color: #fff;
-      padding: 20px 40px;
-      text-align: center;
-    }
-
-    .content {
-      display: flex;
-      gap: 1rem;
-      margin: 20px;
-      padding: 20px;
-      background: #fff;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      flex-wrap: wrap;
-    }
-
-    .status {
-      font-size: 0.9em;
-      color: #666;
-    }
-
-    .island {
-      display: flex;
-      flex-direction: column;
-      font-size: 1em;
-      text-align: left;
-      justify-content: flex-start;
-      align-items: flex-start;
-      background-color: #35495e;
-      color: #fff;
-      padding: 20px;
-      border-radius: 15px;
-      min-width: fit-content;
-    }
-
-    .list {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 0.5rem;
-    }
-
-    code {
-      font-size: 0.8em;
-      color: #fff;
-      background: #35495e;
-      padding: 10px;
-      border-radius: 5px;
-      overflow: auto;
-      max-height: 200px;
-      text-align: left;
-      line-height: 1.5em;
-      min-height: fit-content;
-    }
-
-    .tag {
-      background: #666;
-      color: #fff;
-      padding: 5px;
-      border-radius: 5px;
-      margin: 2px;
-    }
-  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" />
 </head>
 
 <body>
-  <div id="asdsa"></div>
   <div id="app"></div>
   <!-- Include Preact and hooks -->
   <script src="https://unpkg.com/preact@10.11.2/dist/preact.min.js"></script>
   <script src="https://unpkg.com/preact@10.11.2/hooks/dist/hooks.umd.js"></script>
   <script type="text/javascript">
-    const { h, render } = preact;
-    const { useState, useEffect } = preactHooks;
+    const { h, render, Fragment } = preact;
+    const { useState, useEffect, useRef } = preactHooks;
 
-    function jsonToHtml(json, nesting = 0) {
-      if (typeof json !== "object") {
-        return json.toString();
-      }
-
-      if (Array.isArray(json)) {
-        return h("div", null, [
-          "[",
-          h("div", null, [
-            h("ul", null,
-              json.map((item) =>
-                h("li", null, jsonToHtml(item, nesting + 1))
-              ),
-            ),
-          ]),
-          "]",
-        ]);
-      }
-
-      if (json === null) {
-        return "null";
-      }
-
-      return Object.entries(json).map(([key, value]) => {
-        return h("div", { key: key }, [
-          " ".repeat(nesting * 2),
-          h("span", null, key + ": "),
-          jsonToHtml(value, nesting + 1),
-        ]);
-      });
-    }
-
-    function Dashboard() {
+    // Custom hook encapsulating WebSocket connection, reconnection logic, and sending messages.
+    function useWebSocket(url) {
       const [status, setStatus] = useState("Disconnected");
-      const [duration, setDuration] = useState("n/a");
-      const [tps, setTps] = useState(0);
-      const [actorCounts, setActorCounts] = useState([]);
-      const [ticks, setTicks] = useState(0);
-      const [actorStates, setActorStates] = useState([]);
+      const [messages, setMessages] = useState([]);
+      const wsRef = useRef(null);
 
       useEffect(() => {
         let ws;
         let reconnectTimeout;
 
         function connect() {
-          ws = new WebSocket("ws://localhost:8080/ws");
+          ws = new WebSocket(url);
+          wsRef.current = ws;
 
-          ws.onopen = () => {
-            setStatus("Connected");
-          };
+          ws.onopen = () => setStatus("Connected");
 
           ws.onmessage = (event) => {
             try {
               const data = JSON.parse(event.data);
-              if (data.duration !== undefined) {
-                setDuration(data.duration);
-              }
-              if (data.tps !== undefined) {
-                setTps(data.tps);
-              }
-              if (data.actor_counts !== undefined) {
-                setActorCounts(data.actor_counts);
-              }
-              if (data.tick_number !== undefined) {
-                setTicks(data.tick_number);
-              }
-              if (data.actor_states !== undefined) {
-                setActorStates(data.actor_states);
-              }
-            } catch (e) {
-              console.error("Failed to parse message:", e);
+              setMessages((prev) => [...prev, data]);
+            } catch (error) {
+              console.error("Failed to parse message:", error);
             }
           };
 
           ws.onclose = () => {
             setStatus("Disconnected");
-            // Try reconnecting after 3 seconds
             reconnectTimeout = setTimeout(connect, 3000);
           };
 
@@ -184,53 +57,160 @@
           if (ws) ws.close();
           if (reconnectTimeout) clearTimeout(reconnectTimeout);
         };
-      }, []);
+      }, [url]);
 
-      return h("div", null, [
-        h("div", { className: "header" }, [
-          h("h1", null, "Dashboard"),
-          h("div", { className: "status" }, status),
+      const sendMessage = (msg) => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify(msg));
+        }
+      };
+
+      return { status, messages, sendMessage };
+    }
+
+    // Navbar component renders the title and connection status.
+    function Navbar({ title, status }) {
+      const statusColor = status === "Connected" ? "success" : "danger";
+      return h(
+        "nav",
+        { className: "navbar is-dark" },
+        h("div", { className: "navbar-brand" },
+          h("h1", { className: "navbar-item title is-4" }, title)
+        ),
+        h("div", { className: "navbar-end" },
+          h("div", { className: `navbar-item has-text-${statusColor}` }, status)
+        )
+      );
+    }
+
+    // Component for a single behavior row that can expand/collapse its actors row.
+    // Each actor tag is clickable to select the actor.
+    function BehaviorRow({ behavior, onSelectActor }) {
+      const [expanded, setExpanded] = useState(false);
+      return h(Fragment, null, [
+        h("tr", { key: behavior.name + "-data" }, [
+          h("td", null, behavior.name),
+          h("td", null, behavior.count),
+          h("td", null,
+            h("button",
+              {
+                className: "button is-small is-info",
+                onClick: () => setExpanded((prev) => !prev)
+              },
+              expanded ? "Hide Actors" : "Show Actors"
+            )
+          )
         ]),
-        h("div", { className: "content" }, [
-          h("div", { className: "island", id: "ticks" }, [
-            h("span", null, "ticks: ", ticks),
-          ]),
-          h("div", { className: "island", id: "tps" }, [
-            h("span", null, "tps: ", tps),
-          ]),
-          h("div", { className: "island", id: "time" }, [
-            h("span", null, "simulation time: ", duration),
-          ]),
-        ]),
-        h("div", { className: "content" }, [
-          h(
-            "div",
-            { className: "island", id: "behaviors" },
-            h("div", { className: "list" }, [
-              h("div", null, "behaviors"),
-              actorCounts.map(([name, count]) =>
-                h("div", { key: name }, name + ": " + count)
-              ),
+        expanded &&
+        h("tr", { key: behavior.name + "-actors" }, [
+          h("td", { colSpan: 3 },
+            h("div", {
+              style: { display: "flex", flexWrap: "wrap", gap: "0.25rem" }
+            },
+              behavior.actors.map((actor, idx) =>
+                h("span", {
+                  key: idx,
+                  className: "tag is-info is-dark",
+                  style: { cursor: "pointer" },
+                  onClick: () => onSelectActor(actor)
+                }, actor)
+              )
+            )
+          )
+        ])
+      ]);
+    }
+
+    // BehaviorsPanel displays a table of behaviors using the BehaviorRow component.
+    function BehaviorsPanel({ behaviors, onSelectActor }) {
+      return h("div", { className: "box" }, [
+        h("h2", { className: "title is-4" }, "Behaviors"),
+        h("table", { className: "table is-fullwidth is-striped" }, [
+          h("thead", null,
+            h("tr", null, [
+              h("th", null, "Name"),
+              h("th", null, "Count"),
+              h("th", null, "Actions")
             ])
           ),
-        ]),
-        h("div", { className: "content" }, [
-          actorStates.map((actorState, i) =>
-            h("div", { className: "island", id: "state" + i }, [
-              h("div", { className: "tag", id: "state-name" + i }, [actorState.name]),
-              h("div", { className: "tag", id: "state-behavior" + i }, [actorState.behavior]),
-              h("div", { className: "tag", id: "state-started" + i }, [
-                actorState.started ? "started" : "stopped",
-              ]),
-              h("code", null, [
-                h("pre", null, [
-                  jsonToHtml(actorState.state),
-                  // JSON.stringify(actorState, null, 2)
-                ]),
-              ]),
-            ]),
-          ),
-        ]),
+          h("tbody", null,
+            behaviors.map((behavior) =>
+              h(BehaviorRow, { key: behavior.name, behavior, onSelectActor })
+            )
+          )
+        ])
+      ]);
+    }
+
+    // ActorCard displays detailed data for the selected actor.
+    function ActorCard({ actor }) {
+      if (!actor) return null;
+      return h("div", { className: "card", style: { marginTop: "1rem" } }, [
+        h("header", { className: "card-header" },
+          h("p", { className: "card-header-title" }, actor.name)
+        ),
+        h("div", { className: "card-content" },
+          h("div", { className: "content" }, [
+            h("p", null, "Behavior: " + actor.behavior),
+            h("p", null, "Config: " + JSON.stringify(actor.config)),
+            h("p", null, "Started: " + actor.started),
+            h("p", null, "State: "),
+            h("pre", null, JSON.stringify(actor.state, null, 2)),
+          ])
+        )
+      ]);
+    }
+
+    // Dashboard processes incoming messages and distributes state to sub-components.
+    function Dashboard() {
+      const { status, messages, sendMessage } = useWebSocket("ws://localhost:8080/ws");
+      const [actorStates, setActorStates] = useState([]);
+      const [behaviors, setBehaviors] = useState([]);
+      const [selectedActor, setSelectedActor] = useState(null);
+
+      useEffect(() => {
+        messages.forEach((msg) => {
+          switch (msg.type) {
+            case "behaviors":
+              setBehaviors(msg.behaviors);
+              break;
+            case "actor_state_update":
+              setActorStates((prevStates) => {
+                const index = prevStates.findIndex(
+                  (actor) => actor.name === msg.actor_state.name
+                );
+                if (index !== -1) {
+                  const newStates = [...prevStates];
+                  newStates[index] = { ...msg.actor_state };
+                  newStates.sort((a, b) => b.acting - a.acting);
+                  return newStates;
+                }
+                return [...prevStates, { ...msg.actor_state }];
+              });
+              break;
+            default:
+              console.warn("Unhandled message type:", msg);
+          }
+        });
+      }, [messages]);
+
+      // When an actor is selected, update the local state and notify the remote.
+      const handleSelectActor = (actor) => {
+        setSelectedActor(actor);
+        sendMessage({ type: "set_displayed_actor", actor });
+      };
+
+      // Find the actor state for the selected actor.
+      const displayedActor = actorStates.find(a => a.name === selectedActor);
+
+      return h("div", null, [
+        h(Navbar, { title: "Dashboard", status }),
+        h("section", { className: "section" },
+          h("div", { className: "container" }, [
+            h(BehaviorsPanel, { behaviors, onSelectActor: handleSelectActor }),
+            h(ActorCard, { actor: displayedActor })
+          ])
+        ),
       ]);
     }
 

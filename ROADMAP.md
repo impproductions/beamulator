@@ -30,6 +30,7 @@
 
 ## Improvements
 - document/enforce simulation folder/namespacing
+- **write in batch on action logger**
 - tests
 - uniform error handling
 - dashboard: better terminal renderer

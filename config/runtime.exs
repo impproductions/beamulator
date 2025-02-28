@@ -1,13 +1,14 @@
 import Config
 
 config :beamulator,
-  enable_action_logger: true,
+  enable_action_logger: false,
   questdb: %{
     url: "http://localhost",
     port: 9000
   },
   simulation: [
     random_seed: 1,
+    begin_on_start: true,
     tick_interval_ms: 10,
     tick_to_seconds: 1
   ],

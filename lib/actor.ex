@@ -82,11 +82,14 @@ defmodule Beamulator.Actor do
     if started do
       Logger.info("Actor started and acting")
 
+      # Beamulator.WebSocketHandler.broadcast({:action_start, actor_data})
+
       {wait, new_actor_data} =
         case behavior.act(tick_number, behavior_data) do
           {:ok, wait, new_behavior_data} ->
             Logger.debug("Actor #{actor_data.name} acted successfully on tick #{tick_number}")
             new_actor_data = %{actor_data | state: new_behavior_data.state}
+
             {wait, new_actor_data}
 
           {:error, wait, reason} ->
@@ -97,7 +100,7 @@ defmodule Beamulator.Actor do
             {wait, actor_data}
         end
 
-      GenServer.cast(Beamulator.ActorStatesProvider, {:update_actor_state, new_actor_data})
+      Beamulator.WebSocketHandler.broadcast({:actor_state_update, new_actor_data})
 
       wait_in_ms = wait * Tools.Time.tick_interval_ms()
       Logger.debug("Actor #{actor_data.name} scheduling next action in #{wait_in_ms}ms")
@@ -105,7 +108,7 @@ defmodule Beamulator.Actor do
       {:noreply, new_actor_data}
     else
       Logger.warning(
-        "Actor #{actor_data.name} is not started yet, so it can't act. Start it with send(:start)"
+        "Actor #{actor_data.name} is not started yet, so it can't act. Start it with :start"
       )
 
       {:noreply, actor_data}

@@ -15,6 +15,10 @@ defmodule Beamulator.Tools do
     def select_by_behavior(behavior_module) do
       Registry.match(Beamulator.ActorRegistry, :actors, {behavior_module, :_, :_})
     end
+
+    def select_by_name(name) do
+      Registry.match(Beamulator.ActorRegistry, :actors, {:_ , :_, name})
+    end
   end
 
   defmodule Time do
