@@ -1,7 +1,7 @@
 defmodule Beamulator.LoggerFormatter do
   def format(level, message, timestamp, metadata) do
     time = format_timestamp(timestamp)
-    tick = as_duration(Keyword.get(metadata, :tick, nil))
+    tick = as_duration_human(Keyword.get(metadata, :tick, nil))
     actor = Keyword.get(metadata, :actor, nil)
     pid = Keyword.get(metadata, :pid, nil)
 
@@ -17,11 +17,11 @@ defmodule Beamulator.LoggerFormatter do
     "#{year}-#{pad(month)}-#{pad(day)} #{pad(hour)}:#{pad(min)}:#{pad(sec)}"
   end
 
-  defp as_duration(tick) when is_integer(tick) do
-    Beamulator.Tools.Time.as_duration(tick, :shorten)
+  defp as_duration_human(tick) when is_integer(tick) do
+    Beamulator.Tools.Time.as_duration_human(tick, :shorten)
   end
 
-  defp as_duration(_), do: nil
+  defp as_duration_human(_), do: nil
 
   defp pad(num) when num < 10, do: "0#{num}"
   defp pad(num), do: "#{num}"

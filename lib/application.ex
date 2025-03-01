@@ -18,7 +18,6 @@ defmodule Beamulator.Application do
     {:ok, _} = :pg.start(:actor)
     Logger.info("Process group scope :actor started")
 
-    # Define Cowboy dispatch for websockets
     dispatch =
       :cowboy_router.compile([
         {:_,
@@ -36,7 +35,7 @@ defmodule Beamulator.Application do
         {Beamulator.ActorStatesProvider, []},
         %{
           id: :cowboy_listener,
-          start: {:cowboy, :start_clear, [:http_listener, [{:port, 8080}], cowboy_opts]},
+          start: {:cowboy, :start_clear, [:http_listener, [{:port, 4001}], cowboy_opts]},
           type: :worker,
           restart: :permanent,
           shutdown: 5000
@@ -51,10 +50,8 @@ defmodule Beamulator.Application do
         simulation_config = Application.fetch_env!(:beamulator, :simulation)
         Logger.info("Simulation configuration: #{inspect(simulation_config)}")
 
-        begin_on_start = simulation_config[:begin_on_start]
-
-        if begin_on_start do
-          Logger.debug("Creating actors...")
+        if simulation_config[:begin_on_start] do
+          Logger.debug("Creating actors (staggered)...")
           create_actors()
           Logger.info("Actors created.")
         end
@@ -62,12 +59,6 @@ defmodule Beamulator.Application do
         Logger.debug("Registering behaviors...")
         Beamulator.Behavior.Registry.scan_and_register_all_behaviors()
         Logger.info("Behaviors registered.")
-
-        if begin_on_start do
-          Logger.debug("Starting actors...")
-          start_actors(:staggered)
-          Logger.info("Actors started.")
-        end
 
         {:ok, pid}
 
@@ -92,7 +83,7 @@ defmodule Beamulator.Application do
 
     actors_to_create =
       actors_config
-      |> Enum.map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
+      |> Enum.flat_map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
         for _ <- 1..amt,
             do: %{
               name: name <> " " <> to_string(Beamulator.Tools.increasing_int()),
@@ -100,24 +91,17 @@ defmodule Beamulator.Application do
               config: config
             }
       end)
-      |> List.flatten()
 
-    _pids = Beamulator.Connectors.Internal.create_actors(actors_to_create)
-    Logger.info("Actors initialized successfully.")
-  end
-
-  def start_actors(stagger \\ :staggered) do
-    actors = Registry.lookup(Beamulator.ActorRegistry, :actors)
-
-    chunked_actors = Enum.chunk_every(actors, 30)
-
-    for chunk <- chunked_actors do
-      for {pid, _} <- chunk do
-        send(pid, :start)
-      end
-
-      if stagger == :staggered, do: Process.sleep(:rand.uniform(100) + 50)
+    for %{
+          name: name,
+          behavior: behavior,
+          config: config
+        } <- actors_to_create do
+      Beamulator.Connectors.Internal.create_actor(name, behavior, config)
+      Process.sleep(:rand.uniform(100) + 50)
     end
+
+    Logger.info("Actors initialized successfully.")
   end
 
   defp maybe_add_action_logger(children) do
@@ -125,7 +109,6 @@ defmodule Beamulator.Application do
       Logger.info("Action logger enabled, starting...")
       children = children ++ [{Beamulator.ActionLoggerPersistent, []}]
       Logger.info("Action logger started.")
-
       children
     else
       children

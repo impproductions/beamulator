@@ -43,7 +43,7 @@ defmodule Beamulator.Clock do
       Tools.Time.tick_interval_ms() || 1000
 
     if rem(state.tick_number, div(1000, tick_interval)) == 0 do
-      Logger.info("Tick #{state.tick_number} (#{Tools.Time.as_duration(state.tick_number)})")
+      Logger.info("Tick #{state.tick_number} (#{Tools.Time.as_duration_human(state.tick_number)})")
     end
 
     current_time = DateTime.utc_now()

@@ -54,6 +54,8 @@ defmodule Beamulator.Actor do
       state: initial_state
     }
 
+    Process.send_after(self(), :start, :rand.uniform(100) + 50)
+
     {:ok, actor_state}
   end
 
@@ -82,8 +84,6 @@ defmodule Beamulator.Actor do
     if started do
       Logger.info("Actor started and acting")
 
-      # Beamulator.WebSocketHandler.broadcast({:action_start, actor_data})
-
       {wait, new_actor_data} =
         case behavior.act(tick_number, behavior_data) do
           {:ok, wait, new_behavior_data} ->
@@ -102,7 +102,7 @@ defmodule Beamulator.Actor do
 
       Beamulator.WebSocketHandler.broadcast({:actor_state_update, new_actor_data})
 
-      wait_in_ms = wait * Tools.Time.tick_interval_ms()
+      wait_in_ms = Tools.Time.tick_to_ms(wait)
       Logger.debug("Actor #{actor_data.name} scheduling next action in #{wait_in_ms}ms")
       Process.send_after(self(), :act, wait_in_ms)
       {:noreply, new_actor_data}
@@ -117,5 +117,10 @@ defmodule Beamulator.Actor do
 
   def handle_call(:state, _from, state) do
     {:reply, state, state}
+  end
+
+  def terminate(reason, state) do
+    Logger.error("Actor #{state.name} terminating with reason: #{inspect(reason)}")
+    :ok
   end
 end

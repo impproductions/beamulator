@@ -12,12 +12,22 @@ defmodule Beamulator.Tools do
   end
 
   defmodule Actors do
+    def get_state(pid) do
+      case Registry.lookup(Beamulator.ActorRegistry, :actors)
+           |> Enum.find(fn {p_id, _} -> pid == p_id end) do
+        {pid, _} ->
+          GenServer.call(pid, :state)
+        _ ->
+          {:error, "Actor not found"}
+      end
+    end
+
     def select_by_behavior(behavior_module) do
       Registry.match(Beamulator.ActorRegistry, :actors, {behavior_module, :_, :_})
     end
 
     def select_by_name(name) do
-      Registry.match(Beamulator.ActorRegistry, :actors, {:_ , :_, name})
+      Registry.match(Beamulator.ActorRegistry, :actors, {:_, :_, name})
     end
   end
 
@@ -58,7 +68,15 @@ defmodule Beamulator.Tools do
       1000 / tick_interval_ms()
     end
 
-    def as_duration(tick) when is_integer(tick) do
+    def tick_to_ms(tick) do
+      tick * tick_interval_ms()
+    end
+
+    def ms_to_tick(time) do
+      div(time, tick_interval_ms())
+    end
+
+    def as_duration_human(tick) when is_integer(tick) do
       duration = Timex.Duration.from_seconds(tick)
 
       duration
@@ -66,8 +84,8 @@ defmodule Beamulator.Tools do
       |> String.replace(" ago", "")
     end
 
-    def as_duration(tick, :shorten) when is_integer(tick) do
-      as_duration(tick)
+    def as_duration_human(tick, :shorten) when is_integer(tick) do
+      as_duration_human(tick)
       |> String.split(", ")
       |> Enum.map(fn part ->
         [amt, unit] = String.split(part, " ")

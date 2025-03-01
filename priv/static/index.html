@@ -9,18 +9,17 @@
 
 <body>
   <div id="app"></div>
-  <!-- Include Preact and hooks -->
   <script src="https://unpkg.com/preact@10.11.2/dist/preact.min.js"></script>
   <script src="https://unpkg.com/preact@10.11.2/hooks/dist/hooks.umd.js"></script>
   <script type="text/javascript">
     const { h, render, Fragment } = preact;
     const { useState, useEffect, useRef } = preactHooks;
 
-    // Custom hook encapsulating WebSocket connection, reconnection logic, and sending messages.
-    function useWebSocket(url) {
+    function useWebSocket(url, onConnect = () => {}) {
       const [status, setStatus] = useState("Disconnected");
       const [messages, setMessages] = useState([]);
       const wsRef = useRef(null);
+      let heartbeatInterval;
 
       useEffect(() => {
         let ws;
@@ -30,7 +29,18 @@
           ws = new WebSocket(url);
           wsRef.current = ws;
 
-          ws.onopen = () => setStatus("Connected");
+          ws.onopen = () => {
+            setStatus("Connected")
+            if (reconnectTimeout) clearTimeout(reconnectTimeout);
+
+            heartbeatInterval = setInterval(() => {
+              if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "heartbeat" }));
+              }
+            }, 5000);
+
+            onConnect();
+          };
 
           ws.onmessage = (event) => {
             try {
@@ -44,6 +54,8 @@
           ws.onclose = () => {
             setStatus("Disconnected");
             reconnectTimeout = setTimeout(connect, 3000);
+
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
           };
 
           ws.onerror = (err) => {
@@ -68,7 +80,6 @@
       return { status, messages, sendMessage };
     }
 
-    // Navbar component renders the title and connection status.
     function Navbar({ title, status }) {
       const statusColor = status === "Connected" ? "success" : "danger";
       return h(
@@ -83,8 +94,6 @@
       );
     }
 
-    // Component for a single behavior row that can expand/collapse its actors row.
-    // Each actor tag is clickable to select the actor.
     function BehaviorRow({ behavior, onSelectActor }) {
       const [expanded, setExpanded] = useState(false);
       return h(Fragment, null, [
@@ -121,7 +130,6 @@
       ]);
     }
 
-    // BehaviorsPanel displays a table of behaviors using the BehaviorRow component.
     function BehaviorsPanel({ behaviors, onSelectActor }) {
       return h("div", { className: "box" }, [
         h("h2", { className: "title is-4" }, "Behaviors"),
@@ -142,7 +150,6 @@
       ]);
     }
 
-    // ActorCard displays detailed data for the selected actor.
     function ActorCard({ actor }) {
       if (!actor) return null;
       return h("div", { className: "card", style: { marginTop: "1rem" } }, [
@@ -161,16 +168,43 @@
       ]);
     }
 
-    // Dashboard processes incoming messages and distributes state to sub-components.
+    function SimulationCard({ tick, duration, tps }) {
+      return h("div", { className: "card", style: { marginTop: "1rem" } }, [
+        h("header", { className: "card-header" },
+          h("p", { className: "card-header-title" }, "Simulation")
+        ),
+        h("div", { className: "card-content" },
+          h("div", {
+            className: "content", style: { display: "flex", justifyContent: "space-around", flexWrap: "wrap", gap: "0.25rem" }
+          }, [
+            h("span", { className: "tag is-info" }, "Tick: " + tick),
+            h("span", { className: "tag is-info" }, "Simulation time: " + duration),
+            h("span", { className: "tag is-info" }, "TPS: " + tps),
+          ])
+        )
+      ]);
+    }
+
     function Dashboard() {
-      const { status, messages, sendMessage } = useWebSocket("ws://localhost:8080/ws");
+      const { status, messages, sendMessage } = useWebSocket("ws://localhost:4001/ws", () => {
+        sendMessage({ type: "get_behaviors" });
+        if (selectedActor) handleSelectActor(selectedActor);
+      });
       const [actorStates, setActorStates] = useState([]);
       const [behaviors, setBehaviors] = useState([]);
       const [selectedActor, setSelectedActor] = useState(null);
+      const [simulation, setSimulation] = useState({ tick: 0, duration: 0, tps: 0 });
 
       useEffect(() => {
         messages.forEach((msg) => {
           switch (msg.type) {
+            case "simulation":
+              setSimulation({
+                tick: msg.data.tick_number,
+                duration: msg.data.duration,
+                tps: msg.data.tps
+              });
+              break;
             case "behaviors":
               setBehaviors(msg.behaviors);
               break;
@@ -194,19 +228,18 @@
         });
       }, [messages]);
 
-      // When an actor is selected, update the local state and notify the remote.
       const handleSelectActor = (actor) => {
         setSelectedActor(actor);
         sendMessage({ type: "set_displayed_actor", actor });
       };
 
-      // Find the actor state for the selected actor.
       const displayedActor = actorStates.find(a => a.name === selectedActor);
 
       return h("div", null, [
         h(Navbar, { title: "Dashboard", status }),
         h("section", { className: "section" },
           h("div", { className: "container" }, [
+            h(SimulationCard, simulation),
             h(BehaviorsPanel, { behaviors, onSelectActor: handleSelectActor }),
             h(ActorCard, { actor: displayedActor })
           ])

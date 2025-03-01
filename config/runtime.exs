@@ -9,7 +9,7 @@ config :beamulator,
   simulation: [
     random_seed: 1,
     begin_on_start: true,
-    tick_interval_ms: 10,
+    tick_interval_ms: 5,
     tick_to_seconds: 1
   ],
   actors: [

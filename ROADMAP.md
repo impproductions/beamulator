@@ -15,7 +15,10 @@
   - Opensearch?
 
 ## Fix
-- find a controlled way to handle behavior loading?
+- **write in batch on action logger**
+- make actors restart after process dies
+- inject correct ws url
+- can I have the same port for ws and http?
 
 ## Feature ideas
 - save/restore state!!! (ugh)
@@ -29,8 +32,8 @@
   - extract behavior creation to lab
 
 ## Improvements
+- find a controlled way to handle behavior loading?
 - document/enforce simulation folder/namespacing
-- **write in batch on action logger**
 - tests
 - uniform error handling
 - dashboard: better terminal renderer
