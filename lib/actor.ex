@@ -92,7 +92,7 @@ defmodule Beamulator.Actor do
             {wait, state}
         end
 
-      Beamulator.WebSocketHandler.broadcast({:actor_state_update, new_state})
+      Beamulator.Dashboard.WebSocketHandler.broadcast({:actor_state_update, new_state})
       schedule_next_action(state.name, wait)
       {:noreply, new_state}
     else

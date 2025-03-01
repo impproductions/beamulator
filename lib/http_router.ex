@@ -23,7 +23,7 @@ defmodule Beamulator.HttpRouter do
     dispatch = [
       {:_,
        [
-         {"/ws", Beamulator.WebSocketHandler, []},
+         {"/ws", Beamulator.Dashboard.WebSocketHandler, []},
          {"/[...]", Plug.Cowboy.Handler, {__MODULE__, []}}
        ]}
     ]

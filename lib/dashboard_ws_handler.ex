@@ -1,13 +1,12 @@
-defmodule Beamulator.WebSocketHandler do
+defmodule Beamulator.Dashboard.WebSocketHandler do
   require Logger
   alias Beamulator.Tools
   alias Beamulator.Clock
   @behaviour :cowboy_websocket
 
   @impl true
-  def init(req, _) do
-    state = %{}
-    state = Map.put(state, :displayed_actor, nil)
+  def init(req, _opts) do
+    state = %{displayed_actor: nil}
     {:cowboy_websocket, req, state}
   end
 
@@ -19,10 +18,17 @@ defmodule Beamulator.WebSocketHandler do
   @impl true
   def websocket_init(state) do
     Logger.info("WebSocket connection established")
-    Registry.register(Beamulator.WebsocketRegistry, :connections, self())
-    send(self(), {:send_behaviors, get_behaviors()})
-    send(self(), :refresh)
-    {:ok, state}
+
+    case Registry.register(Beamulator.WebsocketRegistry, :connections, self()) do
+      {:ok, _} ->
+        send(self(), {:send_behaviors, fetch_behaviors()})
+        send(self(), :refresh)
+        {:ok, state}
+
+      {:error, _} ->
+        Logger.error("Failed to register connection")
+        {:error, :shutdown}
+    end
   end
 
   @impl true
@@ -63,11 +69,15 @@ defmodule Beamulator.WebSocketHandler do
   @impl true
   def websocket_handle(_data, state), do: {:ok, state}
 
+  @impl true
   def websocket_info(:refresh, state) do
-    json_message = Jason.encode!(%{
-      type: "simulation",
-      data: gather_tick_data()
-    })
+    json_message =
+      %{
+        type: "simulation",
+        data: fetch_tick_data()
+      }
+      |> Jason.encode!()
+
     Process.send_after(self(), :refresh, 250)
     {:reply, {:text, json_message}, state}
   end
@@ -96,7 +106,10 @@ defmodule Beamulator.WebSocketHandler do
       Logger.debug("Sending actor state update for displayed actor: #{json_message}")
       {:reply, {:text, json_message}, state}
     else
-      Logger.warning("Not sending actor state update for non-displayed actor: #{inspect(actor_state.name)} (displayed: #{inspect(state.displayed_actor)})")
+      Logger.warning(
+        "Not sending actor state update for non-displayed actor: #{inspect(actor_state.name)} (displayed: #{inspect(state.displayed_actor)})"
+      )
+
       {:ok, state}
     end
   end
@@ -116,7 +129,7 @@ defmodule Beamulator.WebSocketHandler do
     :ok
   end
 
-  defp get_behaviors do
+  defp fetch_behaviors do
     list = Manage.actor_list()
     Logger.info("Actor list: #{inspect(list)}")
 
@@ -126,12 +139,12 @@ defmodule Beamulator.WebSocketHandler do
       %{
         name: b,
         count: Enum.count(actors),
-        actors: actors |> Enum.map(fn {_, _, n, _} -> n end)
+        actors: Enum.map(actors, fn {_, _, n, _} -> n end)
       }
     end)
   end
 
-  defp gather_tick_data() do
+  defp fetch_tick_data do
     tick_number = Clock.get_tick_number()
     duration = Tools.Time.as_duration_human(tick_number, :shorten)
     tps = Clock.get_tps()

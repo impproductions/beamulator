@@ -11,7 +11,7 @@ defmodule Beamulator.SupervisorWebsocket do
       :cowboy_router.compile([
         {:_,
          [
-           {"/ws", Beamulator.WebSocketHandler, []}
+           {"/ws", Beamulator.Dashboard.WebSocketHandler, []}
          ]}
       ])
 
