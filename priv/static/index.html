@@ -186,7 +186,7 @@
     }
 
     function Dashboard() {
-      const { status, messages, sendMessage } = useWebSocket("ws://localhost:4001/ws", () => {
+      const { status, messages, sendMessage } = useWebSocket("ws://localhost:4000/ws", () => {
         sendMessage({ type: "get_behaviors" });
         if (selectedActor) handleSelectActor(selectedActor);
       });

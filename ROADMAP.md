@@ -2,7 +2,6 @@
 
 ## Next
 - multi-tenant todo example
-- graphic dashboard
 - action log should include failed requests
 - normalize wait times to "simulated time" instead of ticks
 - check if one actor dying kills all other actors
@@ -16,9 +15,9 @@
 
 ## Fix
 - **write in batch on action logger**
-- make actors restart after process dies
 - inject correct ws url
 - can I have the same port for ws and http?
+- created actors don't show up in ui
 
 ## Feature ideas
 - save/restore state!!! (ugh)
@@ -44,6 +43,8 @@
 - rename behavior to personality to avoid confusion with elixir's behaviour keyword
 
 ## Done
+- graphic dashboard ✅
+- make actors restart after process dies ✅
 - refactor questdb writer ✅
 - behaviors in dashboard are broken ✅
 - actor complaint ✅

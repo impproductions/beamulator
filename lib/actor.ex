@@ -43,9 +43,6 @@ defmodule Beamulator.Actor do
     selector = {behavior_module, Beamulator.Tools.increasing_int(), name}
     Registry.register(Beamulator.ActorRegistry, :actors, selector)
 
-    Logger.debug("Actor #{name} joining group")
-    Beamulator.ActorProcessGroup.join()
-
     actor_state = %Data{
       name: name,
       behavior: behavior_module,

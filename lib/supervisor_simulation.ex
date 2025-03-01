@@ -1,4 +1,4 @@
-defmodule Beamulator.SupervisorRoot do
+defmodule Beamulator.SupervisorSimulation do
   use Supervisor
 
   def start_link(opts) do
@@ -12,7 +12,6 @@ defmodule Beamulator.SupervisorRoot do
       {Registry, keys: :duplicate, name: Beamulator.ActorRegistry},
       {Beamulator.SupervisorActors, []},
       {Beamulator.Clock, []},
-      # {Beamulator.Worker, []},
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
