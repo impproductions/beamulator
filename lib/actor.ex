@@ -14,6 +14,7 @@ end
 defmodule Beamulator.Actor do
   require Logger
   use GenServer
+
   alias Beamulator.Tools
   alias Beamulator.Clock
   alias Beamulator.Actor.Data
@@ -32,7 +33,7 @@ defmodule Beamulator.Actor do
         Logger.error("Failed to start actor #{name}: #{inspect(reason)}")
         {:error, reason}
 
-      _ ->
+      _unexpected ->
         Logger.error("Unknown error occurred while starting actor #{name}")
         {:error, "Unknown error"}
     end
@@ -43,7 +44,7 @@ defmodule Beamulator.Actor do
     selector = {behavior_module, Beamulator.Tools.increasing_int(), name}
     Registry.register(Beamulator.ActorRegistry, :actors, selector)
 
-    actor_state = %Data{
+    state = %Data{
       name: name,
       behavior: behavior_module,
       started: false,
@@ -51,64 +52,52 @@ defmodule Beamulator.Actor do
       state: initial_state
     }
 
-    Process.send_after(self(), :start, :rand.uniform(100) + 50)
-
-    {:ok, actor_state}
+    delay = :rand.uniform(100) + 50
+    Process.send_after(self(), :start, delay)
+    {:ok, state}
   end
 
   def handle_info(:start, state) do
     Logger.metadata(actor: state.name, pid: inspect(self()))
     Logger.info("Actor #{state.name} started. Scheduling first action.")
     send(self(), :act)
-
-    new_state = %{state | started: true}
-
-    {:noreply, new_state}
+    {:noreply, %{state | started: true}}
   end
 
-  def handle_info(:act, %{behavior: behavior, state: state, started: started} = actor_data) do
-    Logger.metadata(actor: actor_data.name, pid: inspect(self()))
-    Logger.debug("Actor #{actor_data.name} received action request")
+  def handle_info(:act, %{behavior: behavior, state: actor_state, started: started} = state) do
+    Logger.metadata(actor: state.name, pid: inspect(self()))
+    Logger.debug("Actor #{state.name} received action request")
+
     tick_number = Clock.get_tick_number()
     Logger.metadata(tick: tick_number)
 
     behavior_data = %Beamulator.Behavior.Data{
-      name: actor_data.name,
-      config: actor_data.config,
-      state: state
+      name: state.name,
+      config: state.config,
+      state: actor_state
     }
 
     if started do
       Logger.info("Actor started and acting")
 
-      {wait, new_actor_data} =
+      {wait, new_state} =
         case behavior.act(tick_number, behavior_data) do
           {:ok, wait, new_behavior_data} ->
-            Logger.debug("Actor #{actor_data.name} acted successfully on tick #{tick_number}")
-            new_actor_data = %{actor_data | state: new_behavior_data.state}
-
-            {wait, new_actor_data}
+            Logger.debug("Actor #{state.name} acted successfully on tick #{tick_number}")
+            updated_data = %{state | state: new_behavior_data.state}
+            {wait, updated_data}
 
           {:error, wait, reason} ->
-            Logger.warning(
-              "Actor #{actor_data.name} failed to act on tick #{tick_number}: #{inspect(reason)}"
-            )
-
-            {wait, actor_data}
+            Logger.warning("Actor #{state.name} failed to act on tick #{tick_number}: #{inspect(reason)}")
+            {wait, state}
         end
 
-      Beamulator.WebSocketHandler.broadcast({:actor_state_update, new_actor_data})
-
-      wait_in_ms = Tools.Time.tick_to_ms(wait)
-      Logger.debug("Actor #{actor_data.name} scheduling next action in #{wait_in_ms}ms")
-      Process.send_after(self(), :act, wait_in_ms)
-      {:noreply, new_actor_data}
+      Beamulator.WebSocketHandler.broadcast({:actor_state_update, new_state})
+      schedule_next_action(state.name, wait)
+      {:noreply, new_state}
     else
-      Logger.warning(
-        "Actor #{actor_data.name} is not started yet, so it can't act. Start it with :start"
-      )
-
-      {:noreply, actor_data}
+      Logger.warning("Actor #{state.name} is not started yet, so it can't act. Start it with :start")
+      {:noreply, state}
     end
   end
 
@@ -119,5 +108,11 @@ defmodule Beamulator.Actor do
   def terminate(reason, state) do
     Logger.error("Actor #{state.name} terminating with reason: #{inspect(reason)}")
     :ok
+  end
+
+  defp schedule_next_action(actor_name, wait) do
+    wait_ms = Tools.Time.tick_to_ms(wait)
+    Logger.debug("Actor #{actor_name} scheduling next action in #{wait_ms}ms")
+    Process.send_after(self(), :act, wait_ms)
   end
 end

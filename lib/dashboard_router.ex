@@ -1,4 +1,4 @@
-defmodule Beamulator.Endpoint do
+defmodule Beamulator.HttpRouter do
   use Plug.Router
   require Logger
 
