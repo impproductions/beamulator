@@ -3,8 +3,6 @@ defmodule Beamulator.SupervisorActors do
 
   use DynamicSupervisor
 
-  # alias Beamulator.Tools
-
   def start_link(_) do
     Logger.info("Actor Supervisor started")
     DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)
@@ -22,7 +20,7 @@ defmodule Beamulator.SupervisorActors do
         Logger.debug("Child (actor #{name}) create successfully")
         {:ok, pid}
       {:error, reason} ->
-        Logger.error("Failed to start child (actor #{name}): #{inspect(reason)}")
+        Logger.error("Failed to create child (actor #{name}): #{inspect(reason)}")
         {:error, reason}
     end
   end

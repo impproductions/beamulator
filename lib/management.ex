@@ -23,6 +23,7 @@ defmodule AlertFunctions do
 end
 
 defmodule Manage do
+  alias Beamulator.Tools
   require Logger
   require AlertFunctions
 
@@ -117,9 +118,7 @@ defmodule Manage do
   end
 
   def actors_by_behavior(behavior_module) do
-    Registry.lookup(Beamulator.ActorRegistry, :actors)
-    |> Enum.filter(fn {_, {behavior, _, _}} -> behavior == behavior_module end)
-    |> Enum.map(&simplify_actor_data/1)
+    Tools.Actors.select_by_behavior(behavior_module)
   end
 
   defp extract_pid(pid_string) do
