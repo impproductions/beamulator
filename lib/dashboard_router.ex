@@ -6,7 +6,6 @@ defmodule Beamulator.Endpoint do
     at: "/static",
     from: {:beamulator, "priv/static"}
   )
-
   plug(:match)
   plug(:dispatch)
 
@@ -20,23 +19,22 @@ defmodule Beamulator.Endpoint do
     send_resp(conn, 404, "Not Found")
   end
 
-  def start_link(port \\ 4000) do
-    dispatch =
-      :cowboy_router.compile([
-        {:_,
-         [
-           {"/ws", Beamulator.WebSocketHandler, []},
-           {"/[...]", Plug.Cowboy.Handler, {__MODULE__, []}}
-         ]}
-      ])
+  def child_spec(_opts) do
+    dispatch = [
+      {:_,
+       [
+         {"/ws", Beamulator.WebSocketHandler, []},
+         {"/[...]", Plug.Cowboy.Handler, {__MODULE__, []}}
+       ]}
+    ]
 
-    cowboy_opts = %{env: %{dispatch: dispatch}}
-    :cowboy.start_clear(:http_listener, [{:port, port}], cowboy_opts)
-  end
-end
-
-defmodule Beamulator.Dashboard.StaticServer do
-  def start_link(_opts) do
-    Beamulator.Endpoint.start_link(4000)
+    Plug.Cowboy.child_spec(
+      scheme: :http,
+      plug: __MODULE__,
+      options: [
+        port: Application.get_env(:beamulator, :http_port, 4000),
+        dispatch: dispatch
+      ]
+    )
   end
 end

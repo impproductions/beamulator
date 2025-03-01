@@ -18,7 +18,7 @@ defmodule Beamulator.Application do
       [
         {Registry, keys: :duplicate, name: Beamulator.WebsocketRegistry},
         {Beamulator.SupervisorSimulation, []},
-        # {Beamulator.SupervisorWebsocket, []}
+        {Beamulator.Endpoint, []},
       ]
       |> maybe_add_action_logger()
 
@@ -45,14 +45,6 @@ defmodule Beamulator.Application do
         {:error, reason}
     end
 
-    case Beamulator.Dashboard.StaticServer.start_link([]) do
-      {:ok, _} ->
-        Logger.info("Dashboard started.")
-
-      {:error, reason} ->
-        Logger.error("Failed to start dashboard: #{inspect(reason)}")
-    end
-
     {:ok, self()}
   end
 
@@ -63,7 +55,6 @@ defmodule Beamulator.Application do
     |> Enum.flat_map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
       for _ <- 1..amt do
         %{
-          # Changed concatenation from name <> " " <> to_string(...) to interpolation.
           name: "#{name} #{Beamulator.Tools.increasing_int()}",
           behavior: behavior,
           config: config
