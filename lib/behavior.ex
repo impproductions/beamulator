@@ -85,7 +85,7 @@ defmodule Beamulator.Behavior do
               "Complaint triggered: #{complaint.message}. trigger code: #{complaint.code}"
             )
 
-            GenServer.cast(Beamulator.ActionLoggerPersistent, {
+            GenServer.cast(Beamulator.ActionLogger, {
               :log_complaint,
               {
                 __MODULE__,

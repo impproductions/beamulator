@@ -42,7 +42,7 @@ defmodule Beamulator.ActionExecutor do
   defp log_event(ident, action, args, result, success) do
     if Application.get_env(:beamulator, :enable_action_logger, false) do
       GenServer.cast(
-        Beamulator.ActionLoggerPersistent,
+        Beamulator.ActionLogger,
         {:log_event, {ident, action, args, result, success}}
       )
     end

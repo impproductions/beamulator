@@ -1,16 +1,21 @@
 # Roadmap
 
 ## Next
+- newly created actors don't show up in ui (create event)
+- action count
+- show that actor is acting
+- explicit start/default delay
+
 - reintroduce actor config into the mix
 - find a way to store runtime config along with simulation
+
 - check if one actor dying kills all other actors
 - multi-tenant todo example
 - ws log connection
 
 ## Fix
-- **write in batch on action logger**
 - inject correct ws url
-- created actors don't show up in ui
+- inject correct quest url
 - rationalize type signatures for large tuples (convert to maps)
   - action executor
   - behavior registry/behavior spec?
@@ -43,6 +48,7 @@
   - Opensearch?
 
 ## Done
+- write in batch on action logger ✅
 - normalize wait times to "simulation time" instead of ticks ✅
 - action log should include failed requests ✅
 - can I have the same port for ws and http? ✅

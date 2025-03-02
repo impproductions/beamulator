@@ -43,7 +43,6 @@ defmodule Beamulator.MixProject do
       {:jason, "~> 1.2"},
       {:logger_file_backend, "~> 0.0.12"},
       {:plug_cowboy, "~> 2.0"},
-      {:timex, "~> 3.7"},
       {:uuid, "~> 1.1"}
     ]
   end

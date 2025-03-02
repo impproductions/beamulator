@@ -1,8 +1,4 @@
-defmodule Beamulator.ActionLoggerPersistent do
-  @moduledoc """
-  A persistent logger for actions and complaints that writes to QuestDB.
-  """
-
+defmodule Beamulator.ActionLogger do
   use GenServer
   require Logger
 
@@ -16,6 +12,10 @@ defmodule Beamulator.ActionLoggerPersistent do
   @action_symbol_capacity 1024
   @severity_symbol_capacity 16
 
+  # Batching configuration
+  @batch_size 100
+  @flush_interval 1_000
+
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
@@ -27,7 +27,8 @@ defmodule Beamulator.ActionLoggerPersistent do
 
     with :ok <- test_connection(url),
          :ok <- create_tables(url) do
-      {:ok, %{}}
+      timer_ref = Process.send_after(self(), :flush, @flush_interval)
+      {:ok, %{queue: [], flush_timer: timer_ref}}
     else
       {:error, reason} -> {:stop, reason}
     end
@@ -63,6 +64,57 @@ defmodule Beamulator.ActionLoggerPersistent do
     })
 
     {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:enqueue, line, context}, state) do
+    new_queue = state.queue ++ [{line, context}]
+    state = %{state | queue: new_queue}
+
+    if length(new_queue) >= @batch_size do
+      if state.flush_timer, do: Process.cancel_timer(state.flush_timer)
+      flush(state.queue)
+      timer_ref = Process.send_after(self(), :flush, @flush_interval)
+      {:noreply, %{state | queue: [], flush_timer: timer_ref}}
+    else
+      {:noreply, state}
+    end
+  end
+
+  @impl true
+  def handle_info(:flush, state) do
+    if state.queue != [] do
+      flush(state.queue)
+    end
+
+    timer_ref = Process.send_after(self(), :flush, @flush_interval)
+    {:noreply, %{state | queue: [], flush_timer: timer_ref}}
+  end
+
+  defp flush(queue) do
+    payload =
+      queue
+      |> Enum.map(fn {line, _context} -> line end)
+      |> Enum.join("\n")
+
+    case HTTPoison.post(@write_url, payload, @write_headers) do
+      {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
+        Logger.info("Successfully sent #{length(queue)} logs to QuestDB.")
+
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
+        Enum.each(queue, fn {_, context} ->
+          Logger.error("QuestDB returned status #{code} for #{context}. Body: #{body}")
+        end)
+
+      {:error, reason} ->
+        Enum.each(queue, fn {_, context} ->
+          Logger.error("Failed to send log for #{context}: #{inspect(reason)}")
+        end)
+    end
+  end
+
+  defp post_line(line, context) do
+    GenServer.cast(__MODULE__, {:enqueue, line, context})
   end
 
   defp test_connection(url) do
@@ -245,21 +297,6 @@ defmodule Beamulator.ActionLoggerPersistent do
     start_timestamp_us = DateTime.to_unix(start_time, :microsecond)
     real_time_us = Clock.get_real_duration_ms() * 1_000 + start_timestamp_us
     {timestamp_ns, start_timestamp_us, real_time_us}
-  end
-
-  defp post_line(line, context) do
-    case HTTPoison.post(@write_url, line, @write_headers) do
-      {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
-        Logger.info("Successfully logged #{context}.")
-
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        Logger.error("QuestDB returned status #{code} for #{context}. Body: #{body}")
-        Logger.debug("Failed line: #{line}")
-
-      {:error, reason} ->
-        Logger.error("Failed to send log for #{context}: #{inspect(reason)}")
-        Logger.debug("Failed line: #{line}")
-    end
   end
 
   defp escape_tag(tag) when is_binary(tag), do: String.replace(tag, ~r/[\s,=]/, "_")

@@ -24,4 +24,9 @@ defmodule Beamulator.SupervisorActors do
         {:error, reason}
     end
   end
+
+  def terminate(reason, _state) do
+    Logger.info("Actor Supervisor terminated with reason: #{inspect(reason)}")
+    :ok
+  end
 end
