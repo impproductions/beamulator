@@ -50,12 +50,13 @@ defmodule Beamulator.ActionLoggerPersistent do
   end
 
   @impl true
-  def handle_cast({:log_event, {{behavior, name}, action, args, result}}, state) do
+  def handle_cast({:log_event, {{behavior, name}, action, args, result, success}}, state) do
     write_event(%{
       behavior: behavior,
       name: name,
       action: action,
       args: args,
+      success: success,
       result: result
     })
 
@@ -98,6 +99,7 @@ defmodule Beamulator.ActionLoggerPersistent do
           name STRING,
           action SYMBOL CAPACITY #{@action_symbol_capacity} NOCACHE,
           args STRING,
+          success BOOLEAN,
           result STRING,
           tick_number DOUBLE,
           tick_interval DOUBLE,
@@ -204,10 +206,12 @@ defmodule Beamulator.ActionLoggerPersistent do
   defp write_event(data) do
     %{behavior: behavior, name: name, action: action, args: args, result: result} = data
     {status, content} = result
+    Logger.info("Logging event: #{inspect(status)}, #{inspect(content)}")
 
     action_str = inspect(action) |> escape_tag()
     args_str = Jason.encode!(args) |> escape_field()
     result_str = %{status: status, content: content} |> Jason.encode!() |> escape_field()
+    success = if status == :ok, do: "true", else: "false"
 
     tick_interval = Tools.Time.tick_interval_ms()
     {timestamp, start_timestamp, tick_number} = compute_timestamps()
@@ -215,7 +219,7 @@ defmodule Beamulator.ActionLoggerPersistent do
     line =
       "action_log,behavior=#{escape_tag(behavior)},name=#{escape_tag(name)},action=#{escape_tag(action_str)} " <>
         "args=\"#{args_str}\",result=\"#{result_str}\",tick_number=#{tick_number},tick_interval=#{tick_interval}," <>
-        "start_time=#{start_timestamp}i,run_id=\"#{Application.get_env(:beamulator, :run_uuid)}\" " <>
+        "start_time=#{start_timestamp}i,run_id=\"#{Application.get_env(:beamulator, :run_uuid)}\",success=#{success} " <>
         "#{timestamp}"
 
     post_line(line, "action #{action_str} by #{name}")

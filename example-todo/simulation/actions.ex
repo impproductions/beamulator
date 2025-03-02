@@ -50,19 +50,26 @@ defmodule Beamulator.Actions do
 
     payload = Jason.encode!(%{id: id, title: title, completed: completed})
 
-    case HTTPoison.put("#{@api_base_url}/tasks/#{id}", payload, [{"Content-Type", "application/json"}]) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        task = Jason.decode!(body)
-        Logger.info("Task updated successfully: #{inspect(task)}")
-        {:ok, task}
+    if :rand.uniform() < 0.5 do
+      Logger.error("Randomly failing to update task")
+      {:error, "Random failure"}
+    else
+      case HTTPoison.put("#{@api_base_url}/tasks/#{id}", payload, [
+             {"Content-Type", "application/json"}
+           ]) do
+        {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+          task = Jason.decode!(body)
+          Logger.info("Task updated successfully: #{inspect(task)}")
+          {:ok, task}
 
-      {:ok, resp } ->
-        Logger.error("Failed to update task: #{inspect(resp)}")
-        {:error, "Task not found"}
+        {:ok, resp} ->
+          Logger.error("Failed to update task: #{inspect(resp)}")
+          {:error, "Task not found"}
 
-      {:error, reason} ->
-        Logger.error("Failed to update task: #{inspect(reason)}")
-        {:error, "Could not update task"}
+        {:error, reason} ->
+          Logger.error("Failed to update task: #{inspect(reason)}")
+          {:error, "Could not update task"}
+      end
     end
   end
 

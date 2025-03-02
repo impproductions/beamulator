@@ -2,11 +2,11 @@
 
 ## Next
 - multi-tenant todo example
-- action log should include failed requests
-- normalize wait times to "simulated time" instead of ticks
+- normalize wait times to "simulation time" instead of ticks
 - check if one actor dying kills all other actors
 - find a way to store runtime config along with simulation
 - reintroduce actor config into the mix
+- ws log connection
 - connectors
   - rest 🛠️
   - ws?
@@ -16,7 +16,6 @@
 ## Fix
 - **write in batch on action logger**
 - inject correct ws url
-- can I have the same port for ws and http?
 - created actors don't show up in ui
 
 ## Feature ideas
@@ -31,18 +30,19 @@
   - extract behavior creation to lab
 
 ## Improvements
-- find a controlled way to handle behavior loading?
 - document/enforce simulation folder/namespacing
 - tests
 - uniform error handling
-- dashboard: better terminal renderer
+~~- dashboard: better terminal renderer~~
 
 ## Just thinking
-- ~~should executor be a process (or set of processes) and execute asynchronously?~~
-- remove behavior registry altogether?
+- find a controlled way to handle behavior loading?
+- remove behavior registry altogether?ß
 - rename behavior to personality to avoid confusion with elixir's behaviour keyword
 
 ## Done
+- action log should include failed requests ✅
+- can I have the same port for ws and http? ✅
 - graphic dashboard ✅
 - make actors restart after process dies ✅
 - refactor questdb writer ✅

@@ -41,7 +41,7 @@ defmodule Beamulator.Behaviors.Procrastinator do
                 completed: true
               },
               build_complaint(
-                fn {_, result} -> result["completed"] end,
+                fn {status, result} -> status == :ok and result["completed"] end,
                 "I marked a task incomplete but it's still marked complete",
                 :annoying
               )
@@ -67,7 +67,7 @@ defmodule Beamulator.Behaviors.Procrastinator do
                 completed: false
               },
               build_complaint(
-                fn {_, result} -> not result["completed"] end,
+                fn {status, result} -> status == :ok and not result["completed"] end,
                 "I marked a task incomplete but it's still marked complete",
                 :annoying
               )

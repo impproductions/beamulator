@@ -45,7 +45,7 @@ async def update_task(task_id: str, updated_task: Task):
         if task.id == task_id:
             task.title = updated_task.title
             task.completed = updated_task.completed
-            await asyncio.sleep(0.5)
+            # await asyncio.sleep(0.5)
             return task
     raise HTTPException(status_code=404, detail="Task not found")
     

@@ -33,9 +33,9 @@ defmodule Beamulator.Actor do
         Logger.error("Failed to start actor #{name}: #{inspect(reason)}")
         {:error, reason}
 
-      _unexpected ->
-        Logger.error("Unknown error occurred while starting actor #{name}")
-        {:error, "Unknown error"}
+      unexpected ->
+        Logger.error("Unknown error occurred while starting actor #{name}: #{inspect(unexpected)}")
+        {:error, "Unknown error: #{inspect(unexpected)}"}
     end
   end
 

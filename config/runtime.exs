@@ -1,7 +1,7 @@
 import Config
 
 config :beamulator,
-  enable_action_logger: false,
+  enable_action_logger: true,
   questdb: %{
     url: "http://localhost",
     port: 9000

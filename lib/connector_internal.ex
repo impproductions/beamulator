@@ -8,14 +8,8 @@ defmodule Beamulator.Connectors.Internal do
   def create_actors(actors) do
     results =
       actors
-      |> Enum.map(fn conf ->
-        %{name: name, behavior: behavior, config: config} = conf
-
-        case Beamulator.SupervisorActors.create_actor(
-               name,
-               behavior,
-               config
-             ) do
+      |> Enum.map(fn %{name: name, behavior: behavior, config: config} ->
+        case Beamulator.SupervisorActors.create_actor(name, behavior, config) do
           {:ok, pid} -> {:ok, pid}
           {:error, reason} -> {:error, reason}
         end
