@@ -2,21 +2,19 @@
 
 ## Next
 - multi-tenant todo example
-- normalize wait times to "simulation time" instead of ticks
+- normalize wait times to "simulation time" instead of ticks 🛠️
 - check if one actor dying kills all other actors
 - find a way to store runtime config along with simulation
 - reintroduce actor config into the mix
 - ws log connection
-- connectors
-  - rest 🛠️
-  - ws?
-  - pg?
-  - Opensearch?
 
 ## Fix
 - **write in batch on action logger**
 - inject correct ws url
 - created actors don't show up in ui
+- rationalize type signatures for large tuples (convert to maps)
+  - action executor
+  - behavior registry/behavior spec?
 
 ## Feature ideas
 - save/restore state!!! (ugh)
@@ -39,6 +37,11 @@
 - find a controlled way to handle behavior loading?
 - remove behavior registry altogether?ß
 - rename behavior to personality to avoid confusion with elixir's behaviour keyword
+- simple connectors?
+  - rest?
+  - ws?
+  - pg?
+  - Opensearch?
 
 ## Done
 - action log should include failed requests ✅

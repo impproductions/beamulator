@@ -65,11 +65,9 @@ defmodule Beamulator.Actor do
   end
 
   def handle_info(:act, %{behavior: behavior, state: actor_state, started: started} = state) do
-    Logger.metadata(actor: state.name, pid: inspect(self()))
-    Logger.debug("Actor #{state.name} received action request")
-
     tick_number = Clock.get_tick_number()
-    Logger.metadata(tick: tick_number)
+    Logger.metadata(actor: state.name, pid: inspect(self()), tick: tick_number)
+    Logger.debug("Actor #{state.name} received action request")
 
     behavior_data = %Beamulator.Behavior.Data{
       name: state.name,
@@ -78,14 +76,12 @@ defmodule Beamulator.Actor do
     }
 
     if started do
-      Logger.info("Actor started and acting")
-
       {wait, new_state} =
         case behavior.act(tick_number, behavior_data) do
           {:ok, wait, new_behavior_data} ->
             Logger.debug("Actor #{state.name} acted successfully on tick #{tick_number}")
-            updated_data = %{state | state: new_behavior_data.state}
-            {wait, updated_data}
+            updated_state = %{state | state: new_behavior_data.state}
+            {wait, updated_state}
 
           {:error, wait, reason} ->
             Logger.warning("Actor #{state.name} failed to act on tick #{tick_number}: #{inspect(reason)}")

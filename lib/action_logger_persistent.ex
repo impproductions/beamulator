@@ -35,7 +35,10 @@ defmodule Beamulator.ActionLoggerPersistent do
   end
 
   @impl true
-  def handle_cast({:log_complaint, {behavior, actor, message, severity, action, args, actual}}, state) do
+  def handle_cast(
+        {:log_complaint, {behavior, actor, message, severity, action, args, actual}},
+        state
+      ) do
     write_complaint(%{
       behavior: behavior,
       actor: actor,
@@ -165,6 +168,7 @@ defmodule Beamulator.ActionLoggerPersistent do
     actions_file = Beamulator.Actions.source_code() |> Base.encode64()
 
     timestamp_ns = DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
+
     line =
       "run_metadata,run_id=#{run_id} " <>
         "actions_file=\"#{actions_file}\",random_seed=#{random_seed} " <>
@@ -173,9 +177,11 @@ defmodule Beamulator.ActionLoggerPersistent do
     case HTTPoison.post(@write_url, line, @write_headers) do
       {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
         Logger.info("Metadata successfully sent to QuestDB.")
+
       {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
         Logger.error("QuestDB returned status #{code} on metadata. Body: #{body}")
         Logger.debug("Failed line: #{line}")
+
       {:error, reason} ->
         Logger.error("Failed to send metadata to QuestDB: #{inspect(reason)}")
         Logger.debug("Failed line: #{line}")
@@ -183,13 +189,23 @@ defmodule Beamulator.ActionLoggerPersistent do
   end
 
   defp write_complaint(data) do
-    %{behavior: behavior, actor: actor, message: message, severity: severity,
-      action: action, args: args, actual: actual} = data
+    %{
+      behavior: behavior,
+      actor: actor,
+      message: message,
+      severity: severity,
+      action: action,
+      args: args,
+      actual: actual
+    } = data
 
     action_str = inspect(action) |> escape_tag()
     args_str = Jason.encode!(args) |> escape_field()
     trigger_str = actual.trigger |> escape_field()
-    actual_str = %{status: actual.status, result: actual.result} |> Jason.encode!() |> escape_field()
+
+    actual_str =
+      %{status: actual.status, result: actual.result} |> Jason.encode!() |> escape_field()
+
     severity_str = inspect(severity)
 
     {timestamp, start_timestamp, _tick_number} = compute_timestamps()
@@ -240,9 +256,11 @@ defmodule Beamulator.ActionLoggerPersistent do
     case HTTPoison.post(@write_url, line, @write_headers) do
       {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
         Logger.info("Successfully logged #{context}.")
+
       {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
         Logger.error("QuestDB returned status #{code} for #{context}. Body: #{body}")
         Logger.debug("Failed line: #{line}")
+
       {:error, reason} ->
         Logger.error("Failed to send log for #{context}: #{inspect(reason)}")
         Logger.debug("Failed line: #{line}")
