@@ -65,8 +65,8 @@ defmodule Beamulator.Actor do
   end
 
   def handle_info(:act, %{behavior: behavior, state: actor_state, started: started} = state) do
-    tick_number = Clock.get_tick_number()
-    Logger.metadata(actor: state.name, pid: inspect(self()), tick: tick_number)
+    simulation_time_ms = Clock.get_simulation_time_ms()
+    Logger.metadata(actor: state.name, pid: inspect(self()), simulation_time_ms: simulation_time_ms)
     Logger.debug("Actor #{state.name} received action request")
 
     behavior_data = %Beamulator.Behavior.Data{
@@ -76,20 +76,20 @@ defmodule Beamulator.Actor do
     }
 
     if started do
-      {wait, new_state} =
-        case behavior.act(tick_number, behavior_data) do
-          {:ok, wait, new_behavior_data} ->
-            Logger.debug("Actor #{state.name} acted successfully on tick #{tick_number}")
+      {wait_simulation_time_ms, new_state} =
+        case behavior.act(simulation_time_ms, behavior_data) do
+          {:ok, wait_simulation_time_ms, new_behavior_data} ->
+            Logger.debug("Actor #{state.name} acted successfully at #{simulation_time_ms}")
             updated_state = %{state | state: new_behavior_data.state}
-            {wait, updated_state}
+            {wait_simulation_time_ms, updated_state}
 
-          {:error, wait, reason} ->
-            Logger.warning("Actor #{state.name} failed to act on tick #{tick_number}: #{inspect(reason)}")
-            {wait, state}
+          {:error, wait_simulation_time_ms, reason} ->
+            Logger.error("Actor #{state.name} failed to act on at #{simulation_time_ms}: #{inspect(reason)}")
+            {wait_simulation_time_ms, state}
         end
 
       Beamulator.Dashboard.WebSocketHandler.broadcast({:actor_state_update, new_state})
-      schedule_next_action(state.name, wait)
+      schedule_next_action(state.name, wait_simulation_time_ms)
       {:noreply, new_state}
     else
       Logger.warning("Actor #{state.name} is not started yet, so it can't act. Start it with :start")
@@ -106,9 +106,10 @@ defmodule Beamulator.Actor do
     :ok
   end
 
-  defp schedule_next_action(actor_name, wait) do
-    wait_ms = Tools.Time.tick_to_ms(wait)
-    Logger.debug("Actor #{actor_name} scheduling next action in #{wait_ms}ms")
-    Process.send_after(self(), :act, wait_ms)
+  defp schedule_next_action(actor_name, wait_simulation_time_ms) do
+    wait_real_time_ms = div(wait_simulation_time_ms, Tools.Time.time_speed_multiplier())
+
+    Logger.debug("Actor #{actor_name} scheduling next action in #{Tools.Duration.to_string(wait_simulation_time_ms)} simulation time (#{Tools.Duration.to_string(wait_real_time_ms)})")
+    Process.send_after(self(), :act, wait_real_time_ms)
   end
 end

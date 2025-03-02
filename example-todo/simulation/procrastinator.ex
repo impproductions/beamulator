@@ -1,12 +1,13 @@
 defmodule Beamulator.Behaviors.Procrastinator do
   alias Beamulator.Tools
+  alias Beamulator.Tools.Duration, as: D
   use Beamulator.Behavior
   import Beamulator.Behavior.ComplaintBuilder
 
   require Logger
   alias Beamulator.Actions
 
-  @decision_wait_ticks 700
+  @decision_wait_ms D.new(h: 2)
 
   @impl Beamulator.Behavior
   def default_state() do
@@ -84,8 +85,8 @@ defmodule Beamulator.Behaviors.Procrastinator do
   end
 
   defp wait(name, data) do
-    Logger.info("#{name} is waiting.")
-    to_wait = Tools.random_int(div(@decision_wait_ticks, 2), @decision_wait_ticks)
+    to_wait = Tools.random_int(div(@decision_wait_ms, 2), @decision_wait_ms)
+    Logger.info("#{name} is waiting for #{D.to_string(to_wait)}.")
     {:ok, to_wait, data}
   end
 

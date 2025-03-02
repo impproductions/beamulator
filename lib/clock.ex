@@ -12,12 +12,16 @@ defmodule Beamulator.Clock do
     GenServer.call(__MODULE__, :get_start_time)
   end
 
-  def get_tick_number() do
-    GenServer.call(__MODULE__, :get_tick_number)
+  def get_real_duration_ms() do
+    GenServer.call(__MODULE__, :get_real_duration_ms)
   end
 
-  def get_tps() do
-    GenServer.call(__MODULE__, :get_tps)
+  def get_simulation_duration_ms() do
+    GenServer.call(__MODULE__, :get_simulation_duration_ms)
+  end
+
+  def get_simulation_time_ms() do
+    GenServer.call(__MODULE__, :get_simulation_time_ms)
   end
 
   def init(_) do
@@ -25,68 +29,32 @@ defmodule Beamulator.Clock do
 
     Logger.info("Clock initialized at #{DateTime.to_iso8601(start_time)}")
 
-    schedule_tick()
-
     state = %{
-      tick_number: 0,
-      start_time: start_time,
-      fps_counter: 0,
-      last_fps_time: start_time,
-      last_fps: 0
+      start_time: start_time
     }
 
     {:ok, state}
   end
 
-  def handle_info(:tick, state) do
-    tick_interval =
-      Tools.Time.tick_interval_ms() || 1000
-
-    if rem(state.tick_number, div(1000, tick_interval)) == 0 do
-      Logger.info("Tick #{state.tick_number} (#{Tools.Time.as_duration_human(state.tick_number)})")
-    end
-
-    current_time = DateTime.utc_now()
-    tick_number = state.tick_number
-
-    new_fps_counter = state.fps_counter + 1
-    {updated_fps, updated_fps_counter, updated_last_fps_time} =
-      if DateTime.diff(current_time, state.last_fps_time, :second) >= 1 do
-        {new_fps_counter, 0, current_time}
-      else
-        {state.last_fps, new_fps_counter, state.last_fps_time}
-      end
-
-    schedule_tick()
-
-    new_state = %{
-      state
-      | tick_number: tick_number + 1,
-        fps_counter: updated_fps_counter,
-        last_fps_time: updated_last_fps_time,
-        last_fps: updated_fps
-    }
-
-    {:noreply, new_state}
+  def handle_call(:get_real_duration_ms, _from, state) do
+    since_start = DateTime.diff(DateTime.utc_now(), state.start_time, :millisecond)
+    {:reply, since_start, state}
   end
 
-  def handle_call(:get_tick_number, _from, state) do
-    {:reply, state.tick_number, state}
+  def handle_call(:get_simulation_duration_ms, _from, state) do
+    since_start = DateTime.diff(DateTime.utc_now(), state.start_time, :millisecond)
+    {:reply, Tools.Time.ms_to_simulation_ms(since_start), state}
+  end
+
+  # FIXME: same as above
+  def handle_call(:get_simulation_time_ms, _from, state) do
+    since_start = DateTime.diff(DateTime.utc_now(), state.start_time, :millisecond)
+    simulation_ms = Tools.Time.ms_to_simulation_ms(since_start)
+
+    {:reply, simulation_ms, state}
   end
 
   def handle_call(:get_start_time, _from, state) do
     {:reply, state.start_time, state}
-  end
-
-  def handle_call(:get_tps, _from, state) do
-    {:reply, state.last_fps, state}
-  end
-
-  defp schedule_tick() do
-    tick_interval =
-      Application.get_env(:beamulator, :simulation)[:tick_interval_ms] || 1000
-
-    Logger.debug("Scheduling next tick in #{tick_interval}ms")
-    Process.send_after(self(), :tick, tick_interval)
   end
 end

@@ -6,7 +6,6 @@ defmodule Beamulator.ActionLoggerPersistent do
   use GenServer
   require Logger
 
-  alias Beamulator.Tools
   alias Beamulator.Clock
 
   @headers [{"Content-Type", "application/json"}, {"Accept", "application/json"}]
@@ -104,8 +103,7 @@ defmodule Beamulator.ActionLoggerPersistent do
           args STRING,
           success BOOLEAN,
           result STRING,
-          tick_number DOUBLE,
-          tick_interval DOUBLE,
+          real_time TIMESTAMP,
           start_time TIMESTAMP
         ) TIMESTAMP(timestamp)
         PARTITION BY DAY
@@ -208,7 +206,7 @@ defmodule Beamulator.ActionLoggerPersistent do
 
     severity_str = inspect(severity)
 
-    {timestamp, start_timestamp, _tick_number} = compute_timestamps()
+    {timestamp, start_timestamp, _real_time} = compute_timestamps()
 
     line =
       "complaints_log,behavior=#{escape_tag(behavior)},actor=#{escape_tag(actor)},severity=#{escape_tag(severity_str)} " <>
@@ -222,19 +220,17 @@ defmodule Beamulator.ActionLoggerPersistent do
   defp write_event(data) do
     %{behavior: behavior, name: name, action: action, args: args, result: result} = data
     {status, content} = result
-    Logger.info("Logging event: #{inspect(status)}, #{inspect(content)}")
 
     action_str = inspect(action) |> escape_tag()
     args_str = Jason.encode!(args) |> escape_field()
     result_str = %{status: status, content: content} |> Jason.encode!() |> escape_field()
     success = if status == :ok, do: "true", else: "false"
 
-    tick_interval = Tools.Time.tick_interval_ms()
-    {timestamp, start_timestamp, tick_number} = compute_timestamps()
+    {timestamp, start_timestamp, real_time} = compute_timestamps()
 
     line =
       "action_log,behavior=#{escape_tag(behavior)},name=#{escape_tag(name)},action=#{escape_tag(action_str)} " <>
-        "args=\"#{args_str}\",result=\"#{result_str}\",tick_number=#{tick_number},tick_interval=#{tick_interval}," <>
+        "args=\"#{args_str}\",result=\"#{result_str}\",real_time=#{real_time}i," <>
         "start_time=#{start_timestamp}i,run_id=\"#{Application.get_env(:beamulator, :run_uuid)}\",success=#{success} " <>
         "#{timestamp}"
 
@@ -242,14 +238,13 @@ defmodule Beamulator.ActionLoggerPersistent do
   end
 
   defp compute_timestamps() do
-    tick_number = Clock.get_tick_number()
     start_time = Clock.get_start_time()
-    tick_interval = Tools.Time.tick_interval_ms()
+    simulation_time_ns = Clock.get_simulation_time_ms() * 1_000_000
 
-    tick_duration_ns = tick_number * tick_interval * 10_000
-    timestamp = DateTime.to_unix(start_time, :nanosecond) + tick_duration_ns
-    start_timestamp = DateTime.to_unix(start_time, :microsecond)
-    {timestamp, start_timestamp, tick_number}
+    timestamp_ns = DateTime.to_unix(start_time, :nanosecond) + simulation_time_ns
+    start_timestamp_us = DateTime.to_unix(start_time, :microsecond)
+    real_time_us = Clock.get_real_duration_ms() * 1_000 + start_timestamp_us
+    {timestamp_ns, start_timestamp_us, real_time_us}
   end
 
   defp post_line(line, context) do

@@ -7,4 +7,4 @@ config :logger, :console,
   path: "log/simulation.log",
   level: :info,
   format: {Beamulator.LoggerFormatter, :format},
-  metadata: [:module, :function, :line, :tick, :actor, :pid]
+  metadata: [:module, :function, :line, :actor, :pid, :simulation_time_ms]

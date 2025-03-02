@@ -168,7 +168,7 @@
       ]);
     }
 
-    function SimulationCard({ tick, duration, tps }) {
+    function SimulationCard({ simulation_ms, real_ms, simulation_duration, real_duration }) {
       return h("div", { className: "card", style: { marginTop: "1rem" } }, [
         h("header", { className: "card-header" },
           h("p", { className: "card-header-title" }, "Simulation")
@@ -177,9 +177,10 @@
           h("div", {
             className: "content", style: { display: "flex", justifyContent: "space-around", flexWrap: "wrap", gap: "0.25rem" }
           }, [
-            h("span", { className: "tag is-info" }, "Tick: " + tick),
-            h("span", { className: "tag is-info" }, "Simulation time: " + duration),
-            h("span", { className: "tag is-info" }, "TPS: " + tps),
+            h("span", { className: "tag is-info" }, "Simulation time: " + simulation_ms + "ms"),
+            h("span", { className: "tag is-info" }, "Real time: " + real_ms + "ms"),
+            h("span", { className: "tag is-info" }, "Simulation duration: " + simulation_duration),
+            h("span", { className: "tag is-info" }, "Real duration: " + real_duration)
           ])
         )
       ]);
@@ -193,16 +194,17 @@
       const [actorStates, setActorStates] = useState([]);
       const [behaviors, setBehaviors] = useState([]);
       const [selectedActor, setSelectedActor] = useState(null);
-      const [simulation, setSimulation] = useState({ tick: 0, duration: 0, tps: 0 });
+      const [simulation, setSimulation] = useState({ duration: 0 });
 
       useEffect(() => {
         messages.forEach((msg) => {
           switch (msg.type) {
             case "simulation":
               setSimulation({
-                tick: msg.data.tick_number,
-                duration: msg.data.duration,
-                tps: msg.data.tps
+                simulation_ms: msg.data.simulation_ms,
+                real_ms: msg.data.real_ms,
+                simulation_duration: msg.data.simulation_duration,
+                real_duration: msg.data.real_duration,
               });
               break;
             case "behaviors":

@@ -1,11 +1,10 @@
 # Roadmap
 
 ## Next
-- multi-tenant todo example
-- normalize wait times to "simulation time" instead of ticks 🛠️
-- check if one actor dying kills all other actors
-- find a way to store runtime config along with simulation
 - reintroduce actor config into the mix
+- find a way to store runtime config along with simulation
+- check if one actor dying kills all other actors
+- multi-tenant todo example
 - ws log connection
 
 ## Fix
@@ -44,6 +43,7 @@
   - Opensearch?
 
 ## Done
+- normalize wait times to "simulation time" instead of ticks ✅
 - action log should include failed requests ✅
 - can I have the same port for ws and http? ✅
 - graphic dashboard ✅

@@ -9,8 +9,7 @@ config :beamulator,
   simulation: [
     random_seed: 1,
     begin_on_start: true,
-    tick_interval_ms: 5,
-    tick_to_seconds: 1
+    time_speed_multiplier: 1000
   ],
   actors: [
     # %{behavior: Beamulator.Behaviors.Fooizer, name: "Fooizer", amt: 1000, config: %{}}

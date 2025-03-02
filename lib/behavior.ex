@@ -3,7 +3,7 @@ defmodule Beamulator.Behavior.Data do
   defstruct [:name, :config, :state]
 
   @type t :: %__MODULE__{
-          name: String.t(),
+          name: binary(),
           config: map(),
           state: map()
         }
@@ -15,9 +15,9 @@ defmodule Beamulator.Behavior.Complaint do
 
   @type t :: %__MODULE__{
           trigger: fun(),
-          message: String.t(),
+          message: binary(),
           severity: :urgent | :annoying | :justsayin,
-          code: String.t()
+          code: binary()
         }
 end
 
@@ -45,13 +45,12 @@ defmodule Beamulator.Behavior do
   The act function is called by the ActionExecutor to execute an action.
   It returns a tuple with:
     - the result of the action, either `:ok` or `:error`
-    - the number of ticks to wait before the next action
+    - the time to wait before the next action, in ms, in simulation time (e.s. 1 second is 100ms in simulation time if the simulation is running at 10x speed)
     - the updated behavior data
   """
-  @callback act(tick :: integer(), actor_data :: Beamulator.Behavior.Data.t()) ::
-              {result :: :ok, wait_ticks :: integer(), new_data :: Beamulator.Behavior.Data.t()}
-              | {:error, integer(), String.t()}
-
+  @callback act(simulation_time_ms :: integer(), actor_data :: Beamulator.Behavior.Data.t()) ::
+              {:ok, wait_ms :: integer(), new_data :: Beamulator.Behavior.Data.t()}
+              | {:error, wait_ms :: integer(), new_data :: Beamulator.Behavior.Data.t()}
   defmacro __using__(_opts) do
     quote do
       @behaviour Beamulator.Behavior

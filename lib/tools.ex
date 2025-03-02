@@ -74,60 +74,26 @@ defmodule Beamulator.Tools do
   end
 
   defmodule Time do
-    def second() do
-      Application.get_env(:beamulator, :simulation)[:tick_to_seconds]
-    end
-
-    def minute() do
-      60 * second()
-    end
-
-    def hour() do
-      60 * minute()
-    end
-
-    def day() do
-      24 * hour()
-    end
-
-    def week() do
-      7 * day()
-    end
-
-    def month() do
-      30 * day()
-    end
-
-    def year() do
-      365 * day()
-    end
-
-    def tick_interval_ms() do
-      Application.get_env(:beamulator, :simulation)[:tick_interval_ms]
-    end
-
+    alias Beamulator.Tools.Duration
     def time_speed_multiplier() do
-      1000 / tick_interval_ms()
+      Application.get_env(:beamulator, :simulation)[:time_speed_multiplier]
     end
 
-    def tick_to_ms(tick) do
-      tick * tick_interval_ms()
+    def simulation_ms_to_ms(simulation_ms) do
+      div(simulation_ms, time_speed_multiplier())
     end
 
-    def ms_to_tick(time) do
-      div(time, tick_interval_ms())
+    def ms_to_simulation_ms(time) do
+      time * time_speed_multiplier()
     end
 
-    def as_duration_human(tick) when is_integer(tick) do
-      duration = Timex.Duration.from_seconds(tick)
-
-      duration
-      |> Timex.Format.Duration.Formatter.format(:humanized)
-      |> String.replace(" ago", "")
+    def as_duration_human(time_ms) when is_integer(time_ms) do
+      Duration.new(ms: time_ms)
+      |> Duration.to_string()
     end
 
-    def as_duration_human(tick, :shorten) when is_integer(tick) do
-      as_duration_human(tick)
+    def as_duration_human(time_ms, :shorten) when is_integer(time_ms) do
+      as_duration_human(time_ms)
       |> String.split(", ")
       |> Enum.map(fn part ->
         [amt, unit] = String.split(part, " ")
@@ -140,8 +106,6 @@ defmodule Beamulator.Tools do
           String.starts_with?(unit, "hou") -> "#{amt}h"
           String.starts_with?(unit, "day") -> "#{amt}d"
           String.starts_with?(unit, "wee") -> "#{amt}w"
-          String.starts_with?(unit, "mon") -> "#{amt}M"
-          String.starts_with?(unit, "yea") -> "#{amt}y"
         end
       end)
       |> Enum.join("")

@@ -1,4 +1,6 @@
 defmodule Dashboard do
+  alias Beamulator.Clock
+  alias Beamulator.Tools
   use GenServer
 
   @pages [:overview, :behavior, :actor]
@@ -97,6 +99,7 @@ defmodule Dashboard do
 
     display_header(state)
     IO.puts("------------------ Actor #{actor} ------------------")
+
     Manage.actor_state(actor)
     |> IO.puts()
   end
@@ -113,10 +116,14 @@ defmodule Dashboard do
   defp display_header(state) do
     IO.write(IO.ANSI.clear())
     IO.write(IO.ANSI.home())
-    IO.puts("Dashboard #{Map.get(state, :page)} #{Map.get(state, :page_arg)}\t\t available pages: [#{@pages |> Enum.map(&inspect/1) |> Enum.join(", ")}]")
+
+    IO.puts(
+      "Dashboard #{Map.get(state, :page)} #{Map.get(state, :page_arg)}\t\t available pages: [#{@pages |> Enum.map(&inspect/1) |> Enum.join(", ")}]"
+    )
+
     IO.puts("\n--------- Clock ---------")
-    IO.puts("Current tick: #{Beamulator.Clock.get_tick_number()}" <>
-    "\t\tRunning at #{Beamulator.Clock.get_tps()} TPS\n")
+    IO.puts("Real duration: #{Clock.get_real_duration_ms() |> Tools.Duration.to_string()}")
+    IO.puts("Simulation duration: #{Clock.get_simulation_time_ms() |> Tools.Duration.to_string()}")
   end
 
   defp actor_counts() do

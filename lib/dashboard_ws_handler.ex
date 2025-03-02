@@ -74,7 +74,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     json_message =
       %{
         type: "simulation",
-        data: fetch_tick_data()
+        data: fetch_time_data()
       }
       |> Jason.encode!()
 
@@ -106,10 +106,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
       Logger.debug("Sending actor state update for displayed actor: #{json_message}")
       {:reply, {:text, json_message}, state}
     else
-      Logger.warning(
-        "Not sending actor state update for non-displayed actor: #{inspect(actor_state.name)} (displayed: #{inspect(state.displayed_actor)})"
-      )
-
+      # Do nothing, this actor isn't displayed
       {:ok, state}
     end
   end
@@ -144,11 +141,18 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     end)
   end
 
-  defp fetch_tick_data do
-    tick_number = Clock.get_tick_number()
-    duration = Tools.Time.as_duration_human(tick_number, :shorten)
-    tps = Clock.get_tps()
-    %{tick_number: tick_number, duration: duration, tps: tps}
+  defp fetch_time_data do
+    simulation_ms = Clock.get_simulation_time_ms()
+    real_ms = Clock.get_real_duration_ms()
+    simulation_duration = Tools.Time.as_duration_human(simulation_ms, :shorten)
+    real_duration = Tools.Time.as_duration_human(real_ms, :shorten)
+
+    %{
+      real_ms: real_ms,
+      simulation_ms: simulation_ms,
+      simulation_duration: simulation_duration,
+      real_duration: real_duration
+    }
   end
 
   defp format_actor_state(actor_state) do
