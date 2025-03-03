@@ -1,325 +1,281 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" />
+    <style>
+      html,
+      body {
+        overscroll-behavior: none;
+      }
+      .actor-tile {
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        background-color: #f9f9f9;
+        transition: background-color 0.7s, transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+      }
+      .actor-tile:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+      .actor-tile:active {
+        transform: translate(2px, 2px);
+        box-shadow: none;
+      }
+      .actor-tile[data-just-acted] {
+        background-color: red !important;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .actors-overview {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+      .dashboard-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .card-pre {
+        font-size: 0.8rem;
+        max-height: 30rem;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="https://unpkg.com/preact@10.11.2/dist/preact.min.js"></script>
+    <script src="https://unpkg.com/preact@10.11.2/hooks/dist/hooks.umd.js"></script>
+    <script type="text/javascript">
+      const { h, render } = preact;
+      const { useState, useEffect, useRef, useMemo, useCallback } = preactHooks;
+      const wsUrl = "ws://" + window.location.host + "/ws";
 
-<head>
-  <meta charset="utf-8" />
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" />
-  <style type="text/css">
-    html,
-    body {
-      overscroll-behavior: none;
-    }
-
-    .tile {
-      display: flex;
-      flex-grow: 0;
-      border: none;
-      box-sizing: border-box;
-      background-color: #f9f9f9;
-      min-width: 10px;
-      max-width: 10px;
-      width: 10px;
-      min-height: 10px;
-      max-height: 10px;
-      height: 10px;
-      transition: background-color 0.5s;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="app"></div>
-  <script src="https://unpkg.com/preact@10.11.2/dist/preact.min.js"></script>
-  <script src="https://unpkg.com/preact@10.11.2/hooks/dist/hooks.umd.js"></script>
-  <script type="text/javascript">
-    const { h, render, Fragment } = preact;
-    const { useState, useEffect, useRef, useMemo } = preactHooks;
-
-    function useWebSocket(url, onConnect = () => { }) {
-      const [status, setStatus] = useState("Disconnected");
-      const [messages, setMessages] = useState([]);
-      const wsRef = useRef(null);
-      let heartbeatInterval;
-
-      useEffect(() => {
-        let ws;
-        let reconnectTimeout;
-
-        function connect() {
-          ws = new WebSocket(url);
-          wsRef.current = ws;
-
-          ws.onopen = () => {
-            setStatus("Connected");
-            if (reconnectTimeout) clearTimeout(reconnectTimeout);
-
-            heartbeatInterval = setInterval(() => {
-              if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: "heartbeat" }));
+      const useWebSocket = (url, onMessage = () => {}) => {
+        const [status, setStatus] = useState("Disconnected");
+        const wsRef = useRef(null);
+        useEffect(() => {
+          let ws, reconnectTimeout, heartbeatInterval;
+          const connect = () => {
+            ws = new WebSocket(url);
+            wsRef.current = ws;
+            ws.onopen = () => {
+              setStatus("Connected");
+              if (reconnectTimeout) clearTimeout(reconnectTimeout);
+              heartbeatInterval = setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                  ws.send(JSON.stringify({ type: "heartbeat" }));
+                }
+              }, 5000);
+            };
+            ws.onmessage = (event) => {
+              try {
+                const data = JSON.parse(event.data);
+                onMessage(data);
+              } catch (error) {
+                console.error("Failed to parse message:", error);
               }
-            }, 5000);
-
-            onConnect();
+            };
+            ws.onclose = () => {
+              setStatus("Disconnected");
+              reconnectTimeout = setTimeout(connect, 3000);
+              clearInterval(heartbeatInterval);
+            };
+            ws.onerror = (err) => console.error("WebSocket error:", err);
           };
-
-          ws.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              setMessages((prev) => [...prev, data]);
-            } catch (error) {
-              console.error("Failed to parse message:", error);
-            }
+          connect();
+          return () => {
+            if (ws) ws.close();
+            if (reconnectTimeout) clearTimeout(reconnectTimeout);
           };
-
-          ws.onclose = () => {
-            setStatus("Disconnected");
-            reconnectTimeout = setTimeout(connect, 3000);
-
-            if (heartbeatInterval) clearInterval(heartbeatInterval);
-          };
-
-          ws.onerror = (err) => {
-            console.error("WebSocket error:", err);
-          };
-        }
-
-        connect();
-
-        return () => {
-          if (ws) ws.close();
-          if (reconnectTimeout) clearTimeout(reconnectTimeout);
+        }, [url, onMessage]);
+        const sendMessage = (msg) => {
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify(msg));
+          }
         };
-      }, [url]);
-
-      const sendMessage = (msg) => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(JSON.stringify(msg));
-        }
+        return { status, sendMessage };
       };
 
-      return { status, messages, sendMessage };
-    }
+      const Navbar = ({ title, status }) => {
+        const statusColor = status === "Connected" ? "success" : "danger";
+        return h(
+          "nav",
+          { className: "navbar is-dark" },
+          h(
+            "div",
+            { className: "navbar-brand" },
+            h("h1", { className: "navbar-item title is-4" }, title)
+          ),
+          h(
+            "div",
+            { className: "navbar-end" },
+            h(
+              "div",
+              { className: `navbar-item has-text-${statusColor}` },
+              status
+            )
+          )
+        );
+      };
 
-    function Navbar({ title, status }) {
-      const statusColor = status === "Connected" ? "success" : "danger";
-      return h(
-        "nav",
-        { className: "navbar is-dark" },
-        h("div", { className: "navbar-brand" },
-          h("h1", { className: "navbar-item title is-4" }, title)
-        ),
-        h("div", { className: "navbar-end" },
-          h("div", { className: `navbar-item has-text-${statusColor}` }, status)
-        )
-      );
-    }
-
-    function BehaviorPanel({ behaviors, actor }) {
-      return h("div", { className: "columns" }, [
-        h("div", { className: "column is-half" },
-          h("div", { className: "card" }, [
-            h("header", { className: "card-header" },
-              h("p", { className: "card-header-title" }, "Behaviors")
-            ),
-            h("div", { className: "card-content" }, [
-
-
-              h("table", { className: "table is-fullwidth is-striped" }, [
-                h("thead", null,
-                  h("tr", null, [
-                    h("th", null, "Name"),
-                    h("th", null, "Count"),
-                    h("th", null, "Color")
-                  ])
-                ),
-                h("tbody", null,
-                  behaviors.map((behavior) =>
-                    h("tr", { key: behavior.name }, [
-                      h("td", null, behavior.name),
-                      h("td", null, behavior.count),
-                      h("td", null, [
-                        h("span", {
-                          className: "tag",
-                          style: { backgroundColor: stringToColor(behavior.name) }
-                        }, [])
-                      ])
-                    ])
-                  )
-                )
-              ])
-            ])
-          ])
-        ),
-        h("div", { className: "column is-half" },
-          actor
-            ? h(ActorCard, { actor })
-            : h("div", { className: "card" }, [
+      const BehaviorPanel = ({ behaviors, actor }) =>
+        h("div", { className: "columns" }, [
+          h("div", { className: "column is-half" },
+            h("div", { className: "card" }, [
               h("header", { className: "card-header" },
-                h("p", { className: "card-header-title" }, "Actor")
+                h("p", { className: "card-header-title" }, "Behaviors")
               ),
               h("div", { className: "card-content" },
-                h("div", { className: "content" }, "Select an actor to view details.")
+                h("table", { className: "table is-fullwidth is-striped" }, [
+                  h("thead", null,
+                    h("tr", null, [
+                      h("th", null, "Name"),
+                      h("th", null, "Count"),
+                      h("th", null, "Color")
+                    ])
+                  ),
+                  h("tbody", null,
+                    behaviors.map((behavior) =>
+                      h("tr", { key: behavior.name }, [
+                        h("td", null, behavior.name),
+                        h("td", null, behavior.count),
+                        h("td", null,
+                          h("span", {
+                            className: "tag",
+                            style: { backgroundColor: stringToColor(behavior.name) }
+                          })
+                        )
+                      ])
+                    )
+                  )
+                ])
               )
             ])
-        )
-      ]);
-    }
-
-    function ActorCard({ actor }) {
-      if (!actor) return null;
-      return h("div", { className: "card" }, [
-        h("header", { className: "card-header" },
-          h("p", { className: "card-header-title" }, actor.name)
-        ),
-        h("div", { className: "card-content" },
-          h("div", {
-            className: "content", style: {
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.5rem",
-            }
-          }, [
-            h("div", { className: "tag" }, "Action Count:" + actor.action_count),
-            h("div", { className: "tag" }, "Last Action At: " + actor.last_action_time),
-            h("div", { className: "tag" }, "Behavior: " + actor.behavior),
-            h("div", { className: "tag" }, "Started: " + actor.started),
-          ]),
-          h("div", { className: "content" }, [
-            h("h4", null, "State"),
-            h("pre", {
-              style: {
-                fontSize: "0.8rem",
-                maxHeight: "30rem",
-              }
-            }, JSON.stringify(actor.state, null, 2)),
-            h("h4", null, "Config"),
-            h("pre", {
-              style: {
-                fontSize: "0.8rem",
-                maxHeight: "30rem",
-              }
-            }, JSON.stringify(actor.config, null, 2))
-          ])
-        ),
-      ]);
-    }
-
-    function formatDateTime(ms) {
-      return new Date(ms).toLocaleString();
-    }
-
-    function SimulationCard({ simulation_ms, real_ms, simulation_duration, real_duration }) {
-      return h("div", { className: "card", style: { marginTop: "1rem" } }, [
-        h("header", { className: "card-header" },
-          h("p", { className: "card-header-title" }, "Simulation")
-        ),
-        h("div", { className: "card-content" },
-          h("table", {
-            className: "table is-fullwidth",
-            style: { tableLayout: "fixed" } // enforce fixed layout
-          }, [
-            h("tbody", null, [
-              h("tr", null, [
-                h("th", { style: { width: "25%" } }, "Simulation Time"),
-                h("th", { style: { width: "25%" } }, "Real Time"),
-                h("th", { style: { width: "25%" } }, "Simulation Duration"),
-                h("th", { style: { width: "25%" } }, "Real Duration")
-              ]),
-              h("tr", null, [
-                h("td", null, formatDateTime(simulation_ms)),
-                h("td", null, formatDateTime(real_ms)),
-                h("td", null, simulation_duration),
-                h("td", null, real_duration)
+          ),
+          h("div", { className: "column is-half" },
+            actor
+              ? h(ActorCard, { actor })
+              : h("div", { className: "card" }, [
+                h("header", { className: "card-header" },
+                  h("p", { className: "card-header-title" }, "Actor")
+                ),
+                h("div", { className: "card-content" },
+                  h("div", { className: "content" }, "Select an actor to view details.")
+                )
               ])
+          )
+        ]);
+
+      const ActorCard = ({ actor }) => {
+        if (!actor) return null;
+        return h("div", { className: "card" }, [
+          h("header", { className: "card-header" },
+            h("p", { className: "card-header-title" }, actor.name)
+          ),
+          h("div", { className: "card-content" }, [
+            h("div", {
+              className: "content",
+              style: { display: "flex", flexWrap: "wrap", gap: "0.5rem" }
+            }, [
+              h("div", { className: "tag" }, "Action Count:" + actor.action_count),
+              h("div", { className: "tag" }, "Last Action At: " + actor.last_action_time),
+              h("div", { className: "tag" }, "Behavior: " + actor.behavior),
+              h("div", { className: "tag" }, "Started: " + actor.started)
+            ]),
+            h("div", { className: "content" }, [
+              h("h4", null, "State"),
+              h("pre", { className: "card-pre" }, JSON.stringify(actor.state, null, 2)),
+              h("h4", null, "Config"),
+              h("pre", { className: "card-pre" }, JSON.stringify(actor.config, null, 2))
             ])
           ])
-        )
-      ]);
-    }
+        ]);
+      };
 
-    function stringToColor(str) {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      const h = hash % 360;
-      return `hsl(${h}, 70%, 60%)`;
-    }
+      const formatDateTime = (ms) => new Date(ms).toLocaleString();
 
-    function ActorsOverviewTile({ actor, onSelectActor }) {
-      const [justActed, setJustActed] = preactHooks.useState(false);
-      const [hover, setHover] = preactHooks.useState(false);
-      const [pressed, setPressed] = preactHooks.useState(false);
-
-      preactHooks.useEffect(() => {
-        setJustActed(true);
-        setTimeout(() => setJustActed(false), 500);
-      }, [actor.action_count]);
-
-      const baseColor = preactHooks.useMemo(() => stringToColor(actor.behavior), [actor.behavior]);
-
-      const transform = pressed
-        ? "translate(2px, 2px)"
-        : hover
-          ? "translate(-2px, -2px)"
-          : "none";
-      const boxShadow = pressed
-        ? "none"
-        : hover
-          ? "0 4px 8px rgba(0,0,0,0.3)"
-          : "none";
-
-      return preact.h("div", {
-        className: "tile",
-        title: actor.name,
-        style: {
-          backgroundColor: justActed ? "red" : baseColor,
-          cursor: "pointer",
-          transition: "transform 0.2s, box-shadow 0.2s",
-          transform,
-          boxShadow
-        },
-        onClick: () => onSelectActor(actor.name),
-        onMouseEnter: () => setHover(true),
-        onMouseLeave: () => { setHover(false); setPressed(false); },
-        onMouseDown: () => setPressed(true),
-        onMouseUp: () => setPressed(false)
-      }, []);
-    }
-
-    function ActorsOverviewPanel({ actorStates, onSelectActor }) {
-      return h("div", { className: "card" }, [
-        h("header", { className: "card-header" },
-          h("p", { className: "card-header-title" }, "Actors Overview")
-        ),
-        h("div", {
-          className: "card-content",
-          style: {
-            display: "flex",
-            flexDirection: "row",
-            flexWrap: "wrap",
-            justifyContent: "flex-start"
-          }
-        },
-          actorStates.map((actor) =>
-            h(ActorsOverviewTile, { key: actor.name, actor, onSelectActor })
+      const SimulationCard = ({ simulation_ms, real_ms, simulation_duration, real_duration }) =>
+        h("div", { className: "card", style: { marginTop: "1rem" } }, [
+          h("header", { className: "card-header" },
+            h("p", { className: "card-header-title" }, "Simulation")
+          ),
+          h("div", { className: "card-content" },
+            h("table", { className: "table is-fullwidth", style: { tableLayout: "fixed" } }, [
+              h("tbody", null, [
+                h("tr", null, [
+                  h("th", { style: { width: "25%" } }, "Simulation Time"),
+                  h("th", { style: { width: "25%" } }, "Real Time"),
+                  h("th", { style: { width: "25%" } }, "Simulation Duration"),
+                  h("th", { style: { width: "25%" } }, "Real Duration")
+                ]),
+                h("tr", null, [
+                  h("td", null, formatDateTime(simulation_ms)),
+                  h("td", null, formatDateTime(real_ms)),
+                  h("td", null, simulation_duration),
+                  h("td", null, real_duration)
+                ])
+              ])
+            ])
           )
-        )
-      ]);
-    }
+        ]);
 
-    function Dashboard() {
-      const { status, messages, sendMessage } = useWebSocket("ws://localhost:4000/ws", () => {
-        sendMessage({ type: "get_behaviors" });
-      });
-      const [actorStates, setActorStates] = useState([]);
-      const [behaviors, setBehaviors] = useState([]);
-      const [selectedActor, setSelectedActor] = useState(null);
-      const [simulation, setSimulation] = useState({ duration: 0 });
+      const stringToColor = (str) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const hVal = hash % 360;
+        return `hsl(${hVal}, 70%, 60%)`;
+      };
 
-      useEffect(() => {
-        messages.forEach((msg) => {
+      const ActorsOverviewTile = ({ actor, onSelectActor }) => {
+        const tileRef = useRef(null);
+        const baseColor = useMemo(() => stringToColor(actor.behavior), [actor.behavior]);
+
+        useEffect(() => {
+          if (tileRef.current) {
+            tileRef.current.setAttribute("data-just-acted", "true");
+            const timer = setTimeout(() => {
+              tileRef.current.removeAttribute("data-just-acted");
+            }, 500);
+            return () => clearTimeout(timer);
+          }
+        }, [actor.action_count]);
+
+        return h("div", {
+          ref: tileRef,
+          className: "actor-tile",
+          id: "tile-" + actor.name,
+          title: actor.name,
+          style: { backgroundColor: baseColor },
+          onClick: () => onSelectActor(actor.name)
+        });
+      };
+
+      const ActorsOverviewPanel = ({ actorStates, onSelectActor }) =>
+        h("div", { className: "card" }, [
+          h("header", { className: "card-header" },
+            h("p", { className: "card-header-title" }, "Actors Overview")
+          ),
+          h("div", { className: "card-content actors-overview" },
+            actorStates.map((actor) =>
+              h(ActorsOverviewTile, { key: actor.name, actor, onSelectActor })
+            )
+          )
+        ]);
+
+      const Dashboard = () => {
+        const [actorStates, setActorStates] = useState([]);
+        const [behaviors, setBehaviors] = useState([]);
+        const [selectedActor, setSelectedActor] = useState(null);
+        const [simulation, setSimulation] = useState({ duration: 0 });
+
+        const handleMessage = useCallback((msg) => {
           switch (msg.type) {
             case "simulation":
               setSimulation({
@@ -343,7 +299,7 @@
                   newStates.sort((a, b) => b.acting - a.acting);
                   return newStates;
                 }
-                let newStates = [...prevStates, { ...msg.actor_state }];
+                const newStates = [...prevStates, { ...msg.actor_state }];
                 newStates.sort((a, b) => {
                   if (a.behavior > b.behavior) return 1;
                   if (a.behavior < b.behavior) return -1;
@@ -355,36 +311,25 @@
             default:
               console.warn("Unhandled message type:", msg);
           }
-        });
-      }, [messages]);
+        }, []);
 
-      const handleSelectActor = (actorName) => {
-        setSelectedActor(actorName);
-        sendMessage({ type: "set_displayed_actor", actor: actorName });
+        const { status, sendMessage } = useWebSocket(wsUrl, handleMessage);
+        const handleSelectActor = (actorName) => setSelectedActor(actorName);
+        const displayedActor = actorStates.find((a) => a.name === selectedActor);
+
+        return h("div", null, [
+          h(Navbar, { title: "Dashboard", status }),
+          h("section", { className: "section" },
+            h("div", { className: "container dashboard-container" }, [
+              h(SimulationCard, simulation),
+              h(ActorsOverviewPanel, { actorStates, onSelectActor: handleSelectActor }),
+              h(BehaviorPanel, { behaviors, actor: displayedActor })
+            ])
+          )
+        ]);
       };
 
-      const displayedActor = actorStates.find(a => a.name === selectedActor);
-
-      return h("div", null, [
-        h(Navbar, { title: "Dashboard", status }),
-        h("section", { className: "section" },
-          h("div", {
-            className: "container", style: {
-              display: "flex",
-              flexDirection: "column",
-              gap: "1rem"
-            }
-          }, [
-            h(SimulationCard, simulation),
-            h(ActorsOverviewPanel, { actorStates, onSelectActor: handleSelectActor }),
-            h(BehaviorPanel, { behaviors, actor: displayedActor })
-          ])
-        )
-      ]);
-    }
-
-    render(h(Dashboard), document.getElementById("app"));
-  </script>
-</body>
-
+      render(h(Dashboard), document.getElementById("app"));
+    </script>
+  </body>
 </html>

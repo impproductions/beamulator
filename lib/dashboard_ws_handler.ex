@@ -36,24 +36,6 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     Logger.info("Received message: #{msg}")
 
     case Jason.decode(msg) do
-      {:ok, %{"type" => "set_displayed_actor", "actor" => actor}} ->
-        Logger.info("Setting displayed actor to: #{actor}")
-
-        {pid, _} =
-          Tools.Actors.select_by_name(actor)
-          |> Enum.at(0)
-
-        actual_actor_state = Tools.Actors.get_state(pid)
-        state = Map.put(state, :displayed_actor, actual_actor_state.name)
-
-        payload = %{
-          type: "actor_state_update",
-          actor_state: format_actor_state(actual_actor_state)
-        }
-
-        json_message = Jason.encode!(payload)
-        {:reply, {:text, json_message}, state}
-
       {:ok, %{"type" => "get_behaviors"}} ->
         send(self(), :send_behaviors)
         {:ok, state}

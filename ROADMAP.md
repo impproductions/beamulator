@@ -1,18 +1,15 @@
 # Roadmap
 
 ## Next
-- show that actor is acting
-- explicit start/default delay
-- _**make actor supervisor self healing**_
-- switch from static html page to server side templates?
+- use message specific functions in ws handler
 
 - reintroduce actor config into the mix
 - find a way to store runtime config along with simulation
 
-- check if one actor dying kills all other actors
 - multi-tenant todo example
 - ws add connection to log metadata
 - limit run duration
+- explicit start/default delay (ramp up)
 
 ## Fix
 - actor/behavior states
@@ -21,6 +18,7 @@
 - rationalize type signatures for large tuples (convert to maps)
   - action executor
   - behavior registry/behavior spec?
+- make actor supervisor self healing? (what about state?)
 
 ## Feature ideas
 - save/restore state!!! (ugh)
@@ -49,6 +47,8 @@
   - Opensearch?
 
 ## Done
+- optimize actor overview ✅
+- show that actor is acting ✅
 - newly created actors don't show up in ui (create event) ✅
 - action count ✅
 - write in batch on action logger ✅
