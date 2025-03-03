@@ -53,7 +53,7 @@ defmodule Beamulator.Actor do
       name: name,
       behavior: behavior_module,
       action_count: 0,
-      last_action_time: Clock.get_simulation_time_ms(),
+      last_action_time: Clock.get_simulation_duration_ms(),
       started: false,
       config: config,
       state: initial_state
@@ -75,7 +75,7 @@ defmodule Beamulator.Actor do
   end
 
   def handle_info(:act, %{behavior: behavior, state: actor_state, started: started} = state) do
-    simulation_time_ms = Clock.get_simulation_time_ms()
+    simulation_time_ms = Clock.get_simulation_duration_ms()
 
     Logger.metadata(
       actor: state.name,

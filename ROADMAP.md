@@ -1,18 +1,20 @@
 # Roadmap
 
 ## Next
-- use message specific functions in ws handler
+- use serial id as identifier in UI instead of name
+- add stats to ui (actions per second?)
+- serve statistics from db in ui?
+- actor/behavior states
 
 - reintroduce actor config into the mix
+- multi-tenant todo example
 - find a way to store runtime config along with simulation
 
-- multi-tenant todo example
 - ws add connection to log metadata
 - limit run duration
 - explicit start/default delay (ramp up)
 
 ## Fix
-- actor/behavior states
 - inject correct ws url
 - inject correct quest url
 - rationalize type signatures for large tuples (convert to maps)
@@ -47,6 +49,8 @@
   - Opensearch?
 
 ## Done
+- use message specific functions in ws handler ✅
+- batch sizes in config ✅
 - optimize actor overview ✅
 - show that actor is acting ✅
 - newly created actors don't show up in ui (create event) ✅

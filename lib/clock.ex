@@ -20,10 +20,6 @@ defmodule Beamulator.Clock do
     GenServer.call(__MODULE__, :get_simulation_duration_ms)
   end
 
-  def get_simulation_time_ms() do
-    GenServer.call(__MODULE__, :get_simulation_time_ms)
-  end
-
   def init(_) do
     start_time = DateTime.utc_now()
 
@@ -44,14 +40,6 @@ defmodule Beamulator.Clock do
   def handle_call(:get_simulation_duration_ms, _from, state) do
     since_start = DateTime.diff(DateTime.utc_now(), state.start_time, :millisecond)
     {:reply, Tools.Time.ms_to_simulation_ms(since_start), state}
-  end
-
-  # FIXME: same as above
-  def handle_call(:get_simulation_time_ms, _from, state) do
-    since_start = DateTime.diff(DateTime.utc_now(), state.start_time, :millisecond)
-    simulation_ms = Tools.Time.ms_to_simulation_ms(since_start)
-
-    {:reply, simulation_ms, state}
   end
 
   def handle_call(:get_start_time, _from, state) do

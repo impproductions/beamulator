@@ -123,7 +123,7 @@ defmodule Dashboard do
 
     IO.puts("\n--------- Clock ---------")
     IO.puts("Real duration: #{Clock.get_real_duration_ms() |> Tools.Duration.to_string()}")
-    IO.puts("Simulation duration: #{Clock.get_simulation_time_ms() |> Tools.Duration.to_string()}")
+    IO.puts("Simulation duration: #{Clock.get_simulation_duration_ms() |> Tools.Duration.to_string()}")
   end
 
   defp actor_counts() do

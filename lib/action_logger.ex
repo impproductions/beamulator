@@ -13,8 +13,8 @@ defmodule Beamulator.ActionLogger do
   @severity_symbol_capacity 16
 
   # Batching configuration
-  @batch_size 100
-  @flush_interval 1_000
+  @default_batch_size 1000
+  @default_flush_interval 1_000
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -25,9 +25,11 @@ defmodule Beamulator.ActionLogger do
     questdb_config = Application.get_env(:beamulator, :questdb)
     url = "#{questdb_config[:url]}:#{questdb_config[:port]}"
 
+    flush_interval = questdb_config[:flush_interval_ms] || @default_flush_interval
+
     with :ok <- test_connection(url),
          :ok <- create_tables(url) do
-      timer_ref = Process.send_after(self(), :flush, @flush_interval)
+      timer_ref = Process.send_after(self(), :flush, flush_interval)
       {:ok, %{queue: [], flush_timer: timer_ref}}
     else
       {:error, reason} -> {:stop, reason}
@@ -69,12 +71,13 @@ defmodule Beamulator.ActionLogger do
   @impl true
   def handle_cast({:enqueue, line, context}, state) do
     new_queue = state.queue ++ [{line, context}]
+    flush_batch_size = Application.get_env(:beamulator, :questdb)[:flush_batch_size] || @default_batch_size
     state = %{state | queue: new_queue}
 
-    if length(new_queue) >= @batch_size do
+    if length(new_queue) >= flush_batch_size do
       if state.flush_timer, do: Process.cancel_timer(state.flush_timer)
       flush(state.queue)
-      timer_ref = Process.send_after(self(), :flush, @flush_interval)
+      timer_ref = Process.send_after(self(), :flush, @default_flush_interval)
       {:noreply, %{state | queue: [], flush_timer: timer_ref}}
     else
       {:noreply, state}
@@ -87,7 +90,7 @@ defmodule Beamulator.ActionLogger do
       flush(state.queue)
     end
 
-    timer_ref = Process.send_after(self(), :flush, @flush_interval)
+    timer_ref = Process.send_after(self(), :flush, @default_flush_interval)
     {:noreply, %{state | queue: [], flush_timer: timer_ref}}
   end
 
@@ -291,7 +294,7 @@ defmodule Beamulator.ActionLogger do
 
   defp compute_timestamps() do
     start_time = Clock.get_start_time()
-    simulation_time_ns = Clock.get_simulation_time_ms() * 1_000_000
+    simulation_time_ns = Clock.get_simulation_duration_ms() * 1_000_000
 
     timestamp_ns = DateTime.to_unix(start_time, :nanosecond) + simulation_time_ns
     start_timestamp_us = DateTime.to_unix(start_time, :microsecond)

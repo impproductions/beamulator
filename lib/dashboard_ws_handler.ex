@@ -35,27 +35,41 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   def websocket_handle({:text, msg}, state) do
     Logger.info("Received message: #{msg}")
 
-    case Jason.decode(msg) do
-      {:ok, %{"type" => "get_behaviors"}} ->
-        send(self(), :send_behaviors)
-        {:ok, state}
-
-      {:ok, %{"type" => "get_actors"}} ->
-        send(self(), :send_actors)
-        {:ok, state}
-
-      {:ok, %{"type" => "heartbeat"}} ->
-        Logger.debug("Received heartbeat")
+    with {:ok, %{"type" => type}} <- Jason.decode(msg) do
+      handle_client_message(type, state)
+    else
+      {:error, _} ->
+        Logger.error("Failed to decode message: #{msg}")
         {:ok, state}
 
       _ ->
-        Logger.info("Received unknown message: #{msg}")
+        Logger.error("Unable to process message: #{msg}")
         {:ok, state}
     end
   end
 
   @impl true
   def websocket_handle(_data, state), do: {:ok, state}
+
+  defp handle_client_message("get_behaviors", state) do
+    send(self(), :send_behaviors)
+    {:ok, state}
+  end
+
+  defp handle_client_message("get_actors", state) do
+    send(self(), :send_actors)
+    {:ok, state}
+  end
+
+  defp handle_client_message("heartbeat", state) do
+    Logger.debug("Received heartbeat")
+    {:ok, state}
+  end
+
+  defp handle_client_message(_, state) do
+    Logger.error("Unknown message type")
+    {:ok, state}
+  end
 
   @impl true
   def websocket_info(:refresh, state) do
@@ -67,17 +81,6 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
       |> Jason.encode!()
 
     Process.send_after(self(), :refresh, 250)
-    {:reply, {:text, json_message}, state}
-  end
-
-  @impl true
-  def websocket_info({:send_behaviors, behaviors}, state) do
-    payload = %{
-      type: "behaviors",
-      behaviors: behaviors
-    }
-
-    json_message = Jason.encode!(payload)
     {:reply, {:text, json_message}, state}
   end
 
@@ -133,16 +136,15 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   end
 
   defp fetch_behaviors do
-    # FIXME
-    list = Manage.actor_list()
+    list = Tools.Actors.select_all()
 
     list
-    |> Enum.group_by(fn {b, _, _, _} -> inspect(b) end)
+    |> Enum.group_by(fn {_, {b, _, _}} -> inspect(b) end)
     |> Enum.map(fn {b, actors} ->
       %{
         name: b,
         count: Enum.count(actors),
-        actors: Enum.map(actors, fn {_, _, n, _} -> n end)
+        actors: Enum.map(actors, fn {_, {_, n, _}} -> n end)
       }
     end)
   end
@@ -157,7 +159,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   defp fetch_time_data do
     start_time = Clock.get_start_time()
     start_time_ms = start_time |> DateTime.to_unix(:millisecond)
-    simulation_ms = Clock.get_simulation_time_ms()
+    simulation_ms = Clock.get_simulation_duration_ms()
     simulation_now = start_time_ms + simulation_ms
     real_ms = Clock.get_real_duration_ms()
     simulation_duration = Tools.Time.as_duration_human(simulation_ms, :shorten)
