@@ -1,19 +1,21 @@
 # Roadmap
 
 ## Next
-- newly created actors don't show up in ui (create event)
-- action count
 - show that actor is acting
 - explicit start/default delay
+- _**make actor supervisor self healing**_
+- switch from static html page to server side templates?
 
 - reintroduce actor config into the mix
 - find a way to store runtime config along with simulation
 
 - check if one actor dying kills all other actors
 - multi-tenant todo example
-- ws log connection
+- ws add connection to log metadata
+- limit run duration
 
 ## Fix
+- actor/behavior states
 - inject correct ws url
 - inject correct quest url
 - rationalize type signatures for large tuples (convert to maps)
@@ -27,7 +29,6 @@
 - action replay?
 - restore state from target
 - add new behaviours at runtime
-- limit run duration
 - configure simulations at runtime
   - extract behavior creation to lab
 
@@ -48,6 +49,8 @@
   - Opensearch?
 
 ## Done
+- newly created actors don't show up in ui (create event) ✅
+- action count ✅
 - write in batch on action logger ✅
 - normalize wait times to "simulation time" instead of ticks ✅
 - action log should include failed requests ✅

@@ -5,6 +5,27 @@
   <meta charset="utf-8" />
   <title>Dashboard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" />
+  <style type="text/css">
+    html,
+    body {
+      overscroll-behavior: none;
+    }
+
+    .tile {
+      display: flex;
+      flex-grow: 0;
+      border: none;
+      box-sizing: border-box;
+      background-color: #f9f9f9;
+      min-width: 10px;
+      max-width: 10px;
+      width: 10px;
+      min-height: 10px;
+      max-height: 10px;
+      height: 10px;
+      transition: background-color 0.5s;
+    }
+  </style>
 </head>
 
 <body>
@@ -13,9 +34,9 @@
   <script src="https://unpkg.com/preact@10.11.2/hooks/dist/hooks.umd.js"></script>
   <script type="text/javascript">
     const { h, render, Fragment } = preact;
-    const { useState, useEffect, useRef } = preactHooks;
+    const { useState, useEffect, useRef, useMemo } = preactHooks;
 
-    function useWebSocket(url, onConnect = () => {}) {
+    function useWebSocket(url, onConnect = () => { }) {
       const [status, setStatus] = useState("Disconnected");
       const [messages, setMessages] = useState([]);
       const wsRef = useRef(null);
@@ -30,7 +51,7 @@
           wsRef.current = ws;
 
           ws.onopen = () => {
-            setStatus("Connected")
+            setStatus("Connected");
             if (reconnectTimeout) clearTimeout(reconnectTimeout);
 
             heartbeatInterval = setInterval(() => {
@@ -94,78 +115,98 @@
       );
     }
 
-    function BehaviorRow({ behavior, onSelectActor }) {
-      const [expanded, setExpanded] = useState(false);
-      return h(Fragment, null, [
-        h("tr", { key: behavior.name + "-data" }, [
-          h("td", null, behavior.name),
-          h("td", null, behavior.count),
-          h("td", null,
-            h("button",
-              {
-                className: "button is-small is-info",
-                onClick: () => setExpanded((prev) => !prev)
-              },
-              expanded ? "Hide Actors" : "Show Actors"
-            )
-          )
-        ]),
-        expanded &&
-        h("tr", { key: behavior.name + "-actors" }, [
-          h("td", { colSpan: 3 },
-            h("div", {
-              style: { display: "flex", flexWrap: "wrap", gap: "0.25rem" }
-            },
-              behavior.actors.map((actor, idx) =>
-                h("span", {
-                  key: idx,
-                  className: "tag is-info is-dark",
-                  style: { cursor: "pointer" },
-                  onClick: () => onSelectActor(actor)
-                }, actor)
-              )
-            )
-          )
-        ])
-      ]);
-    }
+    function BehaviorPanel({ behaviors, actor }) {
+      return h("div", { className: "columns" }, [
+        h("div", { className: "column is-half" },
+          h("div", { className: "card" }, [
+            h("header", { className: "card-header" },
+              h("p", { className: "card-header-title" }, "Behaviors")
+            ),
+            h("div", { className: "card-content" }, [
 
-    function BehaviorsPanel({ behaviors, onSelectActor }) {
-      return h("div", { className: "box" }, [
-        h("h2", { className: "title is-4" }, "Behaviors"),
-        h("table", { className: "table is-fullwidth is-striped" }, [
-          h("thead", null,
-            h("tr", null, [
-              h("th", null, "Name"),
-              h("th", null, "Count"),
-              h("th", null, "Actions")
+
+              h("table", { className: "table is-fullwidth is-striped" }, [
+                h("thead", null,
+                  h("tr", null, [
+                    h("th", null, "Name"),
+                    h("th", null, "Count"),
+                    h("th", null, "Color")
+                  ])
+                ),
+                h("tbody", null,
+                  behaviors.map((behavior) =>
+                    h("tr", { key: behavior.name }, [
+                      h("td", null, behavior.name),
+                      h("td", null, behavior.count),
+                      h("td", null, [
+                        h("span", {
+                          className: "tag",
+                          style: { backgroundColor: stringToColor(behavior.name) }
+                        }, [])
+                      ])
+                    ])
+                  )
+                )
+              ])
             ])
-          ),
-          h("tbody", null,
-            behaviors.map((behavior) =>
-              h(BehaviorRow, { key: behavior.name, behavior, onSelectActor })
-            )
-          )
-        ])
+          ])
+        ),
+        h("div", { className: "column is-half" },
+          actor
+            ? h(ActorCard, { actor })
+            : h("div", { className: "card" }, [
+              h("header", { className: "card-header" },
+                h("p", { className: "card-header-title" }, "Actor")
+              ),
+              h("div", { className: "card-content" },
+                h("div", { className: "content" }, "Select an actor to view details.")
+              )
+            ])
+        )
       ]);
     }
 
     function ActorCard({ actor }) {
       if (!actor) return null;
-      return h("div", { className: "card", style: { marginTop: "1rem" } }, [
+      return h("div", { className: "card" }, [
         h("header", { className: "card-header" },
           h("p", { className: "card-header-title" }, actor.name)
         ),
         h("div", { className: "card-content" },
+          h("div", {
+            className: "content", style: {
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+            }
+          }, [
+            h("div", { className: "tag" }, "Action Count:" + actor.action_count),
+            h("div", { className: "tag" }, "Last Action At: " + actor.last_action_time),
+            h("div", { className: "tag" }, "Behavior: " + actor.behavior),
+            h("div", { className: "tag" }, "Started: " + actor.started),
+          ]),
           h("div", { className: "content" }, [
-            h("p", null, "Behavior: " + actor.behavior),
-            h("p", null, "Config: " + JSON.stringify(actor.config)),
-            h("p", null, "Started: " + actor.started),
-            h("p", null, "State: "),
-            h("pre", null, JSON.stringify(actor.state, null, 2)),
+            h("h4", null, "State"),
+            h("pre", {
+              style: {
+                fontSize: "0.8rem",
+                maxHeight: "30rem",
+              }
+            }, JSON.stringify(actor.state, null, 2)),
+            h("h4", null, "Config"),
+            h("pre", {
+              style: {
+                fontSize: "0.8rem",
+                maxHeight: "30rem",
+              }
+            }, JSON.stringify(actor.config, null, 2))
           ])
-        )
+        ),
       ]);
+    }
+
+    function formatDateTime(ms) {
+      return new Date(ms).toLocaleString();
     }
 
     function SimulationCard({ simulation_ms, real_ms, simulation_duration, real_duration }) {
@@ -174,14 +215,96 @@
           h("p", { className: "card-header-title" }, "Simulation")
         ),
         h("div", { className: "card-content" },
-          h("div", {
-            className: "content", style: { display: "flex", justifyContent: "space-around", flexWrap: "wrap", gap: "0.25rem" }
+          h("table", {
+            className: "table is-fullwidth",
+            style: { tableLayout: "fixed" } // enforce fixed layout
           }, [
-            h("span", { className: "tag is-info" }, "Simulation time: " + simulation_ms + "ms"),
-            h("span", { className: "tag is-info" }, "Real time: " + real_ms + "ms"),
-            h("span", { className: "tag is-info" }, "Simulation duration: " + simulation_duration),
-            h("span", { className: "tag is-info" }, "Real duration: " + real_duration)
+            h("tbody", null, [
+              h("tr", null, [
+                h("th", { style: { width: "25%" } }, "Simulation Time"),
+                h("th", { style: { width: "25%" } }, "Real Time"),
+                h("th", { style: { width: "25%" } }, "Simulation Duration"),
+                h("th", { style: { width: "25%" } }, "Real Duration")
+              ]),
+              h("tr", null, [
+                h("td", null, formatDateTime(simulation_ms)),
+                h("td", null, formatDateTime(real_ms)),
+                h("td", null, simulation_duration),
+                h("td", null, real_duration)
+              ])
+            ])
           ])
+        )
+      ]);
+    }
+
+    function stringToColor(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const h = hash % 360;
+      return `hsl(${h}, 70%, 60%)`;
+    }
+
+    function ActorsOverviewTile({ actor, onSelectActor }) {
+      const [justActed, setJustActed] = preactHooks.useState(false);
+      const [hover, setHover] = preactHooks.useState(false);
+      const [pressed, setPressed] = preactHooks.useState(false);
+
+      preactHooks.useEffect(() => {
+        setJustActed(true);
+        setTimeout(() => setJustActed(false), 500);
+      }, [actor.action_count]);
+
+      const baseColor = preactHooks.useMemo(() => stringToColor(actor.behavior), [actor.behavior]);
+
+      const transform = pressed
+        ? "translate(2px, 2px)"
+        : hover
+          ? "translate(-2px, -2px)"
+          : "none";
+      const boxShadow = pressed
+        ? "none"
+        : hover
+          ? "0 4px 8px rgba(0,0,0,0.3)"
+          : "none";
+
+      return preact.h("div", {
+        className: "tile",
+        title: actor.name,
+        style: {
+          backgroundColor: justActed ? "red" : baseColor,
+          cursor: "pointer",
+          transition: "transform 0.2s, box-shadow 0.2s",
+          transform,
+          boxShadow
+        },
+        onClick: () => onSelectActor(actor.name),
+        onMouseEnter: () => setHover(true),
+        onMouseLeave: () => { setHover(false); setPressed(false); },
+        onMouseDown: () => setPressed(true),
+        onMouseUp: () => setPressed(false)
+      }, []);
+    }
+
+    function ActorsOverviewPanel({ actorStates, onSelectActor }) {
+      return h("div", { className: "card" }, [
+        h("header", { className: "card-header" },
+          h("p", { className: "card-header-title" }, "Actors Overview")
+        ),
+        h("div", {
+          className: "card-content",
+          style: {
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
+            justifyContent: "flex-start"
+          }
+        },
+          actorStates.map((actor) =>
+            h(ActorsOverviewTile, { key: actor.name, actor, onSelectActor })
+          )
         )
       ]);
     }
@@ -189,7 +312,6 @@
     function Dashboard() {
       const { status, messages, sendMessage } = useWebSocket("ws://localhost:4000/ws", () => {
         sendMessage({ type: "get_behaviors" });
-        if (selectedActor) handleSelectActor(selectedActor);
       });
       const [actorStates, setActorStates] = useState([]);
       const [behaviors, setBehaviors] = useState([]);
@@ -204,7 +326,7 @@
                 simulation_ms: msg.data.simulation_ms,
                 real_ms: msg.data.real_ms,
                 simulation_duration: msg.data.simulation_duration,
-                real_duration: msg.data.real_duration,
+                real_duration: msg.data.real_duration
               });
               break;
             case "behaviors":
@@ -221,7 +343,13 @@
                   newStates.sort((a, b) => b.acting - a.acting);
                   return newStates;
                 }
-                return [...prevStates, { ...msg.actor_state }];
+                let newStates = [...prevStates, { ...msg.actor_state }];
+                newStates.sort((a, b) => {
+                  if (a.behavior > b.behavior) return 1;
+                  if (a.behavior < b.behavior) return -1;
+                  return a.name > b.name ? 1 : -1;
+                });
+                return newStates;
               });
               break;
             default:
@@ -230,9 +358,9 @@
         });
       }, [messages]);
 
-      const handleSelectActor = (actor) => {
-        setSelectedActor(actor);
-        sendMessage({ type: "set_displayed_actor", actor });
+      const handleSelectActor = (actorName) => {
+        setSelectedActor(actorName);
+        sendMessage({ type: "set_displayed_actor", actor: actorName });
       };
 
       const displayedActor = actorStates.find(a => a.name === selectedActor);
@@ -240,12 +368,18 @@
       return h("div", null, [
         h(Navbar, { title: "Dashboard", status }),
         h("section", { className: "section" },
-          h("div", { className: "container" }, [
+          h("div", {
+            className: "container", style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem"
+            }
+          }, [
             h(SimulationCard, simulation),
-            h(BehaviorsPanel, { behaviors, onSelectActor: handleSelectActor }),
-            h(ActorCard, { actor: displayedActor })
+            h(ActorsOverviewPanel, { actorStates, onSelectActor: handleSelectActor }),
+            h(BehaviorPanel, { behaviors, actor: displayedActor })
           ])
-        ),
+        )
       ]);
     }
 

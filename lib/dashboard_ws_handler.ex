@@ -21,7 +21,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
 
     case Registry.register(Beamulator.WebsocketRegistry, :connections, self()) do
       {:ok, _} ->
-        send(self(), {:send_behaviors, fetch_behaviors()})
+        send(self(), :send_behaviors)
         send(self(), :refresh)
         {:ok, state}
 
@@ -43,9 +43,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
           Tools.Actors.select_by_name(actor)
           |> Enum.at(0)
 
-        Logger.info("Found actor PID: #{inspect(pid)}")
         actual_actor_state = Tools.Actors.get_state(pid)
-        Logger.info("Actual actor state: #{inspect(actual_actor_state)}")
         state = Map.put(state, :displayed_actor, actual_actor_state.name)
 
         payload = %{
@@ -55,6 +53,14 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
 
         json_message = Jason.encode!(payload)
         {:reply, {:text, json_message}, state}
+
+      {:ok, %{"type" => "get_behaviors"}} ->
+        send(self(), :send_behaviors)
+        {:ok, state}
+
+      {:ok, %{"type" => "get_actors"}} ->
+        send(self(), :send_actors)
+        {:ok, state}
 
       {:ok, %{"type" => "heartbeat"}} ->
         Logger.debug("Received heartbeat")
@@ -89,26 +95,44 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
       behaviors: behaviors
     }
 
+    json_message = Jason.encode!(payload)
+    {:reply, {:text, json_message}, state}
+  end
+
+  @impl true
+  def websocket_info(:send_behaviors, state) do
+    behaviors = fetch_behaviors()
+
+    payload = %{
+      type: "behaviors",
+      behaviors: behaviors
+    }
+
     Logger.info("Sending behaviors: #{inspect(payload)}")
     json_message = Jason.encode!(payload)
     {:reply, {:text, json_message}, state}
   end
 
   @impl true
-  def websocket_info({:actor_state_update, actor_state}, state) do
-    if state.displayed_actor == actor_state.name do
-      payload = %{
-        type: "actor_state_update",
-        actor_state: format_actor_state(actor_state)
-      }
+  def websocket_info(:send_actors, state) do
+    payload = %{
+      type: "actors",
+      actors: fetch_actors()
+    }
 
-      json_message = Jason.encode!(payload)
-      Logger.debug("Sending actor state update for displayed actor: #{json_message}")
-      {:reply, {:text, json_message}, state}
-    else
-      # Do nothing, this actor isn't displayed
-      {:ok, state}
-    end
+    json_message = Jason.encode!(payload)
+    {:reply, {:text, json_message}, state}
+  end
+
+  @impl true
+  def websocket_info({:actor_state_update, actor_state}, state) do
+    payload = %{
+      type: "actor_state_update",
+      actor_state: format_actor_state(actor_state)
+    }
+
+    json_message = Jason.encode!(payload)
+    {:reply, {:text, json_message}, state}
   end
 
   @impl true
@@ -127,8 +151,8 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   end
 
   defp fetch_behaviors do
+    # FIXME
     list = Manage.actor_list()
-    Logger.info("Actor list: #{inspect(list)}")
 
     list
     |> Enum.group_by(fn {b, _, _, _} -> inspect(b) end)
@@ -141,15 +165,25 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     end)
   end
 
+  defp fetch_actors do
+    list = Tools.Actors.select_all()
+
+    list
+    |> Enum.map(fn {_, {_, n, _}} -> n end)
+  end
+
   defp fetch_time_data do
+    start_time = Clock.get_start_time()
+    start_time_ms = start_time |> DateTime.to_unix(:millisecond)
     simulation_ms = Clock.get_simulation_time_ms()
+    simulation_now = start_time_ms + simulation_ms
     real_ms = Clock.get_real_duration_ms()
     simulation_duration = Tools.Time.as_duration_human(simulation_ms, :shorten)
     real_duration = Tools.Time.as_duration_human(real_ms, :shorten)
 
     %{
-      real_ms: real_ms,
-      simulation_ms: simulation_ms,
+      real_ms: DateTime.utc_now() |> DateTime.to_unix(:millisecond),
+      simulation_ms: simulation_now,
       simulation_duration: simulation_duration,
       real_duration: real_duration
     }
@@ -159,6 +193,8 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     %{
       behavior: strip_namespace(actor_state.behavior),
       name: actor_state.name,
+      action_count: actor_state.action_count,
+      last_action_time: Tools.Time.as_duration_human(actor_state.last_action_time),
       state: actor_state.state,
       config: actor_state.config,
       started: actor_state.started
