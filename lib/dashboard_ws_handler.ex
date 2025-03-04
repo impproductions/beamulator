@@ -179,11 +179,11 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
       serial_id: actor_state.serial_id,
       behavior: strip_namespace(actor_state.behavior),
       name: actor_state.name,
-      action_count: actor_state.action_count,
-      last_action_time: Tools.Time.as_duration_human(actor_state.last_action_time),
+      action_count: actor_state.runtime_stats.action_count,
+      last_action_time: Tools.Time.as_duration_human(actor_state.runtime_stats.last_action_time),
       state: actor_state.state,
       config: actor_state.config,
-      started: actor_state.started
+      started: actor_state.runtime_stats.started
     }
   end
 

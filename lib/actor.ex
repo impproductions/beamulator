@@ -1,34 +1,29 @@
 defmodule Beamulator.Actor.Data do
-  @enforce_keys [
-    :serial_id,
-    :name,
-    :behavior,
-    :config,
-    :state,
-    :started,
-    :action_count,
-    :last_action_time
-  ]
+  @enforce_keys [:serial_id, :name, :behavior, :config, :state, :runtime_stats]
   defstruct [
     :serial_id,
     :name,
     :behavior,
     :config,
     :state,
-    :started,
-    :action_count,
-    :last_action_time
+    runtime_stats: %{
+      started: false,
+      action_count: 0,
+      last_action_time: 0
+    }
   ]
 
   @type t :: %__MODULE__{
           serial_id: non_neg_integer(),
           name: String.t(),
           behavior: module(),
-          started: boolean(),
           config: map(),
           state: map(),
-          action_count: non_neg_integer(),
-          last_action_time: non_neg_integer()
+          runtime_stats: %{
+            started: boolean(),
+            action_count: non_neg_integer(),
+            last_action_time: non_neg_integer()
+          }
         }
 end
 
@@ -73,11 +68,13 @@ defmodule Beamulator.Actor do
       serial_id: serial_id,
       name: name,
       behavior: behavior_module,
-      action_count: 0,
-      last_action_time: Clock.get_simulation_duration_ms(),
-      started: false,
       config: config,
-      state: initial_state
+      state: initial_state,
+      runtime_stats: %{
+        action_count: 0,
+        last_action_time: Clock.get_simulation_duration_ms(),
+        started: false
+      }
     }
 
     delay = :rand.uniform(100) + 50
@@ -92,10 +89,13 @@ defmodule Beamulator.Actor do
     Logger.metadata(actor: state.name, pid: inspect(self()))
     Logger.info("Actor #{state.name} started. Scheduling first action.")
     send(self(), :act)
-    {:noreply, %{state | started: true}}
+    {:noreply, %{state | runtime_stats: %{state.runtime_stats | started: true}}}
   end
 
-  def handle_info(:act, %{behavior: behavior, state: actor_state, started: started} = state) do
+  def handle_info(
+        :act,
+        %{behavior: behavior, state: actor_state, runtime_stats: %{started: started}} = state
+      ) do
     simulation_time_ms = Clock.get_simulation_duration_ms()
 
     Logger.metadata(
@@ -106,10 +106,11 @@ defmodule Beamulator.Actor do
 
     Logger.debug("Actor #{state.name} received action request")
 
-    behavior_data = %Beamulator.Behavior.Data{
-      name: state.name,
-      config: state.config,
-      state: actor_state
+    behavior_data = %Beamulator.Behavior.ActPayload{
+      actor_serial_id: state.serial_id,
+      actor_name: state.name,
+      actor_config: state.config,
+      actor_state: actor_state
     }
 
     if started do
@@ -117,20 +118,24 @@ defmodule Beamulator.Actor do
         case behavior.act(simulation_time_ms, behavior_data) do
           {:ok, wait_simulation_time_ms, new_behavior_data} ->
             Logger.debug("Actor #{state.name} acted successfully at #{simulation_time_ms}")
-            updated_state = %{state | state: new_behavior_data.state}
+            updated_state = %{state | state: new_behavior_data.actor_state}
             {wait_simulation_time_ms, updated_state}
 
           {:error, wait_simulation_time_ms, reason} ->
             Logger.error(
               "Actor #{state.name} failed to act on at #{simulation_time_ms}: #{inspect(reason)}"
             )
+
             {wait_simulation_time_ms, state}
         end
 
       new_state = %{
         new_state
-        | action_count: new_state.action_count + 1,
-          last_action_time: simulation_time_ms
+        | runtime_stats: %{
+            new_state.runtime_stats
+            | action_count: new_state.runtime_stats.action_count + 1,
+              last_action_time: simulation_time_ms
+          }
       }
 
       Beamulator.Dashboard.WebSocketHandler.broadcast({:actor_state_update, new_state})

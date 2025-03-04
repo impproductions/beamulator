@@ -1,8 +1,6 @@
 # Roadmap
 
 ## Next
-- actor/behavior states
-
 - reintroduce actor config into the mix
 - multi-tenant todo example
 - find a way to store runtime config along with simulation
@@ -12,7 +10,7 @@
 - explicit start/default delay (ramp up)
 
 ## Fix
-- inject correct quest url
+- quest url from config
 - rationalize type signatures for large tuples (convert to maps?)
   - action executor
   - behavior registry/behavior spec?
@@ -46,6 +44,7 @@
   - Opensearch?
 
 ## Done
+- actor/behavior states ✅
 - add stats to ui (actions per second?) ✅
 - inject correct ws url ✅
 - use serial id as identifier in UI instead of name ✅

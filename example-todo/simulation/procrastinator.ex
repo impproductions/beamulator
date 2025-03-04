@@ -19,7 +19,7 @@ defmodule Beamulator.Behaviors.Procrastinator do
   end
 
   @impl Beamulator.Behavior
-  def act(_tick, %{name: name, state: _} = data) do
+  def act(_tick, %{actor_name: name, actor_state: _} = data) do
     {:ok, tasks} = execute(name, &Actions.list_tasks/0)
 
     {:ok, new_data} =
@@ -95,9 +95,9 @@ defmodule Beamulator.Behaviors.Procrastinator do
     {:ok, tasks} = execute(name, &Actions.list_tasks/0)
 
     new_state =
-      data.state
+      data.actor_state
       |> Map.put(:tasks, tasks)
 
-    {:ok, %{data | state: new_state}}
+    {:ok, %{data | actor_state: new_state}}
   end
 end

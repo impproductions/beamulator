@@ -1,11 +1,12 @@
-defmodule Beamulator.Behavior.Data do
-  @enforce_keys [:name, :config, :state]
-  defstruct [:name, :config, :state]
+defmodule Beamulator.Behavior.ActPayload do
+  @enforce_keys [:actor_serial_id, :actor_name, :actor_config, :actor_state]
+  defstruct [:actor_serial_id, :actor_name, :actor_config, :actor_state]
 
   @type t :: %__MODULE__{
-          name: binary(),
-          config: map(),
-          state: map()
+          actor_serial_id: integer(),
+          actor_name: binary(),
+          actor_config: map(),
+          actor_state: map()
         }
 end
 
@@ -48,9 +49,9 @@ defmodule Beamulator.Behavior do
     - the time to wait before the next action, in ms, in simulation time (e.s. 1 second is 100ms in simulation time if the simulation is running at 10x speed)
     - the updated behavior data
   """
-  @callback act(simulation_time_ms :: integer(), actor_data :: Beamulator.Behavior.Data.t()) ::
-              {:ok, wait_ms :: integer(), new_data :: Beamulator.Behavior.Data.t()}
-              | {:error, wait_ms :: integer(), new_data :: Beamulator.Behavior.Data.t()}
+  @callback act(simulation_time_ms :: integer(), actor_data :: Beamulator.Behavior.ActPayload.t()) ::
+              {:ok, wait_ms :: integer(), new_data :: Beamulator.Behavior.ActPayload.t()}
+              | {:error, wait_ms :: integer(), new_data :: Beamulator.Behavior.ActPayload.t()}
   defmacro __using__(_opts) do
     quote do
       @behaviour Beamulator.Behavior

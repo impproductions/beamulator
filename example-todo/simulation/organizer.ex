@@ -12,6 +12,7 @@ defmodule Beamulator.Behaviors.Organizer do
   @min_tasks 10
 
   @impl Beamulator.Behavior
+  @spec default_state() :: %{email: nonempty_binary(), name: binary(), tasks: []}
   def default_state() do
     %{
       name: Faker.Person.name(),
@@ -21,7 +22,7 @@ defmodule Beamulator.Behaviors.Organizer do
   end
 
   @impl Beamulator.Behavior
-  def act(_tick, %{name: name, state: _} = data) do
+  def act(_tick, %{actor_name: name, actor_state: _} = data) do
     {:ok, tasks} = execute(name, &Actions.list_tasks/0)
 
     new_data =
@@ -65,12 +66,12 @@ defmodule Beamulator.Behaviors.Organizer do
     {:ok, tasks} = execute(name, &Actions.list_tasks/0)
 
     new_state =
-      data.state
+      data.actor_state
       |> Map.put(:tasks, tasks)
       |> Map.put(:tasks, tasks)
 
 
-    {:ok, %{data | state: new_state}}
+    {:ok, %{data | actor_state: new_state}}
   end
 
   defp wait(name, data) do
