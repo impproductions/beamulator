@@ -3,9 +3,6 @@
 ## Next
 - actor/behavior states
 
-- add stats to ui (actions per second?)
-- serve statistics from db in ui?
-
 - reintroduce actor config into the mix
 - multi-tenant todo example
 - find a way to store runtime config along with simulation
@@ -22,6 +19,7 @@
 - make actor supervisor self healing? (what about state?)
 
 ## Feature ideas
+- serve more detailed statistics from db
 - save/restore state!!! (ugh)
 - python behaviours
 - fuzzer (fuzzy actor example?)
@@ -48,6 +46,7 @@
   - Opensearch?
 
 ## Done
+- add stats to ui (actions per second?) ✅
 - inject correct ws url ✅
 - use serial id as identifier in UI instead of name ✅
 - use message specific functions in ws handler ✅
