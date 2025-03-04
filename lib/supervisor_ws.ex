@@ -24,7 +24,7 @@ defmodule Beamulator.SupervisorWebsocket do
         type: :worker,
         restart: :permanent,
         shutdown: 5000
-      }
+      },
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

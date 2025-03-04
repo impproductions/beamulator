@@ -15,9 +15,8 @@
 - explicit start/default delay (ramp up)
 
 ## Fix
-- inject correct ws url
 - inject correct quest url
-- rationalize type signatures for large tuples (convert to maps)
+- rationalize type signatures for large tuples (convert to maps?)
   - action executor
   - behavior registry/behavior spec?
 - make actor supervisor self healing? (what about state?)
@@ -49,6 +48,7 @@
   - Opensearch?
 
 ## Done
+- inject correct ws url ✅
 - use serial id as identifier in UI instead of name ✅
 - use message specific functions in ws handler ✅
 - batch sizes in config ✅

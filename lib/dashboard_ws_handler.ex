@@ -76,7 +76,8 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     json_message =
       %{
         type: "simulation",
-        data: fetch_time_data()
+        data: fetch_time_data(),
+        stats: fetch_stats()
       }
       |> Jason.encode!()
 
@@ -184,6 +185,10 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
       config: actor_state.config,
       started: actor_state.started
     }
+  end
+
+  def fetch_stats do
+    GenServer.call(Beamulator.DashboardStatsProvider, :get_stats)
   end
 
   defp strip_namespace(behavior) do

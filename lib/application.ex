@@ -19,6 +19,7 @@ defmodule Beamulator.Application do
         {Registry, keys: :duplicate, name: Beamulator.WebsocketRegistry},
         {Beamulator.SupervisorSimulation, []},
         {Beamulator.HttpRouter, []},
+        {Beamulator.DashboardStatsProvider, []},
       ]
       |> maybe_add_action_logger()
 

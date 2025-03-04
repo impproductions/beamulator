@@ -12,10 +12,12 @@ defmodule Beamulator.ActionExecutor do
 
     case result do
       {:ok, _} ->
+        GenServer.cast(Beamulator.DashboardStatsProvider, {:action, true})
         log_event({behavior, name}, action, args, result, true)
 
       {:error, reason} when is_binary(reason) ->
         Logger.error("Action failed: #{reason}")
+        GenServer.cast(Beamulator.DashboardStatsProvider, {:action, false})
         log_event({behavior, name}, action, args, result, false)
 
       _ ->

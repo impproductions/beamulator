@@ -1,6 +1,24 @@
 defmodule Beamulator.Actor.Data do
-  @enforce_keys [:serial_id, :name, :behavior, :config, :state, :started, :action_count, :last_action_time]
-  defstruct [:serial_id, :name, :behavior, :config, :state, :started, :action_count, :last_action_time]
+  @enforce_keys [
+    :serial_id,
+    :name,
+    :behavior,
+    :config,
+    :state,
+    :started,
+    :action_count,
+    :last_action_time
+  ]
+  defstruct [
+    :serial_id,
+    :name,
+    :behavior,
+    :config,
+    :state,
+    :started,
+    :action_count,
+    :last_action_time
+  ]
 
   @type t :: %__MODULE__{
           serial_id: non_neg_integer(),
@@ -106,7 +124,6 @@ defmodule Beamulator.Actor do
             Logger.error(
               "Actor #{state.name} failed to act on at #{simulation_time_ms}: #{inspect(reason)}"
             )
-
             {wait_simulation_time_ms, state}
         end
 
@@ -135,6 +152,8 @@ defmodule Beamulator.Actor do
 
   def terminate(reason, state) do
     Logger.error("Actor #{state.name} terminating with reason: #{inspect(reason)}")
+
+    GenServer.cast(Beamulator.DashboardStatsProvider, {:actor, :crash})
     :ok
   end
 
