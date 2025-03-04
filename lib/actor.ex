@@ -1,8 +1,9 @@
 defmodule Beamulator.Actor.Data do
-  @enforce_keys [:name, :behavior, :config, :state, :started, :action_count, :last_action_time]
-  defstruct [:name, :behavior, :config, :state, :started, :action_count, :last_action_time]
+  @enforce_keys [:serial_id, :name, :behavior, :config, :state, :started, :action_count, :last_action_time]
+  defstruct [:serial_id, :name, :behavior, :config, :state, :started, :action_count, :last_action_time]
 
   @type t :: %__MODULE__{
+          serial_id: non_neg_integer(),
           name: String.t(),
           behavior: module(),
           started: boolean(),
@@ -46,10 +47,12 @@ defmodule Beamulator.Actor do
 
   def init({name, behavior_module, config, initial_state}) do
     Logger.debug("Initializing actor: #{name}")
-    selector = {behavior_module, Beamulator.Tools.increasing_int(), name}
+    serial_id = Beamulator.Tools.increasing_int()
+    selector = {behavior_module, serial_id, name}
     Registry.register(Beamulator.ActorRegistry, :actors, selector)
 
     state = %Data{
+      serial_id: serial_id,
       name: name,
       behavior: behavior_module,
       action_count: 0,

@@ -1,10 +1,10 @@
 # Roadmap
 
 ## Next
-- use serial id as identifier in UI instead of name
+- actor/behavior states
+
 - add stats to ui (actions per second?)
 - serve statistics from db in ui?
-- actor/behavior states
 
 - reintroduce actor config into the mix
 - multi-tenant todo example
@@ -49,6 +49,7 @@
   - Opensearch?
 
 ## Done
+- use serial id as identifier in UI instead of name ✅
 - use message specific functions in ws handler ✅
 - batch sizes in config ✅
 - optimize actor overview ✅

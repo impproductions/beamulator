@@ -175,6 +175,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
 
   defp format_actor_state(actor_state) do
     %{
+      serial_id: actor_state.serial_id,
       behavior: strip_namespace(actor_state.behavior),
       name: actor_state.name,
       action_count: actor_state.action_count,

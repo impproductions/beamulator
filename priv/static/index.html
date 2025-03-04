@@ -250,10 +250,10 @@
         return h("div", {
           ref: tileRef,
           className: "actor-tile",
-          id: "tile-" + actor.name,
-          title: actor.name,
+          id: "tile-" + actor.serial_id,
+          title: actor.name + " (" + actor.serial_id + ")",
           style: { backgroundColor: baseColor },
-          onClick: () => onSelectActor(actor.name)
+          onClick: () => onSelectActor(actor.serial_id)
         });
       };
 
@@ -264,7 +264,7 @@
           ),
           h("div", { className: "card-content actors-overview" },
             actorStates.map((actor) =>
-              h(ActorsOverviewTile, { key: actor.name, actor, onSelectActor })
+              h(ActorsOverviewTile, { key: actor.serial_id, actor, onSelectActor })
             )
           )
         ]);
@@ -291,7 +291,7 @@
             case "actor_state_update":
               setActorStates((prevStates) => {
                 const index = prevStates.findIndex(
-                  (actor) => actor.name === msg.actor_state.name
+                  (actor) => actor.serial_id === msg.actor_state.serial_id
                 );
                 if (index !== -1) {
                   const newStates = [...prevStates];
@@ -303,7 +303,9 @@
                 newStates.sort((a, b) => {
                   if (a.behavior > b.behavior) return 1;
                   if (a.behavior < b.behavior) return -1;
-                  return a.name > b.name ? 1 : -1;
+                  if (a.name > b.name) return 1;
+                  if (a.name < b.name) return -1;
+                  return a.serial_id > b.serial_id ? 1 : -1;
                 });
                 return newStates;
               });
@@ -315,7 +317,7 @@
 
         const { status, sendMessage } = useWebSocket(wsUrl, handleMessage);
         const handleSelectActor = (actorName) => setSelectedActor(actorName);
-        const displayedActor = actorStates.find((a) => a.name === selectedActor);
+        const displayedActor = actorStates.find((a) => a.serial_id === selectedActor);
 
         return h("div", null, [
           h(Navbar, { title: "Dashboard", status }),
