@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Multitenant Todo Application with Users</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  </head>
+  <body>
+    <section class="section">
+      <div class="container">
+        <h1 class="title">Todo Application</h1>
+        <div class="box">
+          <div class="field">
+            <label class="label">Username</label>
+            <div class="control">
+              <input id="user-input" class="input" type="text" placeholder="Enter your username">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Password</label>
+            <div class="control">
+              <input id="password-input" class="input" type="password" placeholder="Enter your password">
+            </div>
+          </div>
+          <div class="field is-grouped">
+            <div class="control">
+              <button id="login-btn" class="button is-link">Load Todos</button>
+            </div>
+            <div class="control">
+              <button id="register-btn" class="button is-primary">Register</button>
+            </div>
+          </div>
+        </div>
+        <div class="box">
+          <form id="todo-form">
+            <div class="field has-addons">
+              <div class="control is-expanded">
+                <input id="todo-input" class="input" type="text" placeholder="Enter a new todo" required>
+              </div>
+              <div class="control">
+                <button class="button is-primary" type="submit">Add</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="box">
+          <h2 class="subtitle">Todos</h2>
+          <ul id="todo-list">
+            <!-- Todos will be rendered here -->
+          </ul>
+        </div>
+      </div>
+    </section>
+    <script>
+      let currentUser = "";
+      let currentPassword = "";
+      const userInput = document.getElementById('user-input');
+      const passwordInput = document.getElementById('password-input');
+      const loginBtn = document.getElementById('login-btn');
+      const registerBtn = document.getElementById('register-btn');
+      const form = document.getElementById('todo-form');
+      const todoInput = document.getElementById('todo-input');
+      const list = document.getElementById('todo-list');
+
+      loginBtn.addEventListener('click', () => {
+        currentUser = userInput.value.trim();
+        currentPassword = passwordInput.value;
+        if (!currentUser || !currentPassword) {
+          alert("Please enter both username and password");
+          return;
+        }
+        fetchTodos();
+      });
+
+      registerBtn.addEventListener('click', () => {
+        const username = userInput.value.trim();
+        const password = passwordInput.value;
+        if (!username || !password) {
+          alert("Please enter both username and password for registration.");
+          return;
+        }
+        fetch('/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.error || "Registration failed"); });
+          }
+          return response.json();
+        })
+        .then(data => {
+          alert(`User ${data.username} registered successfully.`);
+        })
+        .catch(err => {
+          alert("Error: " + err.message);
+        });
+      });
+
+      function fetchTodos() {
+        if (!currentUser || !currentPassword) return;
+        fetch('/todos', { headers: { 'X-User': currentUser, 'X-Password': currentPassword } })
+          .then(response => response.json())
+          .then(data => {
+            list.innerHTML = '';
+            data.forEach(todo => {
+              const li = document.createElement('li');
+              li.className = 'box';
+              li.innerHTML = `
+                <div class="level">
+                  <div class="level-left">
+                    <div class="level-item">
+                      <label class="checkbox">
+                        <input type="checkbox" onchange="toggleTodo(${todo.id}, '${todo.title.replace(/'/g, "\\'")}', this.checked)" ${todo.completed ? "checked" : ""}>
+                        <span class="ml-2">${todo.title}</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="level-right">
+                    <div class="level-item">
+                      <button class="button is-danger is-small" onclick="deleteTodo(${todo.id})">Delete</button>
+                    </div>
+                  </div>
+                </div>`;
+              list.appendChild(li);
+            });
+          });
+      }
+
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        if (!currentUser || !currentPassword) {
+          alert("Please enter both username and password.");
+          return;
+        }
+        const title = todoInput.value.trim();
+        if (!title) return;
+        fetch('/todos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User': currentUser,
+            'X-Password': currentPassword
+          },
+          body: JSON.stringify({ title: title, completed: false })
+        }).then(() => {
+          todoInput.value = '';
+          fetchTodos();
+        });
+      });
+
+      function deleteTodo(id) {
+        if (!currentUser || !currentPassword) return;
+        fetch(`/todos/${id}`, {
+          method: 'DELETE',
+          headers: { 'X-User': currentUser, 'X-Password': currentPassword }
+        }).then(() => {
+          fetchTodos();
+        });
+      }
+
+      function toggleTodo(id, title, completed) {
+        if (!currentUser || !currentPassword) return;
+        fetch(`/todos/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User': currentUser,
+            'X-Password': currentPassword
+          },
+          body: JSON.stringify({ title: title, completed: completed })
+        }).then(() => {
+          fetchTodos();
+        });
+      }
+    </script>
+  </body>
+</html>
