@@ -80,18 +80,22 @@ defmodule Dashboard do
     IO.puts("Behavior State")
     IO.puts("\n--------- Behaviors ---------")
 
-    Manage.behavior_list()
-    |> Map.keys()
-    |> Enum.map(fn behavior ->
-      Manage.actors_by_behavior(behavior)
-      |> Enum.map(fn {_, _, name, pid} ->
-        "#{name} [#{inspect(pid)}]"
-      end)
-      |> Enum.join(", ")
-      |> then(fn actors -> "#{behavior}:\n #{actors}" end)
+    list = Tools.Actors.select_all()
+
+    list
+    |> Enum.group_by(fn {_, {b, _, _}} -> inspect(b) end)
+    |> Enum.map(fn {b, actors} ->
+      %{
+        name: b,
+        count: Enum.count(actors),
+        actors: Enum.map(actors, fn {_, {_, n, _}} -> n end)
+      }
     end)
-    |> Enum.join("\n")
-    |> IO.puts()
+
+    |> Enum.each(fn %{name: name, count: count, actors: actors} ->
+      IO.puts("\n#{name} (#{count})")
+      IO.puts(actors |> Enum.join(", "))
+    end)
   end
 
   def display_actor_state(state) do
@@ -109,8 +113,6 @@ defmodule Dashboard do
     IO.puts("\n------------------ Overview ------------------")
     IO.puts("\n--------- Actors ---------")
     IO.puts(actor_counts())
-    IO.puts("\n--------- Behaviors ---------")
-    IO.puts(available_behaviors())
   end
 
   defp display_header(state) do
@@ -130,12 +132,6 @@ defmodule Dashboard do
     Manage.actor_list()
     |> Enum.group_by(fn {behavior, _id, _name, _pid} -> behavior end)
     |> Enum.map(fn {behavior, actors} -> "#{strip_namespace(behavior)}: #{length(actors)}" end)
-    |> Enum.join("\n")
-  end
-
-  defp available_behaviors() do
-    Manage.behavior_list()
-    |> Enum.map(fn {behavior, _data} -> strip_namespace(behavior) end)
     |> Enum.join("\n")
   end
 

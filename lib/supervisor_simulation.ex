@@ -8,7 +8,8 @@ defmodule Beamulator.SupervisorSimulation do
   @impl true
   def init(_opts) do
     children = [
-      {Beamulator.Behavior.Registry, []},
+      {Beamulator.ActorInizializer, []},
+      # {Beamulator.Behavior.Registry, []},
       {Registry, keys: :duplicate, name: Beamulator.ActorRegistry},
       {Beamulator.SupervisorActors, []},
       {Beamulator.Clock, []},

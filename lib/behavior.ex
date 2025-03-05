@@ -130,54 +130,54 @@ defmodule Beamulator.Behavior do
   end
 end
 
-defmodule Beamulator.Behavior.Registry do
-  require Logger
+# defmodule Beamulator.Behavior.Registry do
+#   require Logger
 
-  use GenServer
+#   use GenServer
 
-  def start_link(_opts \\ []) do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
-  end
+#   def start_link(_opts \\ []) do
+#     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+#   end
 
-  def register(behavior_module, data \\ %{}) when is_atom(behavior_module) do
-    GenServer.call(__MODULE__, {:register, behavior_module, data})
-  end
+#   def register(behavior_module, data \\ %{}) when is_atom(behavior_module) do
+#     GenServer.call(__MODULE__, {:register, behavior_module, data})
+#   end
 
-  def list_behaviors do
-    GenServer.call(__MODULE__, :list_behaviors)
-  end
+#   def list_behaviors do
+#     GenServer.call(__MODULE__, :list_behaviors)
+#   end
 
-  def scan_and_register_all_behaviors do
-    found =
-      :code.all_loaded()
-      |> Enum.map(fn {module, _file} -> module end)
-      |> Enum.filter(&module_in_behaviors_namespace?/1)
+#   def scan_and_register_all_behaviors do
+#     found =
+#       :code.all_loaded()
+#       |> Enum.map(fn {module, _file} -> module end)
+#       |> Enum.filter(&module_in_behaviors_namespace?/1)
 
-    Logger.info("Found behaviors: #{inspect(found)}")
+#     Logger.info("Found behaviors: #{inspect(found)}")
 
-    found
-    |> Enum.each(&register/1)
-  end
+#     found
+#     |> Enum.each(&register/1)
+#   end
 
-  defp module_in_behaviors_namespace?(module) do
-    module
-    |> Atom.to_string()
-    |> String.starts_with?("Elixir.Beamulator.Behaviors.")
-  end
+#   defp module_in_behaviors_namespace?(module) do
+#     module
+#     |> Atom.to_string()
+#     |> String.starts_with?("Elixir.Beamulator.Behaviors.")
+#   end
 
-  @impl true
-  def init(_init_arg) do
-    {:ok, %{}}
-  end
+#   @impl true
+#   def init(_init_arg) do
+#     {:ok, %{}}
+#   end
 
-  @impl true
-  def handle_call({:register, module, data}, _from, state) do
-    new_state = Map.put(state, module, data)
-    {:reply, :ok, new_state}
-  end
+#   @impl true
+#   def handle_call({:register, module, data}, _from, state) do
+#     new_state = Map.put(state, module, data)
+#     {:reply, :ok, new_state}
+#   end
 
-  @impl true
-  def handle_call(:list_behaviors, _from, state) do
-    {:reply, state, state}
-  end
-end
+#   @impl true
+#   def handle_call(:list_behaviors, _from, state) do
+#     {:reply, state, state}
+#   end
+# end

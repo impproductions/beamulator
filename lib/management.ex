@@ -29,9 +29,9 @@ defmodule Manage do
 
   import AlertFunctions, only: [defwithalert: 2]
 
-  defwithalert behavior_list() do
-    Beamulator.Behavior.Registry.list_behaviors()
-  end
+  # defwithalert behavior_list() do
+  #   Beamulator.Behavior.Registry.list_behaviors()
+  # end
 
   defwithalert actor_list() do
     Registry.lookup(Beamulator.ActorRegistry, :actors)

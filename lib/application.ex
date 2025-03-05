@@ -33,15 +33,15 @@ defmodule Beamulator.Application do
       simulation_config = Application.fetch_env!(:beamulator, :simulation)
       Logger.info("Simulation configuration: #{inspect(simulation_config)}")
 
-      if simulation_config[:begin_on_start] do
-        Logger.debug("Creating actors (staggered)...")
-        create_actors()
-        Logger.info("Actors created.")
-      end
+      # if simulation_config[:begin_on_start] do
+      #   Logger.debug("Creating actors (staggered)...")
+      #   create_actors()
+      #   Logger.info("Actors created.")
+      # end
 
-      Logger.debug("Registering behaviors...")
-      Beamulator.Behavior.Registry.scan_and_register_all_behaviors()
-      Logger.info("Behaviors registered.")
+      # Logger.debug("Registering behaviors...")
+      # Beamulator.Behavior.Registry.scan_and_register_all_behaviors()
+      # Logger.info("Behaviors registered.")
 
       {:ok, pid}
     else
@@ -53,26 +53,26 @@ defmodule Beamulator.Application do
     {:ok, self()}
   end
 
-  def create_actors do
-    actors_config = Application.fetch_env!(:beamulator, :actors)
+  # def create_actors do
+  #   actors_config = Application.fetch_env!(:beamulator, :actors)
 
-    actors_config
-    |> Enum.flat_map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
-      for _ <- 1..amt do
-        %{
-          name: "#{name} #{Beamulator.Tools.increasing_int()}",
-          behavior: behavior,
-          config: config
-        }
-      end
-    end)
-    |> Enum.each(fn %{name: name, behavior: behavior, config: config} ->
-      Beamulator.Connectors.Internal.create_actor(name, behavior, config)
-      Process.sleep(:rand.uniform(100) + 50)
-    end)
+  #   actors_config
+  #   |> Enum.flat_map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
+  #     for _ <- 1..amt do
+  #       %{
+  #         name: "#{name} #{Beamulator.Tools.increasing_int()}",
+  #         behavior: behavior,
+  #         config: config
+  #       }
+  #     end
+  #   end)
+  #   |> Enum.each(fn %{name: name, behavior: behavior, config: config} ->
+  #     Beamulator.Connectors.Internal.create_actor(name, behavior, config)
+  #     Process.sleep(:rand.uniform(100) + 50)
+  #   end)
 
-    Logger.info("Actors initialized successfully.")
-  end
+  #   Logger.info("Actors initialized successfully.")
+  # end
 
   defp maybe_add_action_logger(children) do
     if Application.get_env(:beamulator, :enable_action_logger, false) do

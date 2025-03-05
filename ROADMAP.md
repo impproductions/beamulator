@@ -1,7 +1,10 @@
 # Roadmap
 
 ## Next
-- actor supervisor should be in charge of scheduling actor starts (so it does when it crashes)
+- actor schedule (as opposed to freehand wait)
+- abstraction for conscutive, dependant calls
+- tooling for timeseries generation
+- tooling for inter-actor communication
 
 - reintroduce actor config into the mix
 
@@ -18,7 +21,7 @@
 
 ## Feature ideas
 - serve more detailed statistics from db
-- save/restore state!!! (ugh)
+- save/restore state!!! (ugh) <- the actors restarting is pointless without this
 - python behaviours
 - fuzzer (fuzzy actor example?)
 - action replay?
@@ -44,6 +47,7 @@
   - Opensearch?
 
 ## Done
+- actor supervisor should be in charge of scheduling actor starts (so it does when it crashes) ✅
 - multi-tenant todo example ✅
 - find a way to store runtime config along with simulation ✅
 - actor/behavior states ✅

@@ -1,7 +1,6 @@
 defmodule Beamulator.SupervisorActors do
-  require Logger
-
   use DynamicSupervisor
+  require Logger
 
   def start_link(_) do
     Logger.info("Actor Supervisor started")
@@ -9,9 +8,9 @@ defmodule Beamulator.SupervisorActors do
   end
 
   def init(_) do
+    Process.send_after(Beamulator.ActorInizializer, :create_actors, 10)
     DynamicSupervisor.init(strategy: :one_for_one)
   end
-
 
   def create_actor(name, behavior_module, config) do
     Logger.debug("create actor: #{name}")
@@ -19,16 +18,11 @@ defmodule Beamulator.SupervisorActors do
 
     case DynamicSupervisor.start_child(__MODULE__, spec) do
       {:ok, pid} ->
-        Logger.debug("Child (actor #{name}) create successfully")
+        Logger.debug("Child (actor #{name}) created successfully")
         {:ok, pid}
       {:error, reason} ->
         Logger.error("Failed to create child (actor #{name}): #{inspect(reason)}")
         {:error, reason}
     end
-  end
-
-  def terminate(reason, _state) do
-    Logger.info("Actor Supervisor terminated with reason: #{inspect(reason)}")
-    :ok
   end
 end
