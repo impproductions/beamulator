@@ -29,11 +29,21 @@ var db *sql.DB
 
 func main() {
 	var err error
-	db, err = sql.Open("sqlite3", "./todos.db")
+	// Open with DSN parameters to share cache and set a busy timeout
+	db, err = sql.Open("sqlite3", "file:todos.db?cache=shared&_busy_timeout=5000")
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
+
+	// Allow multiple connections (even though writes are serialized)
+	db.SetMaxOpenConns(10)
+
+	// Enable WAL mode for better concurrency
+	_, err = db.Exec("PRAGMA journal_mode=WAL;")
+	if err != nil {
+		panic(err)
+	}
 
 	createUsersQuery := `
 	CREATE TABLE IF NOT EXISTS users (
@@ -61,26 +71,35 @@ func main() {
 		panic(err)
 	}
 
+	createUserIndexQuery := `
+	CREATE INDEX IF NOT EXISTS user_index ON users (username);
+	`
+	_, err = db.Exec(createUserIndexQuery)
+	if err != nil {
+		panic(err)
+	}
+
+	createTodoIndexQuery := `
+	CREATE INDEX IF NOT EXISTS todo_index ON todos (user);
+	`
+	_, err = db.Exec(createTodoIndexQuery)
+	if err != nil {
+		panic(err)
+	}
+
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// usage: curl -X POST -H "X-User: user" -H "X-Password: password" http://localhost:8080/users
+	e.GET("/users", listUsers)
 	e.POST("/users", createUser)
-	// usage curl -H "X-User: user" -H "X-Password: password" http://localhost:8080/users/me
 	e.GET("/users/me", getUser)
-	// usage curl -X PUT -H "X-User: user" -H "X-Password: password" -d '{"password": "newpassword"}' http://localhost:8080/users/me
 	e.PUT("/users/me", updateUser)
-	// usage curl -X DELETE -H "X-User: user" -H "X-Password: password" http://localhost:8080/users/me
 	e.DELETE("/users/me", deleteUser)
 
-	// usage: curl -X GET -H "X-User: user" -H "X-Password: password" http://localhost:8080/todos
 	e.GET("/todos", getTodos)
-	// usage: curl -X POST -H "X-User: user" -H "X-Password: password" -d '{"title": "new todo", "completed": false}' http://localhost:8080/todos
 	e.POST("/todos", createTodo)
-	// usage: curl -X PUT -H "X-User: user" -H "X-Password: password" -d '{"title": "updated todo", "completed": true}' http://localhost:8080/todos/1
 	e.PUT("/todos/:id", updateTodo)
-	// usage: curl -X DELETE -H "X-User: user" -H "X-Password: password" http://localhost:8080/todos/1
 	e.DELETE("/todos/:id", deleteTodo)
 
 	e.Static("/static", "static")
@@ -110,21 +129,39 @@ func verifyUser(c echo.Context) (string, error) {
 	return username, nil
 }
 
+func listUsers(c echo.Context) error {
+	rows, err := db.Query("SELECT id, username FROM users")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer rows.Close()
+
+	users := []User{}
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.ID, &u.Username); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		users = append(users, u)
+	}
+	return c.JSON(http.StatusOK, users)
+}
+
 func createUser(c echo.Context) error {
 	u := new(User)
 	if err := c.Bind(u); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if u.Username == "" || u.Password == "" {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "username and password required: " + u.Username + " " + u.Password})
+		return echo.NewHTTPError(http.StatusBadRequest, "username and password required")
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", u.Username, string(hashed))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusCreated, echo.Map{"message": "user created", "username": u.Username})
 }
@@ -137,7 +174,7 @@ func getUser(c echo.Context) error {
 	var u User
 	err = db.QueryRow("SELECT id, username FROM users WHERE username = ?", username).Scan(&u.ID, &u.Username)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, u)
 }
@@ -151,18 +188,18 @@ func updateUser(c echo.Context) error {
 		Password string `json:"password"`
 	}
 	if err := c.Bind(&input); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if input.Password == "" {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "password required"})
+		return echo.NewHTTPError(http.StatusBadRequest, "password required")
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	_, err = db.Exec("UPDATE users SET password = ? WHERE username = ?", string(hashed), username)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "password updated"})
 }
@@ -175,11 +212,11 @@ func deleteUser(c echo.Context) error {
 
 	_, err = db.Exec("DELETE FROM todos WHERE user = ?", username)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	_, err = db.Exec("DELETE FROM users WHERE username = ?", username)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -191,7 +228,7 @@ func getTodos(c echo.Context) error {
 	}
 	rows, err := db.Query("SELECT id, title, completed, user FROM todos WHERE user = ?", username)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer rows.Close()
 
@@ -200,7 +237,7 @@ func getTodos(c echo.Context) error {
 		var t Todo
 		var completed int
 		if err := rows.Scan(&t.ID, &t.Title, &completed, &t.User); err != nil {
-			return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		t.Completed = completed != 0
 		todos = append(todos, t)
@@ -216,21 +253,21 @@ func createTodo(c echo.Context) error {
 	var count int
 	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).Scan(&count)
 	if err != nil || count == 0 {
-		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "user does not exist"})
+		return echo.NewHTTPError(http.StatusUnauthorized, "user does not exist")
 	}
 
 	var newTodo Todo
 	if err := c.Bind(&newTodo); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	newTodo.User = username
 	res, err := db.Exec("INSERT INTO todos (title, completed, user) VALUES (?, ?, ?)", newTodo.Title, boolToInt(newTodo.Completed), newTodo.User)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	newTodo.ID = int(id)
 	return c.JSON(http.StatusCreated, newTodo)
@@ -244,23 +281,23 @@ func updateTodo(c echo.Context) error {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid id"})
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid id")
 	}
 
 	var updateData Todo
 	if err := c.Bind(&updateData); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	res, err := db.Exec("UPDATE todos SET title = ?, completed = ? WHERE id = ? AND user = ?", updateData.Title, boolToInt(updateData.Completed), id, username)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	affected, err := res.RowsAffected()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if affected == 0 {
-		return c.JSON(http.StatusNotFound, echo.Map{"error": "todo not found for user"})
+		return echo.NewHTTPError(http.StatusNotFound, "todo not found for user")
 	}
 	updateData.ID = id
 	updateData.User = username
@@ -275,19 +312,19 @@ func deleteTodo(c echo.Context) error {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid id"})
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid id")
 	}
 
 	res, err := db.Exec("DELETE FROM todos WHERE id = ? AND user = ?", id, username)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	affected, err := res.RowsAffected()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if affected == 0 {
-		return c.JSON(http.StatusNotFound, echo.Map{"error": "todo not found for user"})
+		return echo.NewHTTPError(http.StatusNotFound, "todo not found for user")
 	}
 	return c.NoContent(http.StatusNoContent)
 }

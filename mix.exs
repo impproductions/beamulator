@@ -34,7 +34,7 @@ defmodule Beamulator.MixProject do
   end
 
   defp elixirc_paths(), do: ["lib", simulation_path()]
-  defp simulation_path(), do: "example-todo/simulation"
+  defp simulation_path(), do: "example-todo-multi/simulation"
 
   defp deps do
     [

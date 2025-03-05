@@ -21,12 +21,12 @@
     }
 
     .actor-tile:hover {
-      transform: translate(-2px, -2px);
+      transform: translate(-1px, -1px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
 
     .actor-tile:active {
-      transform: translate(2px, 2px);
+      transform: translate(1px, 1px);
       box-shadow: none;
     }
 
@@ -132,9 +132,9 @@
       );
     };
 
-    const BehaviorPanel = ({ behaviors, actor }) =>
+    const BehaviorPanel = ({ stats, behaviors, actor }) =>
       h("div", { className: "columns" }, [
-        h("div", { className: "column is-half" },
+        h("div", { className: "column is-half", style: { paddingBottom: 0 } },
           h("div", { className: "card" }, [
             h("header", { className: "card-header" },
               h("p", { className: "card-header-title" }, "Behaviors")
@@ -153,12 +153,16 @@
                     h("tr", { key: behavior.name }, [
                       h("td", null, behavior.name),
                       h("td", null, behavior.count),
-                      h("td", null,
+                      h("td", { style: { display: "flex", justifyContent: "space-around" } }, [
                         h("span", {
                           className: "tag",
-                          style: { backgroundColor: stringToColor(behavior.name) }
-                        })
-                      )
+                          style: { padding: "1rem", backgroundColor: stringToColor(behavior.name) }
+                        }, "💤"),
+                        h("span", {
+                          className: "tag",
+                          style: { padding: "1rem", backgroundColor: "red" }
+                        }, "🚀")
+                      ])
                     ])
                   )
                 )
@@ -166,17 +170,8 @@
             )
           ])
         ),
-        h("div", { className: "column is-half" },
-          actor
-            ? h(ActorCard, { actor })
-            : h("div", { className: "card" }, [
-              h("header", { className: "card-header" },
-                h("p", { className: "card-header-title" }, "Actor")
-              ),
-              h("div", { className: "card-content" },
-                h("div", { className: "content" }, "Select an actor to view details.")
-              )
-            ])
+        h("div", { className: "column is-half", style: { paddingBottom: 0 } },
+          h(StatsPanel, { stats })
         )
       ]);
 
@@ -243,14 +238,14 @@
             h("thead", null,
               h("tr", null, [
                 h("th", null, "Name"),
-                h("th", null, "Value")
+                h("th", { className: "has-text-right" }, "Value")
               ])
             ),
             h("tbody", null,
               Object.entries(stats).toSorted().map(([name, value]) =>
                 h("tr", { key: name }, [
                   h("td", null, name),
-                  h("td", null, value)
+                  h("td", { className: "has-text-right" }, value)
                 ])
               )
             )
@@ -263,7 +258,7 @@
       for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
       }
-      const hVal = hash % 360;
+      const hVal = hash % 300 + 30;
       return `hsl(${hVal}, 70%, 60%)`;
     };
 
@@ -360,9 +355,18 @@
         h("section", { className: "section" },
           h("div", { className: "container dashboard-container" }, [
             h(SimulationPanel, simulation),
-            h(StatsPanel, { stats }),
             h(ActorsOverviewPanel, { actorStates, onSelectActor: handleSelectActor }),
-            h(BehaviorPanel, { behaviors, actor: displayedActor })
+            h(BehaviorPanel, { stats, behaviors, actor: displayedActor }),
+            displayedActor
+              ? h(ActorCard, { actor: displayedActor })
+              : h("div", { className: "card" }, [
+                h("header", { className: "card-header" },
+                  h("p", { className: "card-header-title" }, "Actor")
+                ),
+                h("div", { className: "card-content" },
+                  h("div", { className: "content" }, "Select an actor to view details.")
+                )
+              ])
           ])
         )
       ]);

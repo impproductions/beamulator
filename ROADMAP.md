@@ -1,8 +1,10 @@
 # Roadmap
 
 ## Next
-- reintroduce actor config into the mix
+- actor supervisor should be in charge of scheduling actor starts (so it does when it crashes)
+
 - multi-tenant todo example
+- reintroduce actor config into the mix
 - find a way to store runtime config along with simulation
 
 - ws add connection to log metadata

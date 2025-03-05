@@ -94,7 +94,6 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
       behaviors: behaviors
     }
 
-    Logger.info("Sending behaviors: #{inspect(payload)}")
     json_message = Jason.encode!(payload)
     {:reply, {:text, json_message}, state}
   end

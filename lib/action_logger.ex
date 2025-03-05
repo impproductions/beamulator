@@ -162,6 +162,7 @@ defmodule Beamulator.ActionLogger do
           start_time TIMESTAMP
         ) TIMESTAMP(timestamp)
         PARTITION BY DAY
+        TTL 1 WEEK
         WAL
         """
       },
@@ -194,6 +195,7 @@ defmodule Beamulator.ActionLogger do
           run_id STRING
         ) TIMESTAMP(timestamp)
         PARTITION BY DAY
+        TTL 1 WEEK
         WAL
         """
       }

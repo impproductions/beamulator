@@ -77,7 +77,7 @@ defmodule Beamulator.Actor do
       }
     }
 
-    delay = :rand.uniform(100) + 50
+    delay = :rand.uniform(10) + 5
     Process.send_after(self(), :start, delay)
 
     Beamulator.Dashboard.WebSocketHandler.broadcast(:send_behaviors)

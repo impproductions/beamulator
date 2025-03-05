@@ -14,9 +14,10 @@ config :beamulator,
     time_speed_multiplier: 500
   ],
   actors: [
+    %{behavior: Beamulator.Behaviors.TodoUser, name: "Todo User", amt: 100, config: %{}},
     # %{behavior: Beamulator.Behaviors.Fooizer, name: "Fooizer", amt: 1000, config: %{}}
-    %{behavior: Beamulator.Behaviors.Organizer, name: "Organizer", amt: 1, config: %{}},
-    %{behavior: Beamulator.Behaviors.Procrastinator, name: "Procrastinator", amt: 5000, config: %{}},
+    # %{behavior: Beamulator.Behaviors.Organizer, name: "Organizer", amt: 1, config: %{}},
+    # %{behavior: Beamulator.Behaviors.Procrastinator, name: "Procrastinator", amt: 100000, config: %{}},
     # %{behavior: Beamulator.Behaviors.BigSpender, name: "Big Spender", amt: 2, config: %{}},
     # %{behavior: Beamulator.Behaviors.CompulsiveBrowser, name: "Compulsive browser", amt: 10, config: %{}},
     # %{behavior: Beamulator.Behaviors.Scammer, name: "Scammer", amt: 1, config: %{}},
