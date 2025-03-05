@@ -14,6 +14,10 @@ defmodule Beamulator.Application do
     :rand.seed(:exsss, random_seed)
     Logger.info("Random seed set to: #{random_seed}")
 
+    Logger.debug("Loading actors configuration...")
+    Application.put_env(:beamulator, :actors, Beamulator.ActorsConfig.actors())
+    Logger.info("Actors configuration loaded. #{inspect(Application.fetch_env!(:beamulator, :actors))}")
+
     children =
       [
         {Registry, keys: :duplicate, name: Beamulator.WebsocketRegistry},
