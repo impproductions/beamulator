@@ -145,7 +145,8 @@
                   h("tr", null, [
                     h("th", null, "Name"),
                     h("th", null, "Count"),
-                    h("th", null, "Color")
+                    h("th", null, "💤"),
+                    h("th", null, "🚀"),
                   ])
                 ),
                 h("tbody", null,
@@ -153,16 +154,18 @@
                     h("tr", { key: behavior.name }, [
                       h("td", null, behavior.name),
                       h("td", null, behavior.count),
-                      h("td", { style: { display: "flex", justifyContent: "space-around" } }, [
+                      h("td", null,
                         h("span", {
                           className: "tag",
-                          style: { padding: "1rem", backgroundColor: stringToColor(behavior.name) }
-                        }, "💤"),
+                          style: { backgroundColor: stringToColor(behavior.name) }
+                        })
+                      ),
+                      h("td", null,
                         h("span", {
                           className: "tag",
-                          style: { padding: "1rem", backgroundColor: "red" }
-                        }, "🚀")
-                      ])
+                          style: { backgroundColor: "red" }
+                        })
+                      )
                     ])
                   )
                 )
