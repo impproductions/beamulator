@@ -61,23 +61,23 @@ defmodule Beamulator.Behavior do
       require Logger
       alias Beamulator.ActionExecutor
 
-      def execute(name, action) do
-        execute(name, action, nil)
+      def execute(actor_data, action) do
+        execute(actor_data, action, nil)
       end
 
-      def execute(name, action, args) do
-        Logger.debug("#{name} executing action #{inspect(action)} with args #{inspect(args)}")
-        result = ActionExecutor.exec({__MODULE__, name}, action, args)
-        Logger.info("#{name} executed action #{inspect(action)} with args #{inspect(args)}")
+      def execute(actor_data, action, args) do
+        Logger.debug("#{actor_data.actor_name} executing action #{inspect(action)} with args #{inspect(args)}")
+        result = ActionExecutor.exec({__MODULE__, actor_data.actor_name}, action, args)
+        Logger.info("#{actor_data.actor_name} executed action #{inspect(action)} with args #{inspect(args)}")
         result
       end
 
-      def execute(name, action, args, complaint) when is_struct(complaint) do
-        execute(name, action, args, [complaint])
+      def execute(actor_data, action, args, complaint) when is_struct(complaint) do
+        execute(actor_data, action, args, [complaint])
       end
 
-      def execute(name, action, args, complaints) when is_list(complaints) do
-        {status, result} = execute(name, action, args)
+      def execute(actor_data, action, args, complaints) when is_list(complaints) do
+        {status, result} = execute(actor_data, action, args)
 
         complaints
         |> Enum.each(fn complaint ->
@@ -92,7 +92,7 @@ defmodule Beamulator.Behavior do
               :log_complaint,
               {
                 __MODULE__,
-                name,
+                actor_data.actor_name,
                 complaint.message,
                 complaint.severity,
                 action,
@@ -112,55 +112,3 @@ defmodule Beamulator.Behavior do
     end
   end
 end
-
-# defmodule Beamulator.Behavior.Registry do
-#   require Logger
-
-#   use GenServer
-
-#   def start_link(_opts \\ []) do
-#     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
-#   end
-
-#   def register(behavior_module, data \\ %{}) when is_atom(behavior_module) do
-#     GenServer.call(__MODULE__, {:register, behavior_module, data})
-#   end
-
-#   def list_behaviors do
-#     GenServer.call(__MODULE__, :list_behaviors)
-#   end
-
-#   def scan_and_register_all_behaviors do
-#     found =
-#       :code.all_loaded()
-#       |> Enum.map(fn {module, _file} -> module end)
-#       |> Enum.filter(&module_in_behaviors_namespace?/1)
-
-#     Logger.info("Found behaviors: #{inspect(found)}")
-
-#     found
-#     |> Enum.each(&register/1)
-#   end
-
-#   defp module_in_behaviors_namespace?(module) do
-#     module
-#     |> Atom.to_string()
-#     |> String.starts_with?("Elixir.Beamulator.Behaviors.")
-#   end
-
-#   @impl true
-#   def init(_init_arg) do
-#     {:ok, %{}}
-#   end
-
-#   @impl true
-#   def handle_call({:register, module, data}, _from, state) do
-#     new_state = Map.put(state, module, data)
-#     {:reply, :ok, new_state}
-#   end
-
-#   @impl true
-#   def handle_call(:list_behaviors, _from, state) do
-#     {:reply, state, state}
-#   end
-# end

@@ -2,7 +2,7 @@
 
 ## Next
 - scheduling tools 🛠️
-- abstraction for conscutive, dependant calls
+- abstraction for conscutive, dependant calls 🛠️
 - tooling for timeseries generation
 - tooling for inter-actor communication
 - automatically store last action in actor

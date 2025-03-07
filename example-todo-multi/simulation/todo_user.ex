@@ -20,83 +20,76 @@ defmodule Beamulator.Behaviors.TodoUser do
   end
 
   @impl true
-  def act(_tick, %{actor_state: state} = data) do
+  def act(_tick, %{actor_state: state} = actor_data) do
     cond do
       not state.registered ->
-        register_self(data)
+        register_self(actor_data)
 
       :rand.uniform() < 0.5 ->
-        create_todo(data)
+        create_todo(actor_data)
 
       true ->
-        delete_todo(data)
+        delete_todo(actor_data)
     end
   end
 
-  defp register_self(%{actor_state: state} = data) do
-    Logger.info("#{data.actor_name} is registering as a new user.")
+  defp register_self(%{actor_state: state} = actor_data) do
+    Logger.info("#{actor_data.actor_name} is registering as a new user.")
 
-    execute(data.actor_name, &Actions.create_user/1, auth_data(state))
+    execute(actor_data, &Actions.create_user/1, auth_data(state))
 
     new_state = Map.put(state, :registered, true)
-    wait(data.actor_name, %{data | actor_state: Map.put(new_state, :last_action, "registered")})
+    wait(%{actor_data | actor_state: Map.put(new_state, :last_action, "registered")})
   end
 
-  defp delete_todo(%{actor_state: state} = data) do
-    Logger.info("#{data.actor_name} is deleting a todo item.")
+  defp delete_todo(%{actor_state: state} = actor_data) do
+    Logger.info("#{actor_data.actor_name} is deleting a todo item.")
 
     with {:ok, todos} when todos != [] <-
-           execute(data.actor_name, &Actions.get_todos/1, auth_data(state)),
+           execute(actor_data, &Actions.get_todos/1, auth_data(state)),
          todo <- Enum.random(todos),
          {:ok, _} <-
-           execute(
-             data.actor_name,
-             &Actions.delete_todo/1,
-             Map.merge(%{id: todo["id"]}, auth_data(state))
-           ),
+           execute(actor_data, &Actions.delete_todo/1, with_auth_data(%{id: todo["id"]}, state)),
          {:ok, updated_todos} <-
-           execute(data.actor_name, &Actions.get_todos/1, auth_data(state)) do
+           execute(actor_data, &Actions.get_todos/1, auth_data(state)) do
       new_state = Map.put(state, :todos, updated_todos)
 
-      wait(data.actor_name, %{
-        data
+      wait(%{
+        actor_data
         | actor_state: Map.put(new_state, :last_action, "deleted todo")
       })
     else
       _ ->
-        Logger.info("#{data.actor_name} has no todos to delete.")
+        Logger.info("#{actor_data.actor_name} has no todos to delete.")
 
-        wait(data.actor_name, %{
-          data
+        wait(%{
+          actor_data
           | actor_state: Map.put(state, :last_action, "no todos to delete")
         })
     end
   end
 
-  defp create_todo(%{actor_state: state} = data) do
-    Logger.info("#{data.actor_name} is creating a new todo item.")
+  defp create_todo(%{actor_state: state} = actor_data) do
+    Logger.info("#{actor_data.actor_name} is creating a new todo item.")
+
+    todo_item = %{
+      title: Faker.Lorem.sentence(),
+      completed: false
+    }
 
     with {:ok, _} <-
-           execute(
-             data.actor_name,
-             &Actions.create_todo/1,
-             %{
-               title: Faker.Lorem.sentence(),
-               completed: false
-             }
-             |> Map.merge(auth_data(state))
-           ),
+           execute(actor_data, &Actions.create_todo/1, with_auth_data(todo_item, state)),
          {:ok, todos} <-
-           execute(data.actor_name, &Actions.get_todos/1, auth_data(state)) do
+           execute(actor_data, &Actions.get_todos/1, auth_data(state)) do
       new_state = Map.put(state, :todos, todos)
 
-      wait(data.actor_name, %{
-        data
+      wait(%{
+        actor_data
         | actor_state: Map.put(new_state, :last_action, "created todo")
       })
     else
       _ ->
-        wait(data.actor_name, %{data | actor_state: Map.put(state, :last_action, "created todo")})
+        wait(%{actor_data | actor_state: Map.put(state, :last_action, "created todo")})
     end
   end
 
@@ -107,7 +100,11 @@ defmodule Beamulator.Behaviors.TodoUser do
     }
   end
 
-  defp wait(name, data) do
+  defp with_auth_data(map, state) do
+    Map.merge(map, auth_data(state))
+  end
+
+  defp wait(actor_data) do
     to_wait =
       Tools.random_int(div(@decision_wait_ms, 2), @decision_wait_ms)
       |> Tools.Time.adjust_to_time_window(8, 18)
@@ -116,9 +113,9 @@ defmodule Beamulator.Behaviors.TodoUser do
     real_scheduled_time = Tools.Time.real_time_after!(to_wait)
 
     Logger.info(
-      "#{name} is waiting for #{D.to_string(to_wait)} and is scheduled to act at #{new_scheduled_time} (#{real_scheduled_time} real time)."
+      "#{actor_data.actor_name} is waiting for #{D.to_string(to_wait)} and is scheduled to act at #{new_scheduled_time} (#{real_scheduled_time} real time)."
     )
 
-    {:ok, to_wait, data}
+    {:ok, to_wait, actor_data}
   end
 end

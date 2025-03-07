@@ -114,7 +114,7 @@ defmodule Beamulator.Tools do
       next_action_hour = Map.get(next_action_simulation_time, :hour)
 
       target_hour = from
-      limit_hour = to
+      limit_hour = to - 1
 
       to_wait =
         if next_action_hour in target_hour..limit_hour do
