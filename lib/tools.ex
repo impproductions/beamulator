@@ -74,24 +74,79 @@ defmodule Beamulator.Tools do
   end
 
   defmodule Time do
+    alias Beamulator.Clock
     alias Beamulator.Tools.Duration
+
     def time_speed_multiplier() do
       Application.get_env(:beamulator, :simulation)[:time_speed_multiplier]
     end
 
-    def simulation_ms_to_ms(simulation_ms) do
+    @spec simulation_ms_to_ms(integer()) :: integer()
+    def simulation_ms_to_ms(simulation_ms) when is_integer(simulation_ms) do
       div(simulation_ms, time_speed_multiplier())
     end
 
-    def ms_to_simulation_ms(time) do
+    @spec ms_to_simulation_ms(integer()) :: integer()
+    def ms_to_simulation_ms(time) when is_integer(time) do
       time * time_speed_multiplier()
     end
 
+    @spec simulation_time_after!(time_ms :: integer()) :: DateTime.t()
+    def simulation_time_after!(time_ms) do
+      (Clock.get_simulation_now() + time_ms)
+      |> DateTime.from_unix!(:millisecond)
+    end
+
+    @spec real_time_after!(simulation_time_ms :: integer()) :: DateTime.t()
+    def real_time_after!(simulation_time_ms) do
+      ((DateTime.utc_now() |> DateTime.to_unix(:millisecond)) +
+         simulation_ms_to_ms(simulation_time_ms))
+      |> DateTime.from_unix!(:millisecond)
+    end
+
+    @spec adjust_to_time_window(
+            time_to_wait_ms :: integer(),
+            from_hour :: non_neg_integer(),
+            to_hour :: non_neg_integer()
+          ) :: integer()
+    def adjust_to_time_window(to_wait, from, to) do
+      next_action_simulation_time = simulation_time_after!(to_wait)
+      next_action_hour = Map.get(next_action_simulation_time, :hour)
+
+      target_hour = from
+      limit_hour = to
+
+      to_wait =
+        if next_action_hour in target_hour..limit_hour do
+          to_wait
+        else
+          if next_action_hour < target_hour do
+            to_wait + Duration.new(h: target_hour - next_action_hour)
+          else
+            to_wait + Duration.new(h: target_hour + 24 - next_action_hour)
+          end
+        end
+
+      to_wait
+    end
+
+    @spec adjust_to_time_window(
+            time_to_wait_ms :: integer(),
+            from_hour :: non_neg_integer(),
+            to_hour :: non_neg_integer(),
+            offset_hours :: integer()
+          ) :: integer()
+    def adjust_to_time_window(to_wait, from, to, offset) do
+      adjust_to_time_window(to_wait, from, to) + Duration.new(h: offset)
+    end
+
+    @spec as_duration_human(non_neg_integer()) :: binary()
     def as_duration_human(time_ms) when is_integer(time_ms) do
       Duration.new(ms: time_ms)
       |> Duration.to_string()
     end
 
+    @spec as_duration_human(non_neg_integer(), :shorten) :: binary()
     def as_duration_human(time_ms, :shorten) when is_integer(time_ms) do
       as_duration_human(time_ms)
       |> String.split(", ")
@@ -108,7 +163,7 @@ defmodule Beamulator.Tools do
           String.starts_with?(unit, "wee") -> "#{amt}w"
         end
       end)
-      |> Enum.join("")
+      |> Enum.join(", ")
     end
   end
 end

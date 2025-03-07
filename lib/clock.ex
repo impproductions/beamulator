@@ -16,12 +16,24 @@ defmodule Beamulator.Clock do
     GenServer.call(__MODULE__, :get_real_duration_ms)
   end
 
+  @spec get_simulation_now() :: any()
+  def get_simulation_now() do
+    GenServer.call(__MODULE__, :get_simulation_now)
+  end
+
   def get_simulation_duration_ms() do
     GenServer.call(__MODULE__, :get_simulation_duration_ms)
   end
 
   def init(_) do
-    start_time = DateTime.utc_now()
+    start_time =
+      if Application.get_env(:beamulator, :start_time) do
+        Application.get_env(:beamulator, :start_time)
+      else
+        DateTime.utc_now()
+      end
+
+    Application.put_env(:beamulator, :start_time, start_time)
 
     Logger.info("Clock initialized at #{DateTime.to_iso8601(start_time)}")
 
@@ -30,6 +42,16 @@ defmodule Beamulator.Clock do
     }
 
     {:ok, state}
+  end
+
+  def handle_call(:get_simulation_now, _from, state) do
+    start_time = state.start_time
+    since_start = DateTime.diff(DateTime.utc_now(), state.start_time, :millisecond)
+
+    simulation_now =
+      DateTime.to_unix(start_time, :millisecond) + Tools.Time.ms_to_simulation_ms(since_start)
+
+    {:reply, simulation_now, state}
   end
 
   def handle_call(:get_real_duration_ms, _from, state) do

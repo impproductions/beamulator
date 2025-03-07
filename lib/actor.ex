@@ -71,6 +71,7 @@ defmodule Beamulator.Actor do
       config: config,
       state: initial_state,
       runtime_stats: %{
+        schedule_position: 0,
         action_count: 0,
         last_action_time: Clock.get_simulation_duration_ms(),
         started: false
@@ -139,7 +140,7 @@ defmodule Beamulator.Actor do
       }
 
       Beamulator.Dashboard.WebSocketHandler.broadcast({:actor_state_update, new_state})
-      schedule_next_action(state.name, wait_simulation_time_ms)
+      schedule_next_action(state, wait_simulation_time_ms)
 
       {:noreply, new_state}
     else
@@ -162,7 +163,8 @@ defmodule Beamulator.Actor do
     :ok
   end
 
-  defp schedule_next_action(actor_name, wait_simulation_time_ms) do
+  defp schedule_next_action(state, wait_simulation_time_ms) do
+    actor_name = state.name
     wait_real_time_ms = div(wait_simulation_time_ms, Tools.Time.time_speed_multiplier())
 
     Logger.debug(

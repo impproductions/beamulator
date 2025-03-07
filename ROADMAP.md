@@ -1,12 +1,20 @@
 # Roadmap
 
 ## Next
-- actor schedule (as opposed to freehand wait)
+- scheduling tools 🛠️
 - abstraction for conscutive, dependant calls
 - tooling for timeseries generation
 - tooling for inter-actor communication
+- automatically store last action in actor
 
 - reintroduce actor config into the mix
+
+- alter simulation population at runtime
+  - add
+  - remove
+  - replace
+  - manual actions
+  - store and restore actor state <--------------------- crucial for self healing
 
 - ws add connection to log metadata
 - limit run duration

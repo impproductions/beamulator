@@ -53,6 +53,7 @@ defmodule Beamulator.Behavior do
   @callback act(simulation_time_ms :: integer(), actor_data :: Beamulator.Behavior.ActPayload.t()) ::
               {:ok, wait_ms :: integer(), new_data :: Beamulator.Behavior.ActPayload.t()}
               | {:error, wait_ms :: integer(), new_data :: Beamulator.Behavior.ActPayload.t()}
+
   defmacro __using__(_opts) do
     quote do
       @behaviour Beamulator.Behavior
@@ -60,14 +61,10 @@ defmodule Beamulator.Behavior do
       require Logger
       alias Beamulator.ActionExecutor
 
-      # @spec execute(name :: binary(), action :: fun()) ::
-      #         {:ok, response :: any()} | {:error, reason :: any()}
       def execute(name, action) do
         execute(name, action, nil)
       end
 
-      # @spec execute(name :: binary(), action :: fun(), args :: map()) ::
-      #         {:ok, response :: any()} | {:error, reason :: any()}
       def execute(name, action, args) do
         Logger.debug("#{name} executing action #{inspect(action)} with args #{inspect(args)}")
         result = ActionExecutor.exec({__MODULE__, name}, action, args)
@@ -75,24 +72,10 @@ defmodule Beamulator.Behavior do
         result
       end
 
-      # @spec execute(
-      #         name :: binary(),
-      #         action :: fun(),
-      #         args :: map(),
-      #         complaint :: Beamulator.Behavior.Complaint.t()
-      #       ) ::
-      #         {:ok, response :: any()} | {:error, reason :: any()}
       def execute(name, action, args, complaint) when is_struct(complaint) do
         execute(name, action, args, [complaint])
       end
 
-      # @spec execute(
-      #         name :: binary(),
-      #         action :: fun(),
-      #         args :: map(),
-      #         complaints :: [Beamulator.Behavior.Complaint.t()]
-      #       ) ::
-      #         {:ok, response :: any()} | {:error, reason :: any()}
       def execute(name, action, args, complaints) when is_list(complaints) do
         {status, result} = execute(name, action, args)
 
