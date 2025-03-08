@@ -3,8 +3,13 @@
 ## Next
 - scheduling tools 🛠️
 - abstraction for conscutive, dependant calls 🛠️
+- create distinction between tools (for behavior labs) and utils (for internal use)
 - tooling for timeseries generation
 - tooling for inter-actor communication
+
+- ensure actors start last
+
+- log action schedule automatically in actor
 - automatically store last action in actor
 
 - reintroduce actor config into the mix
@@ -22,6 +27,7 @@
 
 ## Fix
 - quest url from config
+- fix actor drift
 - rationalize type signatures for large tuples (convert to maps?)
   - action executor
   - behavior registry/behavior spec?

@@ -180,7 +180,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
       name: actor_state.name,
       action_count: actor_state.runtime_stats.action_count,
       last_action_time: Tools.Time.as_duration_human(actor_state.runtime_stats.last_action_time),
-      state: actor_state.state,
+      state: inspect(actor_state.state, pretty: true),
       config: actor_state.config,
       started: actor_state.runtime_stats.started
     }

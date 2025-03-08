@@ -97,6 +97,7 @@ defmodule Beamulator.Actor do
         :act,
         %{behavior: behavior, state: actor_state, runtime_stats: %{started: started}} = state
       ) do
+    action_start_time = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
     simulation_time_ms = Clock.get_simulation_duration_ms()
 
     Logger.metadata(
@@ -111,7 +112,8 @@ defmodule Beamulator.Actor do
       actor_serial_id: state.serial_id,
       actor_name: state.name,
       actor_config: state.config,
-      actor_state: actor_state
+      actor_state: actor_state,
+      actor_runtime: state.runtime_stats
     }
 
     if started do
@@ -140,7 +142,8 @@ defmodule Beamulator.Actor do
       }
 
       Beamulator.Dashboard.WebSocketHandler.broadcast({:actor_state_update, new_state})
-      schedule_next_action(state, wait_simulation_time_ms)
+
+      schedule_next_action(state, wait_simulation_time_ms, action_start_time)
 
       {:noreply, new_state}
     else
@@ -150,6 +153,11 @@ defmodule Beamulator.Actor do
 
       {:noreply, state}
     end
+  end
+
+  def handle_cast({:update_state, key, value}, state) do
+    new_state = %{state | state: Map.put(state.state, key, value)}
+    {:noreply, new_state}
   end
 
   def handle_call(:state, _from, state) do
@@ -163,14 +171,17 @@ defmodule Beamulator.Actor do
     :ok
   end
 
-  defp schedule_next_action(state, wait_simulation_time_ms) do
+  defp schedule_next_action(state, wait_simulation_time_ms, action_start_time) do
     actor_name = state.name
     wait_real_time_ms = div(wait_simulation_time_ms, Tools.Time.time_speed_multiplier())
+
+    elapsed = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - action_start_time
 
     Logger.debug(
       "Actor #{actor_name} scheduling next action in #{Tools.Duration.to_string(wait_simulation_time_ms)} simulation time (#{Tools.Duration.to_string(wait_real_time_ms)})"
     )
 
-    Process.send_after(self(), :act, wait_real_time_ms)
+    drift_adjusted = wait_real_time_ms - elapsed
+    Process.send_after(self(), :act, drift_adjusted)
   end
 end

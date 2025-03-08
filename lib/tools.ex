@@ -104,30 +104,30 @@ defmodule Beamulator.Tools do
       |> DateTime.from_unix!(:millisecond)
     end
 
+    # TODO allow different time resolutions
     @spec adjust_to_time_window(
             time_to_wait_ms :: integer(),
             from_hour :: non_neg_integer(),
             to_hour :: non_neg_integer()
           ) :: integer()
     def adjust_to_time_window(to_wait, from, to) do
+      # FIXME remove dependency and unit test
       next_action_simulation_time = simulation_time_after!(to_wait)
       next_action_hour = Map.get(next_action_simulation_time, :hour)
 
-      target_hour = from
-      limit_hour = to - 1
+      # upper limit is exclusive, you don't want to be working at 17:30 if your day ends at 17:00
+      limit = to - 1
 
-      to_wait =
-        if next_action_hour in target_hour..limit_hour do
+      cond do
+        next_action_hour in from..limit ->
           to_wait
-        else
-          if next_action_hour < target_hour do
-            to_wait + Duration.new(h: target_hour - next_action_hour)
-          else
-            to_wait + Duration.new(h: target_hour + 24 - next_action_hour)
-          end
-        end
 
-      to_wait
+        next_action_hour < from ->
+          to_wait + Duration.new(h: from - next_action_hour)
+
+        true ->
+          to_wait + Duration.new(h: from + 24 - next_action_hour)
+      end
     end
 
     @spec adjust_to_time_window(

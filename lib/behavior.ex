@@ -1,12 +1,13 @@
 defmodule Beamulator.Behavior.ActPayload do
-  @enforce_keys [:actor_serial_id, :actor_name, :actor_config, :actor_state]
-  defstruct [:actor_serial_id, :actor_name, :actor_config, :actor_state]
+  @enforce_keys [:actor_serial_id, :actor_name, :actor_config, :actor_state, :actor_runtime]
+  defstruct [:actor_serial_id, :actor_name, :actor_config, :actor_state, :actor_runtime]
 
   @type t :: %__MODULE__{
           actor_serial_id: integer(),
           actor_name: binary(),
           actor_config: map(),
-          actor_state: map()
+          actor_state: map(),
+          actor_runtime: map()
         }
 end
 

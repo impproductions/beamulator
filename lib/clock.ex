@@ -16,7 +16,6 @@ defmodule Beamulator.Clock do
     GenServer.call(__MODULE__, :get_real_duration_ms)
   end
 
-  @spec get_simulation_now() :: any()
   def get_simulation_now() do
     GenServer.call(__MODULE__, :get_simulation_now)
   end
