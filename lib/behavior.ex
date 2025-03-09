@@ -1,8 +1,9 @@
 defmodule Beamulator.Behavior.ActPayload do
-  @enforce_keys [:actor_serial_id, :actor_name, :actor_config, :actor_state, :actor_runtime]
-  defstruct [:actor_serial_id, :actor_name, :actor_config, :actor_state, :actor_runtime]
+  @enforce_keys [:simulation_data, :actor_serial_id, :actor_name, :actor_config, :actor_state, :actor_runtime]
+  defstruct [:simulation_data, :actor_serial_id, :actor_name, :actor_config, :actor_state, :actor_runtime]
 
   @type t :: %__MODULE__{
+          simulation_data: Beamulator.Simulation.SimulationData.t(),
           actor_serial_id: integer(),
           actor_name: binary(),
           actor_config: map(),
@@ -51,7 +52,7 @@ defmodule Beamulator.Behavior do
     - the time to wait before the next action, in ms, in simulation time (e.s. 1 second is 100ms in simulation time if the simulation is running at 10x speed)
     - the updated behavior data
   """
-  @callback act(simulation_time_ms :: integer(), actor_data :: Beamulator.Behavior.ActPayload.t()) ::
+  @callback act(actor_data :: Beamulator.Behavior.ActPayload.t()) ::
               {:ok, wait_ms :: integer(), new_data :: Beamulator.Behavior.ActPayload.t()}
               | {:error, wait_ms :: integer(), new_data :: Beamulator.Behavior.ActPayload.t()}
 
@@ -67,9 +68,16 @@ defmodule Beamulator.Behavior do
       end
 
       def execute(actor_data, action, args) do
-        Logger.debug("#{actor_data.actor_name} executing action #{inspect(action)} with args #{inspect(args)}")
+        Logger.debug(
+          "#{actor_data.actor_name} executing action #{inspect(action)} with args #{inspect(args)}"
+        )
+
         result = ActionExecutor.exec({__MODULE__, actor_data.actor_name}, action, args)
-        Logger.info("#{actor_data.actor_name} executed action #{inspect(action)} with args #{inspect(args)}")
+
+        Logger.info(
+          "#{actor_data.actor_name} executed action #{inspect(action)} with args #{inspect(args)}"
+        )
+
         result
       end
 

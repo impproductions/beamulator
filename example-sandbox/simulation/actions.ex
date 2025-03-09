@@ -6,4 +6,9 @@ defmodule Beamulator.Actions do
     Logger.info("Doing foo with metric: #{metric}")
     {:ok, %{}}
   end
+
+  def do_bar(foos) do
+    Logger.info("Collected: #{inspect(foos)}")
+    {:ok, %{}}
+  end
 end

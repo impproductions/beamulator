@@ -147,6 +147,7 @@ defmodule Beamulator.Tools.Signal.PatchPresets do
       adjustment_fn: fn elapsed, duration ->
         half = duration / 2
 
+
         if elapsed <= half do
           max_value * (elapsed / half)
         else

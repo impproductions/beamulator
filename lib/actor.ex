@@ -27,6 +27,17 @@ defmodule Beamulator.Actor.Data do
         }
 end
 
+defmodule Beamulator.Simulation.SimulationData do
+  @enforce_keys [:now_ms, :duration_ms, :start_time_ms]
+  defstruct [:now_ms, :duration_ms, :start_time_ms]
+
+  @type t :: %__MODULE__{
+          now_ms: non_neg_integer(),
+          duration_ms: non_neg_integer(),
+          start_time_ms: non_neg_integer()
+        }
+end
+
 defmodule Beamulator.Actor do
   require Logger
   use GenServer
@@ -98,7 +109,7 @@ defmodule Beamulator.Actor do
         %{behavior: behavior, state: actor_state, runtime_stats: %{started: started}} = state
       ) do
     action_start_time = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
-    simulation_time_ms = Clock.get_simulation_duration_ms()
+    simulation_time_ms = Clock.get_simulation_now()
 
     Logger.metadata(
       actor: state.name,
@@ -109,6 +120,11 @@ defmodule Beamulator.Actor do
     Logger.debug("Actor #{state.name} received action request")
 
     behavior_data = %Beamulator.Behavior.ActPayload{
+      simulation_data: %Beamulator.Simulation.SimulationData{
+        now_ms: simulation_time_ms,
+        duration_ms: Clock.get_simulation_duration_ms(),
+        start_time_ms: Clock.get_start_time()
+      },
       actor_serial_id: state.serial_id,
       actor_name: state.name,
       actor_config: state.config,
@@ -118,7 +134,7 @@ defmodule Beamulator.Actor do
 
     if started do
       {wait_simulation_time_ms, new_state} =
-        case behavior.act(simulation_time_ms, behavior_data) do
+        case behavior.act(behavior_data) do
           {:ok, wait_simulation_time_ms, new_behavior_data} ->
             Logger.debug("Actor #{state.name} acted successfully at #{simulation_time_ms}")
             updated_state = %{state | state: new_behavior_data.actor_state}

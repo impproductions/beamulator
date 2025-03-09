@@ -4,8 +4,8 @@
 - scheduling tools 🛠️
 - abstraction for conscutive, dependant calls 🛠️
 - create distinction between tools (for behavior labs) and utils (for internal use)
-- tooling for timeseries generation
-- tooling for inter-actor communication
+- tooling for timeseries generation ✅
+- tooling for inter-actor communication 🛠️
 
 - ensure actors start last
 
