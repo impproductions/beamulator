@@ -54,7 +54,7 @@ defmodule Beamulator.Tools.Signal.Patch.Config do
 end
 
 defmodule Beamulator.Tools.Signal.Patch do
-  alias Beamulator.Tools
+  alias Beamulator.Utils
   use GenServer
   require Logger
 
@@ -80,7 +80,7 @@ defmodule Beamulator.Tools.Signal.Patch do
 
   def handle_cast({:start, now, duration}, state) do
     if state.status != :active do
-      real_duration = Tools.Time.simulation_ms_to_ms(duration)
+      real_duration = Utils.Time.simulation_ms_to_ms(duration)
       new_state = %{state | status: :active, start_ms: now, duration: duration}
       Process.send_after(self(), :finish, real_duration)
       {:noreply, new_state}

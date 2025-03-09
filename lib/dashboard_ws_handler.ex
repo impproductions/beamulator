@@ -1,6 +1,6 @@
 defmodule Beamulator.Dashboard.WebSocketHandler do
   require Logger
-  alias Beamulator.Tools
+  alias Beamulator.Utils
   alias Beamulator.Clock
   @behaviour :cowboy_websocket
 
@@ -136,7 +136,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   end
 
   defp fetch_behaviors do
-    list = Tools.Actors.select_all()
+    list = Utils.Actors.select_all()
 
     list
     |> Enum.group_by(fn {_, {b, _, _}} -> inspect(b) end)
@@ -150,7 +150,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   end
 
   defp fetch_actors do
-    list = Tools.Actors.select_all()
+    list = Utils.Actors.select_all()
 
     list
     |> Enum.map(fn {_, {_, n, _}} -> n end)
@@ -162,8 +162,8 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     simulation_ms = Clock.get_simulation_duration_ms()
     simulation_now = start_time_ms + simulation_ms
     real_ms = Clock.get_real_duration_ms()
-    simulation_duration = Tools.Time.as_duration_human(simulation_ms, :shorten)
-    real_duration = Tools.Time.as_duration_human(real_ms, :shorten)
+    simulation_duration = Utils.Time.as_duration_human(simulation_ms, :shorten)
+    real_duration = Utils.Time.as_duration_human(real_ms, :shorten)
 
     %{
       real_ms: DateTime.utc_now() |> DateTime.to_unix(:millisecond),
@@ -179,7 +179,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
       behavior: strip_namespace(actor_state.behavior),
       name: actor_state.name,
       action_count: actor_state.runtime_stats.action_count,
-      last_action_time: Tools.Time.as_duration_human(actor_state.runtime_stats.last_action_time),
+      last_action_time: Utils.Time.as_duration_human(actor_state.runtime_stats.last_action_time),
       state: inspect(actor_state.state, pretty: true),
       config: actor_state.config,
       started: actor_state.runtime_stats.started

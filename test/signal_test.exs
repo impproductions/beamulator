@@ -1,7 +1,7 @@
 defmodule DurationTest do
   use ExUnit.Case
 
-  alias Beamulator.Tools.Signal
+  alias Beamulator.Utils.Signal
   doctest Duration
 
   test "default sine fits in period" do

@@ -1,7 +1,7 @@
 defmodule DurationTest do
   use ExUnit.Case
 
-  alias Beamulator.Tools.Duration, as: D
+  alias Beamulator.Utils.Duration, as: D
   doctest Duration
 
   test "1 second in milliseconds" do

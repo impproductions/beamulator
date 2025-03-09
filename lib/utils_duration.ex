@@ -1,4 +1,4 @@
-defmodule Beamulator.Tools.Duration do
+defmodule Beamulator.Utils.Duration do
   @type time_unit ::
           :ms | :s | :m | :h | :d | :w
 

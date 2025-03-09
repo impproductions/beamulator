@@ -1,8 +1,8 @@
 defmodule Beamulator.Behaviors.TodoUser do
   alias Beamulator.Actions
   alias Beamulator
-  alias Beamulator.Tools
-  alias Beamulator.Tools.Duration, as: D
+  alias Beamulator.Utils
+  alias Beamulator.Utils.Duration, as: D
   use Beamulator.Behavior
   require Logger
 
@@ -106,11 +106,11 @@ defmodule Beamulator.Behaviors.TodoUser do
 
   defp wait(actor_data) do
     to_wait =
-      Tools.random_int(div(@decision_wait_ms, 2), @decision_wait_ms)
-      |> Tools.Time.adjust_to_time_window(8, 18)
+      Utils.random_int(div(@decision_wait_ms, 2), @decision_wait_ms)
+      |> Utils.Time.adjust_to_time_window(8, 18)
 
-    new_scheduled_time = Tools.Time.simulation_time_after!(to_wait)
-    real_scheduled_time = Tools.Time.real_time_after!(to_wait)
+    new_scheduled_time = Utils.Time.simulation_time_after!(to_wait)
+    real_scheduled_time = Utils.Time.real_time_after!(to_wait)
 
     Logger.info(
       "#{actor_data.actor_name} is waiting for #{D.to_string(to_wait)} and is scheduled to act at #{new_scheduled_time} (#{real_scheduled_time} real time)."

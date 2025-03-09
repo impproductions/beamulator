@@ -1,6 +1,6 @@
 defmodule Beamulator.Behaviors.Organizer do
-  alias Beamulator.Tools
-  alias Beamulator.Tools.Duration, as: D
+  alias Beamulator.Utils
+  alias Beamulator.Utils.Duration, as: D
   use Beamulator.Behavior
 
   require Logger
@@ -75,7 +75,7 @@ defmodule Beamulator.Behaviors.Organizer do
   end
 
   defp wait(name, data) do
-    to_wait = Tools.random_int(div(@decision_wait_ms, 2), @decision_wait_ms)
+    to_wait = Utils.random_int(div(@decision_wait_ms, 2), @decision_wait_ms)
     Logger.info("#{name} is waiting for #{D.to_string(to_wait)}.")
     {:ok, to_wait, data}
   end

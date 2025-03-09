@@ -25,7 +25,7 @@ defmodule Beamulator.ActorInizializer do
     |> Enum.flat_map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
       for _ <- 1..amt do
         %{
-          name: "#{name} #{Beamulator.Tools.increasing_int()}",
+          name: "#{name} #{Beamulator.Utils.increasing_int()}",
           behavior: behavior,
           config: config
         }

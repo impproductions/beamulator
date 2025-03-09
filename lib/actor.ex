@@ -42,16 +42,16 @@ defmodule Beamulator.Actor do
   require Logger
   use GenServer
 
-  alias Beamulator.Tools
+  alias Beamulator.Utils
   alias Beamulator.Clock
   alias Beamulator.Actor.Data
 
-  def start_link({name, behavior_module, config}) do
+  def start_link({serial_id, name, behavior_module, config}) do
     Logger.debug("Attempting to start actor: #{name} with behavior #{inspect(behavior_module)}")
 
     initial_state = behavior_module.default_state()
 
-    case GenServer.start_link(__MODULE__, {name, behavior_module, config, initial_state}) do
+    case GenServer.start_link(__MODULE__, {serial_id, name, behavior_module, config, initial_state}) do
       {:ok, pid} ->
         Logger.debug("Actor #{name} started successfully")
         {:ok, pid}
@@ -69,9 +69,8 @@ defmodule Beamulator.Actor do
     end
   end
 
-  def init({name, behavior_module, config, initial_state}) do
+  def init({serial_id, name, behavior_module, config, initial_state}) do
     Logger.debug("Initializing actor: #{name}")
-    serial_id = Beamulator.Tools.increasing_int()
     selector = {behavior_module, serial_id, name}
     Registry.register(Beamulator.ActorRegistry, :actors, selector)
 
@@ -82,7 +81,6 @@ defmodule Beamulator.Actor do
       config: config,
       state: initial_state,
       runtime_stats: %{
-        schedule_position: 0,
         action_count: 0,
         last_action_time: Clock.get_simulation_duration_ms(),
         started: false
@@ -189,12 +187,12 @@ defmodule Beamulator.Actor do
 
   defp schedule_next_action(state, wait_simulation_time_ms, action_start_time) do
     actor_name = state.name
-    wait_real_time_ms = div(wait_simulation_time_ms, Tools.Time.time_speed_multiplier())
+    wait_real_time_ms = div(wait_simulation_time_ms, Utils.Time.time_speed_multiplier())
 
     elapsed = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - action_start_time
 
     Logger.debug(
-      "Actor #{actor_name} scheduling next action in #{Tools.Duration.to_string(wait_simulation_time_ms)} simulation time (#{Tools.Duration.to_string(wait_real_time_ms)})"
+      "Actor #{actor_name} scheduling next action in #{Utils.Duration.to_string(wait_simulation_time_ms)} simulation time (#{Utils.Duration.to_string(wait_real_time_ms)})"
     )
 
     drift_adjusted = wait_real_time_ms - elapsed

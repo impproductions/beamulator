@@ -5,7 +5,7 @@ defmodule Beamulator.Behaviors.Fooizer do
   alias Beamulator.Actions
   alias Beamulator
   alias Beamulator.Tools.Signal
-  alias Beamulator.Tools.Duration, as: D
+  alias Beamulator.Utils.Duration, as: D
   use Beamulator.Behavior
   require Logger
 
@@ -43,9 +43,9 @@ defmodule Beamulator.Behaviors.Fooizer do
 
     state =
       with nil <- state.collector_serial_id,
-           collectors when collectors != [] <-
-             Tools.Actors.select_by_behavior(Beamulator.Behaviors.Collector),
-           {_, collector_serial_id, _} <- Enum.random(collectors) |> elem(1) do
+           %{serial_id: collector_serial_id} <-
+             Tools.Actor.select_by_behavior(Beamulator.Behaviors.Collector)
+             |> Enum.random() do
         %{state | collector_serial_id: collector_serial_id}
       else
         _ -> state

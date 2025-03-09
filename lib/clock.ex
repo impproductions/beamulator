@@ -1,5 +1,5 @@
 defmodule Beamulator.Clock do
-  alias Beamulator.Tools
+  alias Beamulator.Utils
   use GenServer
   require Logger
 
@@ -48,7 +48,7 @@ defmodule Beamulator.Clock do
     since_start = DateTime.diff(DateTime.utc_now(), state.start_time, :millisecond)
 
     simulation_now =
-      DateTime.to_unix(start_time, :millisecond) + Tools.Time.ms_to_simulation_ms(since_start)
+      DateTime.to_unix(start_time, :millisecond) + Utils.Time.ms_to_simulation_ms(since_start)
 
     {:reply, simulation_now, state}
   end
@@ -60,7 +60,7 @@ defmodule Beamulator.Clock do
 
   def handle_call(:get_simulation_duration_ms, _from, state) do
     since_start = DateTime.diff(DateTime.utc_now(), state.start_time, :millisecond)
-    {:reply, Tools.Time.ms_to_simulation_ms(since_start), state}
+    {:reply, Utils.Time.ms_to_simulation_ms(since_start), state}
   end
 
   def handle_call(:get_start_time, _from, state) do

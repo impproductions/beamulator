@@ -9,7 +9,7 @@ defmodule Beamulator.Application do
     Logger.debug("Run UUID: #{run_uuid}")
     Application.put_env(:beamulator, :run_uuid, run_uuid)
 
-    random_seed = Beamulator.Tools.random_seed()
+    random_seed = Beamulator.Utils.random_seed()
     Logger.debug("Setting random seed: #{random_seed}")
     :rand.seed(:exsss, random_seed)
     Logger.info("Random seed set to: #{random_seed}")
@@ -60,7 +60,7 @@ defmodule Beamulator.Application do
   #   |> Enum.flat_map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
   #     for _ <- 1..amt do
   #       %{
-  #         name: "#{name} #{Beamulator.Tools.increasing_int()}",
+  #         name: "#{name} #{Beamulator.Utils.increasing_int()}",
   #         behavior: behavior,
   #         config: config
   #       }

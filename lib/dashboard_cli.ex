@@ -1,6 +1,6 @@
 defmodule Dashboard do
   alias Beamulator.Clock
-  alias Beamulator.Tools
+  alias Beamulator.Utils
   use GenServer
 
   @pages [:overview, :behavior, :actor]
@@ -80,7 +80,7 @@ defmodule Dashboard do
     IO.puts("Behavior State")
     IO.puts("\n--------- Behaviors ---------")
 
-    list = Tools.Actors.select_all()
+    list = Utils.Actors.select_all()
 
     list
     |> Enum.group_by(fn {_, {b, _, _}} -> inspect(b) end)
@@ -124,8 +124,8 @@ defmodule Dashboard do
     )
 
     IO.puts("\n--------- Clock ---------")
-    IO.puts("Real duration: #{Clock.get_real_duration_ms() |> Tools.Duration.to_string()}")
-    IO.puts("Simulation duration: #{Clock.get_simulation_duration_ms() |> Tools.Duration.to_string()}")
+    IO.puts("Real duration: #{Clock.get_real_duration_ms() |> Utils.Duration.to_string()}")
+    IO.puts("Simulation duration: #{Clock.get_simulation_duration_ms() |> Utils.Duration.to_string()}")
   end
 
   defp actor_counts() do

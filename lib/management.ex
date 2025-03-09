@@ -23,7 +23,7 @@ defmodule AlertFunctions do
 end
 
 defmodule Manage do
-  alias Beamulator.Tools
+  alias Beamulator.Utils
   require Logger
   require AlertFunctions
 
@@ -79,7 +79,7 @@ defmodule Manage do
 
   defwithalert actor_spawn(behavior_module) do
     behaviour_name = behavior_module |> Atom.to_string() |> String.split(".") |> List.last()
-    name = "#{behaviour_name} #{Beamulator.Tools.increasing_int()}"
+    name = "#{behaviour_name} #{Beamulator.Utils.increasing_int()}"
 
     Logger.info("Spawning actor: #{name} with behavior #{behavior_module}")
     actor_spawn(name, behavior_module, %{})
@@ -118,17 +118,10 @@ defmodule Manage do
   end
 
   def actors_by_behavior(behavior_module) do
-    Tools.Actors.select_by_behavior(behavior_module)
+    Utils.Actors.select_by_behavior(behavior_module)
   end
 
   defp extract_pid(pid_string) do
-    pid_string =
-      if String.starts_with?(pid_string, "#PID") do
-        String.slice(pid_string, 4..-1//1)
-      else
-        pid_string
-      end
-
-    pid_string |> String.to_charlist() |> :erlang.list_to_pid()
+    Beamulator.Utils.pid_from_string(pid_string)
   end
 end
