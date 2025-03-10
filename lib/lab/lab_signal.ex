@@ -1,4 +1,4 @@
-defmodule Beamulator.Tools.Signal do
+defmodule Beamulator.Lab.Signal do
   def normal(offset \\ 0, mean \\ 0, variance \\ 1) do
     offset + :rand.normal(mean, variance)
   end
@@ -36,7 +36,7 @@ defmodule Beamulator.Tools.Signal do
   def patch(offset, patch_pid) do
     simulation_now = Beamulator.Clock.get_simulation_now()
 
-    case Beamulator.Tools.Signal.Patch.get(patch_pid, offset, simulation_now) do
+    case Beamulator.Lab.Signal.Patch.get(patch_pid, offset, simulation_now) do
       {:ok, res} -> res
       error -> error
     end
@@ -44,16 +44,16 @@ defmodule Beamulator.Tools.Signal do
 
   def patch!(offset, patch_pid) do
     simulation_now = Beamulator.Clock.get_simulation_now()
-    Beamulator.Tools.Signal.Patch.get!(patch_pid, offset, simulation_now)
+    Beamulator.Lab.Signal.Patch.get!(patch_pid, offset, simulation_now)
   end
 end
 
-defmodule Beamulator.Tools.Signal.Patch.Config do
+defmodule Beamulator.Lab.Signal.Patch.Config do
   @enforce_keys [:adjustment_fn]
   defstruct duration: 0, adjustment_fn: nil
 end
 
-defmodule Beamulator.Tools.Signal.Patch do
+defmodule Beamulator.Lab.Signal.Patch do
   alias Beamulator.Utils
   use GenServer
   require Logger
@@ -117,9 +117,9 @@ defmodule Beamulator.Tools.Signal.Patch do
   end
 end
 
-defmodule Beamulator.Tools.Signal.PatchPresets do
-  alias Beamulator.Tools.Signal
-  alias Beamulator.Tools.Signal.Patch.Config
+defmodule Beamulator.Lab.Signal.PatchPresets do
+  alias Beamulator.Lab.Signal
+  alias Beamulator.Lab.Signal.Patch.Config
   require Logger
 
   def ramp(final_value) do

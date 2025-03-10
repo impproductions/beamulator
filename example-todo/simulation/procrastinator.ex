@@ -1,6 +1,6 @@
 defmodule Beamulator.Behaviors.Procrastinator do
   alias Beamulator.Utils
-  alias Beamulator.Utils.Duration, as: D
+  alias Beamulator.Lab.Duration, as: D
   use Beamulator.Behavior
   import Beamulator.Behavior.ComplaintBuilder
 

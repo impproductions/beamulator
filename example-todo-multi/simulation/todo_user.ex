@@ -2,7 +2,7 @@ defmodule Beamulator.Behaviors.TodoUser do
   alias Beamulator.Actions
   alias Beamulator
   alias Beamulator.Utils
-  alias Beamulator.Utils.Duration, as: D
+  alias Beamulator.Lab.Duration, as: D
   use Beamulator.Behavior
   require Logger
 

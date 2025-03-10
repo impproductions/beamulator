@@ -189,14 +189,17 @@
             className: "content",
             style: { display: "flex", flexWrap: "wrap", gap: "0.5rem" }
           }, [
+            h("div", { className: "tag" }, "Pid: " + actor.pid),
+            h("div", { className: "tag" }, "Serial ID: " + actor.serial_id),
+            // h("div", { className: "tag" }, "Tags: " + actor.tags.join(", ")),
             h("div", { className: "tag" }, "Action Count:" + actor.action_count),
             h("div", { className: "tag" }, "Last Action At: " + actor.last_action_time),
             h("div", { className: "tag" }, "Behavior: " + actor.behavior),
-            h("div", { className: "tag" }, "Started: " + actor.started)
+            h("div", { className: "tag" }, "Started: " + actor.started),
           ]),
           h("div", { className: "content" }, [
             h("h4", null, "State"),
-            h("pre", { className: "card-pre" }, JSON.stringify(actor.state, null, 2)),
+            h("pre", { className: "card-pre" }, actor.state),
             h("h4", null, "Config"),
             h("pre", { className: "card-pre" }, JSON.stringify(actor.config, null, 2))
           ])

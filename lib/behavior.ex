@@ -46,6 +46,11 @@ defmodule Beamulator.Behavior do
   @callback default_state() :: map()
 
   @doc """
+  The default_tags function should return a set of tags that the behavior is associated with.
+  """
+  @callback default_tags() :: MapSet.t()
+
+  @doc """
   The act function is called by the ActionExecutor to execute an action.
   It returns a tuple with:
     - the result of the action, either `:ok` or `:error`

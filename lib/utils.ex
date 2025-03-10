@@ -87,7 +87,7 @@ defmodule Beamulator.Utils do
 
   defmodule Time do
     alias Beamulator.Clock
-    alias Beamulator.Utils.Duration
+    alias Beamulator.Lab.Duration
 
     def time_speed_multiplier() do
       Application.get_env(:beamulator, :simulation)[:time_speed_multiplier]

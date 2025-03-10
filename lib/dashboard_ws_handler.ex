@@ -176,12 +176,16 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   defp format_actor_state(actor_state) do
     %{
       serial_id: actor_state.serial_id,
+      pid: actor_state.pid_str,
       behavior: strip_namespace(actor_state.behavior),
+      tags: inspect(actor_state.tags),
       name: actor_state.name,
       action_count: actor_state.runtime_stats.action_count,
-      last_action_time: Utils.Time.as_duration_human(actor_state.runtime_stats.last_action_time),
+      last_action_time:
+        DateTime.from_unix!(actor_state.runtime_stats.last_action_time, :millisecond)
+        |> DateTime.to_string(),
       state: inspect(actor_state.state, pretty: true),
-      config: actor_state.config,
+      config: inspect(actor_state.config, pretty: true),
       started: actor_state.runtime_stats.started
     }
   end

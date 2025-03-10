@@ -1,10 +1,9 @@
 # Roadmap
 
 ## Next
-- scheduling Utils 🛠️
-- abstraction for conscutive, dependant calls 🛠️
-- create distinction between Utils (for behavior labs) and utils (for internal use)
-- tooling for timeseries generation ✅
+- scheduling Utils ✅
+- create distinction between Lab (for behavior labs) and Utils (for internal use) 🛠️
+- tooling for signal generation ✅
 - tooling for inter-actor communication 🛠️
 
 - ensure actors start last

@@ -1,11 +1,14 @@
 defmodule Beamulator.Actor.Data do
-  @enforce_keys [:serial_id, :name, :behavior, :config, :state, :runtime_stats]
+  @enforce_keys [:pid_str, :serial_id, :name, :behavior, :config, :state, :tags, :runtime_stats]
+  @derive Jason.Encoder
   defstruct [
+    :pid_str,
     :serial_id,
     :name,
     :behavior,
     :config,
     :state,
+    :tags,
     runtime_stats: %{
       started: false,
       action_count: 0,
@@ -14,11 +17,13 @@ defmodule Beamulator.Actor.Data do
   ]
 
   @type t :: %__MODULE__{
+          pid_str: String.t(),
           serial_id: non_neg_integer(),
           name: String.t(),
           behavior: module(),
           config: map(),
           state: map(),
+          tags: MapSet.t(),
           runtime_stats: %{
             started: boolean(),
             action_count: non_neg_integer(),
@@ -43,15 +48,17 @@ defmodule Beamulator.Actor do
   use GenServer
 
   alias Beamulator.Utils
+  alias Beamulator.Lab
   alias Beamulator.Clock
   alias Beamulator.Actor.Data
 
   def start_link({serial_id, name, behavior_module, config}) do
     Logger.debug("Attempting to start actor: #{name} with behavior #{inspect(behavior_module)}")
 
-    initial_state = behavior_module.default_state()
-
-    case GenServer.start_link(__MODULE__, {serial_id, name, behavior_module, config, initial_state}) do
+    case GenServer.start_link(
+           __MODULE__,
+           {serial_id, name, behavior_module, config}
+         ) do
       {:ok, pid} ->
         Logger.debug("Actor #{name} started successfully")
         {:ok, pid}
@@ -69,17 +76,22 @@ defmodule Beamulator.Actor do
     end
   end
 
-  def init({serial_id, name, behavior_module, config, initial_state}) do
+  def init({serial_id, name, behavior_module, config}) do
     Logger.debug("Initializing actor: #{name}")
     selector = {behavior_module, serial_id, name}
+    initial_state = behavior_module.default_state()
+    initial_tags = behavior_module.default_tags()
+
     Registry.register(Beamulator.ActorRegistry, :actors, selector)
 
     state = %Data{
+      pid_str: inspect(self()),
       serial_id: serial_id,
       name: name,
       behavior: behavior_module,
       config: config,
       state: initial_state,
+      tags: initial_tags,
       runtime_stats: %{
         action_count: 0,
         last_action_time: Clock.get_simulation_duration_ms(),
@@ -174,6 +186,12 @@ defmodule Beamulator.Actor do
     {:noreply, new_state}
   end
 
+  def handle_cast({:set_tags, tags}, state) do
+    as_set = tags |> Enum.into(MapSet.new())
+    new_state = %{state | tags: MapSet.union(state.tags, as_set)}
+    {:noreply, new_state}
+  end
+
   def handle_call(:state, _from, state) do
     {:reply, state, state}
   end
@@ -192,7 +210,7 @@ defmodule Beamulator.Actor do
     elapsed = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - action_start_time
 
     Logger.debug(
-      "Actor #{actor_name} scheduling next action in #{Utils.Duration.to_string(wait_simulation_time_ms)} simulation time (#{Utils.Duration.to_string(wait_real_time_ms)})"
+      "Actor #{actor_name} scheduling next action in #{Lab.Duration.to_string(wait_simulation_time_ms)} simulation time (#{Lab.Duration.to_string(wait_real_time_ms)})"
     )
 
     drift_adjusted = wait_real_time_ms - elapsed
