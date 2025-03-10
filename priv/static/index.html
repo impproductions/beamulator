@@ -191,9 +191,10 @@
           }, [
             h("div", { className: "tag" }, "Pid: " + actor.pid),
             h("div", { className: "tag" }, "Serial ID: " + actor.serial_id),
-            // h("div", { className: "tag" }, "Tags: " + actor.tags.join(", ")),
+            h("div", { className: "tag" }, "Tags: " + actor.tags),
             h("div", { className: "tag" }, "Action Count:" + actor.action_count),
-            h("div", { className: "tag" }, "Last Action At: " + actor.last_action_time),
+            h("div", { className: "tag" }, "Last Action At: " + formatDateTime(actor.last_action_time)),
+            h("div", { className: "tag" }, "Next Action At: " + formatDateTime(actor.next_action_time)),
             h("div", { className: "tag" }, "Behavior: " + actor.behavior),
             h("div", { className: "tag" }, "Started: " + actor.started),
           ]),

@@ -157,16 +157,14 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   end
 
   defp fetch_time_data do
-    start_time = Clock.get_start_time()
-    start_time_ms = start_time |> DateTime.to_unix(:millisecond)
     simulation_ms = Clock.get_simulation_duration_ms()
-    simulation_now = start_time_ms + simulation_ms
+    simulation_now = Clock.get_simulation_now()
     real_ms = Clock.get_real_duration_ms()
     simulation_duration = Utils.Time.as_duration_human(simulation_ms, :shorten)
     real_duration = Utils.Time.as_duration_human(real_ms, :shorten)
 
     %{
-      real_ms: DateTime.utc_now() |> DateTime.to_unix(:millisecond),
+      real_ms: DateTime.utc_now() |> DateTime.to_string(),
       simulation_ms: simulation_now,
       simulation_duration: simulation_duration,
       real_duration: real_duration
@@ -178,11 +176,14 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
       serial_id: actor_state.serial_id,
       pid: actor_state.pid_str,
       behavior: strip_namespace(actor_state.behavior),
-      tags: inspect(actor_state.tags),
+      tags: MapSet.to_list(actor_state.tags),
       name: actor_state.name,
       action_count: actor_state.runtime_stats.action_count,
       last_action_time:
         DateTime.from_unix!(actor_state.runtime_stats.last_action_time, :millisecond)
+        |> DateTime.to_string(),
+      next_action_time:
+        DateTime.from_unix!(actor_state.runtime_stats.next_action_time, :millisecond)
         |> DateTime.to_string(),
       state: inspect(actor_state.state, pretty: true),
       config: inspect(actor_state.config, pretty: true),

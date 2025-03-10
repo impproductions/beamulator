@@ -1,17 +1,14 @@
 # Roadmap
 
 ## Next
-- scheduling Utils ✅
 - create distinction between Lab (for behavior labs) and Utils (for internal use) 🛠️
-- tooling for signal generation ✅
 - tooling for inter-actor communication 🛠️
 
-- ensure actors start last
-
-- log action schedule automatically in actor
-- automatically store last action in actor
+- log action schedule automatically in actor ✅
 
 - reintroduce actor config into the mix
+
+- ensure actors start last
 
 - alter simulation population at runtime
   - add
@@ -60,6 +57,8 @@
   - Opensearch?
 
 ## Done
+- tooling for signal generation ✅
+- scheduling Utils ✅
 - actor supervisor should be in charge of scheduling actor starts (so it does when it crashes) ✅
 - multi-tenant todo example ✅
 - find a way to store runtime config along with simulation ✅

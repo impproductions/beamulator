@@ -12,7 +12,8 @@ defmodule Beamulator.Actor.Data do
     runtime_stats: %{
       started: false,
       action_count: 0,
-      last_action_time: 0
+      last_action_time: 0,
+      next_action_time: nil
     }
   ]
 
@@ -27,7 +28,8 @@ defmodule Beamulator.Actor.Data do
           runtime_stats: %{
             started: boolean(),
             action_count: non_neg_integer(),
-            last_action_time: non_neg_integer()
+            last_action_time: non_neg_integer(),
+            next_action_time: nil | non_neg_integer()
           }
         }
 end
@@ -95,6 +97,7 @@ defmodule Beamulator.Actor do
       runtime_stats: %{
         action_count: 0,
         last_action_time: Clock.get_simulation_duration_ms(),
+        next_action_time: nil,
         started: false
       }
     }
@@ -163,7 +166,8 @@ defmodule Beamulator.Actor do
         | runtime_stats: %{
             new_state.runtime_stats
             | action_count: new_state.runtime_stats.action_count + 1,
-              last_action_time: simulation_time_ms
+              last_action_time: simulation_time_ms,
+              next_action_time: simulation_time_ms + wait_simulation_time_ms
           }
       }
 
@@ -209,7 +213,7 @@ defmodule Beamulator.Actor do
 
     elapsed = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - action_start_time
 
-    Logger.debug(
+    Logger.info(
       "Actor #{actor_name} scheduling next action in #{Lab.Duration.to_string(wait_simulation_time_ms)} simulation time (#{Lab.Duration.to_string(wait_real_time_ms)})"
     )
 
