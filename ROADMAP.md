@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Next
+
 - create distinction between Lab (for behavior labs) and Utils (for internal use) 🛠️
 - tooling for inter-actor communication 🛠️
 
@@ -11,6 +12,8 @@
   - manual actions
   - store and restore actor state <--------------------- crucial for self healing
 
+- test all signals
+
 - ensure actors start last
 - reintroduce actor config into the mix
 - ws add connection to log metadata
@@ -18,6 +21,7 @@
 - explicit start/default delay (ramp up)
 
 ## Fix
+
 - quest url from config
 - fix actor drift
 - rationalize type signatures for large tuples (convert to maps?)
@@ -26,6 +30,7 @@
 - make actor supervisor self healing? (what about state?)
 
 ## Feature ideas
+
 - serve more detailed statistics from db
 - save/restore state!!! (ugh) <- the actors restarting is pointless without this
 - python behaviours
@@ -37,16 +42,19 @@
   - extract behavior creation to lab
 
 ## Improvements
+
 - document/enforce simulation folder/namespacing
 - tests
 - uniform error handling
 ~~- dashboard: better terminal renderer~~
 
 ## Just thinking
+
 - find a controlled way to handle behavior loading?
 - rename behavior to personality to avoid confusion with elixir's behaviour keyword
 
 ## Done
+
 - log action schedule automatically in actor ✅
 - tooling for signal generation ✅
 - scheduling Utils ✅
