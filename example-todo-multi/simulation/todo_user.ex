@@ -6,7 +6,10 @@ defmodule Beamulator.Behaviors.TodoUser do
   use Beamulator.Behavior
   require Logger
 
-  @decision_wait_ms D.new(h: 2)
+  @decision_wait_ms D.new(m: 30)
+
+  @impl true
+  def default_tags(), do: MapSet.new()
 
   @impl true
   def default_state() do
@@ -20,7 +23,7 @@ defmodule Beamulator.Behaviors.TodoUser do
   end
 
   @impl true
-  def act(_tick, %{actor_state: state} = actor_data) do
+  def act(%{actor_state: state} = actor_data) do
     cond do
       not state.registered ->
         register_self(actor_data)

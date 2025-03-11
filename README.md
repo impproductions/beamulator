@@ -16,9 +16,7 @@ It simulates a lively population of independent actors, each running in its own 
 
 ## 🚨 DISCLAIMER 🚨
 
-
 >This not a project (yet?), it's just me tinkering and having fun. It can't even be called a work in progress. It's only public because I think it's fun and I'm happy to share the idea. Do not expect it to run ~~flawlessly~~ or to be documented in any way beyond this very synthetic readme and a couple of very likely outdated examples!
-
 
 ## Structure
 
