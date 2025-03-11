@@ -12,11 +12,11 @@ It simulates a lively population of independent actors, each running in its own 
 - **Testing in Production (Sort Of):** Create a dynamic, production-like environment where you can experiment with live features and explore novel testing methods without taking things too seriously.
 - **Time Scaling:** Run the simulation faster than real time, so you can iterate and test time-dependent features without the wait.
 - **Fuzzy Testing:** Actor choices can be fuzzed, opening the door to entirely new testing patterns.
-- **Work in Progress:** This project is a moving target. Whether it evolves into a library, framework, or standalone app is anyone’s guess.
+- **Elusive Destination:** This project is a moving target. Whether it evolves into a library, framework, or standalone app is anyone’s guess.
 
 ## 🚨 DISCLAIMER 🚨
 
->This not a project (yet?), it's just me tinkering and having fun. It can't even be called a work in progress. It's only public because I think it's fun and I'm happy to share the idea. Do not expect it to run ~~flawlessly~~ or to be documented in any way beyond this very synthetic readme and a couple of very likely outdated examples!
+>This not really a project (yet?), it's just me tinkering and having fun. It can't even be called a work in progress. It's only public because I think it's fun and I'm happy to share the idea. Do not expect it to run ~~flawlessly~~ or to be documented in any way beyond this very synthetic readme and a couple of very likely outdated examples!
 
 ## Structure
 
