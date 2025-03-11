@@ -4,12 +4,6 @@
 - create distinction between Lab (for behavior labs) and Utils (for internal use) 🛠️
 - tooling for inter-actor communication 🛠️
 
-- log action schedule automatically in actor ✅
-
-- reintroduce actor config into the mix
-
-- ensure actors start last
-
 - alter simulation population at runtime
   - add
   - remove
@@ -17,6 +11,8 @@
   - manual actions
   - store and restore actor state <--------------------- crucial for self healing
 
+- ensure actors start last
+- reintroduce actor config into the mix
 - ws add connection to log metadata
 - limit run duration
 - explicit start/default delay (ramp up)
@@ -48,15 +44,10 @@
 
 ## Just thinking
 - find a controlled way to handle behavior loading?
-- remove behavior registry altogether?ß
 - rename behavior to personality to avoid confusion with elixir's behaviour keyword
-- simple connectors?
-  - rest?
-  - ws?
-  - pg?
-  - Opensearch?
 
 ## Done
+- log action schedule automatically in actor ✅
 - tooling for signal generation ✅
 - scheduling Utils ✅
 - actor supervisor should be in charge of scheduling actor starts (so it does when it crashes) ✅
