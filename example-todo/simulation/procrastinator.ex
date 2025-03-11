@@ -9,7 +9,10 @@ defmodule Beamulator.Behaviors.Procrastinator do
 
   @decision_wait_ms D.new(h: 2)
 
-  @impl Beamulator.Behavior
+  @impl true
+  def default_tags(), do: MapSet.new()
+
+  @impl true
   def default_state() do
     %{
       name: Faker.Person.name(),
@@ -18,9 +21,9 @@ defmodule Beamulator.Behaviors.Procrastinator do
     }
   end
 
-  @impl Beamulator.Behavior
-  def act(_tick, %{actor_name: name, actor_state: _} = data) do
-    {:ok, tasks} = execute(name, &Actions.list_tasks/0)
+  @impl true
+  def act(%{actor_name: name, actor_state: _} = data) do
+    {:ok, tasks} = execute(data, &Actions.list_tasks/0)
 
     {:ok, new_data} =
       case :rand.uniform() do
@@ -34,7 +37,7 @@ defmodule Beamulator.Behaviors.Procrastinator do
             Logger.info("#{name} is marking task '#{task["title"]}' as complete.")
 
             execute(
-              name,
+              data,
               &Actions.update_task/1,
               %{
                 id: task["id"],
@@ -48,7 +51,7 @@ defmodule Beamulator.Behaviors.Procrastinator do
               )
             )
 
-            refresh_tasks(name, data)
+            refresh_tasks(data)
           else
             Logger.info("#{name} has no tasks to mark complete.")
             {:ok, data}
@@ -60,7 +63,7 @@ defmodule Beamulator.Behaviors.Procrastinator do
             Logger.info("#{name} is marking task '#{task["title"]}' as incomplete.")
 
             execute(
-              name,
+              data,
               &Actions.update_task/1,
               %{
                 id: task["id"],
@@ -74,25 +77,25 @@ defmodule Beamulator.Behaviors.Procrastinator do
               )
             )
 
-            refresh_tasks(name, data)
+            refresh_tasks(data)
           else
             Logger.info("#{name} has no tasks to mark incomplete.")
             {:ok, data}
           end
       end
 
-    wait(name, new_data)
+    wait(new_data)
   end
 
-  defp wait(name, data) do
+  defp wait(data) do
     to_wait = Utils.random_int(div(@decision_wait_ms, 2), @decision_wait_ms)
-    Logger.info("#{name} is waiting for #{D.to_string(to_wait)}.")
+    Logger.info("#{data.actor_name} is waiting for #{D.to_string(to_wait)}.")
     {:ok, to_wait, data}
   end
 
-  defp refresh_tasks(name, data) do
-    Logger.info("#{name} is refreshing their task list.")
-    {:ok, tasks} = execute(name, &Actions.list_tasks/0)
+  defp refresh_tasks(data) do
+    Logger.info("#{data.actor_name} is refreshing their task list.")
+    {:ok, tasks} = execute(data, &Actions.list_tasks/0)
 
     new_state =
       data.actor_state

@@ -2,13 +2,9 @@ defmodule Beamulator.Actions do
   use SourceInjector
   require Logger
 
-  def do_foo(metric) do
-    Logger.info("Doing foo with metric: #{metric}")
+  def send_collected_metrics(sensors) do
+    Logger.info("Sending collected metrics: #{inspect(sensors)}")
     {:ok, %{}}
   end
 
-  def do_bar(foos) do
-    Logger.info("Collected: #{inspect(foos)}")
-    {:ok, %{}}
-  end
 end

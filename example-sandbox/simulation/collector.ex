@@ -26,7 +26,7 @@ defmodule Beamulator.Behaviors.Collector do
     Logger.info("Collector #{serial_id} is collecting data")
 
     fooizers =
-      Lab.Actor.select_by_behavior(Beamulator.Behaviors.Fooizer)
+      Lab.Actor.select_by_behavior(Beamulator.Behaviors.Sensor)
       |> Lab.Actor.filter_by_tag("owner:collector:#{serial_id}")
       |> Enum.map(fn %{pid: pid, serial_id: serial_id} ->
         %{state: %{metric_type: mt, metric_current: mc}} = Lab.Actor.get_state!(pid)
@@ -34,7 +34,7 @@ defmodule Beamulator.Behaviors.Collector do
       end)
 
     if fooizers != [] do
-      execute(actor_data, &Actions.do_bar/1, [fooizers])
+      execute(actor_data, &Actions.send_collected_metrics/1, [fooizers])
     end
 
     actor_data = %{actor_data | actor_state: %{state | sensors: fooizers}}
