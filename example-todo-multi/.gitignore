@@ -1,2 +1,6 @@
 todos.db
 todos.db*
+
+log*
+
+build/*
