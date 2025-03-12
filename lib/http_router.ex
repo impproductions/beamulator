@@ -6,10 +6,17 @@ defmodule Beamulator.HttpRouter do
     at: "/static",
     from: {:beamulator, "priv/static"}
   )
+
   plug(:match)
   plug(:dispatch)
 
   match "/static" do
+    conn
+    |> Plug.Conn.put_resp_header("location", "/static/index.html")
+    |> send_resp(302, "Redirecting")
+  end
+
+  match "/" do
     conn
     |> Plug.Conn.put_resp_header("location", "/static/index.html")
     |> send_resp(302, "Redirecting")
