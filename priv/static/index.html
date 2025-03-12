@@ -62,7 +62,7 @@
   <script type="text/javascript">
     const { h, render } = preact;
     const { useState, useEffect, useRef, useMemo, useCallback } = preactHooks;
-    const wsUrl = "ws://" + window.location.host + "/ws";
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
 
     const useWebSocket = (url, onMessage = () => { }) => {
       const [status, setStatus] = useState("Disconnected");
