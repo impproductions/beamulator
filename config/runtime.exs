@@ -11,5 +11,5 @@ config :beamulator,
   simulation: [
     random_seed: 1,
     begin_on_start: true,
-    time_speed_multiplier: 50
+    time_speed_multiplier: 200
   ]

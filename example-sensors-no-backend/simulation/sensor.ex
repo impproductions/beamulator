@@ -8,7 +8,7 @@ defmodule Beamulator.Behaviors.Sensor do
   use Beamulator.Behavior
   require Logger
 
-  @decision_wait_ms D.new(m: 1)
+  @decision_wait_ms D.new(m: 5)
 
   @impl true
   def default_tags(), do: MapSet.new()
