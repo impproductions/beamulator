@@ -8,7 +8,7 @@ Beamulator is a fun project I tinker with on weeknights as I take my first steps
 
 It simulates a lively population of independent actors, each running in its own process. Every actor acts based on a user-defined behavior. Key highlights include:
 
-- **Agent-Based Simulation:** Behaviors are defined as stateless `act` functions, allowing on-the-fly replacements and manual tweaks.
+- **Agent-Based Simulation:** Behaviors are defined as `act` functions, allowing on-the-fly replacements and manual tweaks.
 - **Testing in Production (Sort Of):** Create a dynamic, production-like environment where you can experiment with live features and explore novel testing methods without taking things too seriously.
 - **Time Scaling:** Run the simulation faster than real time, so you can iterate and test time-dependent features without the wait.
 - **Fuzzy Testing:** Actor choices can be fuzzed, opening the door to entirely new testing patterns.
