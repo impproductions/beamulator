@@ -26,6 +26,7 @@ defmodule Beamulator.Application do
         {Beamulator.DashboardStatsProvider, []},
       ]
       |> maybe_add_action_logger()
+      |> maybe_add_memory_sink()
 
     opts = [strategy: :one_for_one, name: Beamulator.Supervisor.Root]
 
@@ -33,15 +34,11 @@ defmodule Beamulator.Application do
       simulation_config = Application.fetch_env!(:beamulator, :simulation)
       Logger.info("Simulation configuration: #{inspect(simulation_config)}")
 
-      # if simulation_config[:begin_on_start] do
-      #   Logger.debug("Creating actors (staggered)...")
-      #   create_actors()
-      #   Logger.info("Actors created.")
-      # end
-
-      # Logger.debug("Registering behaviors...")
-      # Beamulator.Behavior.Registry.scan_and_register_all_behaviors()
-      # Logger.info("Behaviors registered.")
+      if simulation_config[:begin_on_start] do
+        Logger.debug("Creating actors...")
+        Beamulator.start_actors()
+        Logger.info("Actors created.")
+      end
 
       {:ok, pid}
     else
@@ -49,8 +46,6 @@ defmodule Beamulator.Application do
         Logger.error("Failed to start supervisor: #{inspect(reason)}")
         {:error, reason}
     end
-
-    {:ok, self()}
   end
 
   # def create_actors do
@@ -78,6 +73,15 @@ defmodule Beamulator.Application do
     if Application.get_env(:beamulator, :enable_action_logger, false) do
       Logger.info("Action logger enabled, starting...")
       children ++ [{Beamulator.ActionLogger, []}]
+    else
+      children
+    end
+  end
+
+  defp maybe_add_memory_sink(children) do
+    if Application.get_env(:beamulator, :start_memory_sink, false) do
+      Logger.info("Memory sink enabled, starting...")
+      children ++ [{Beamulator.Sinks.Memory, []}]
     else
       children
     end

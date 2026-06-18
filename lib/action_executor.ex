@@ -1,5 +1,7 @@
 defmodule Beamulator.ActionExecutor do
   require Logger
+  alias Beamulator.Sinks
+  alias Beamulator.Sinks.Event
 
   @spec exec(
           {behavior :: module(), name :: binary()},
@@ -10,20 +12,28 @@ defmodule Beamulator.ActionExecutor do
     Logger.debug("Executing action: #{inspect(action)} with args #{inspect(args)}")
     result = apply_action(action, args)
 
-    case result do
-      {:ok, _} ->
-        GenServer.cast(Beamulator.DashboardStatsProvider, {:action, true})
-        log_event({behavior, name}, action, args, result, true)
+    success =
+      case result do
+        {:ok, _} ->
+          true
 
-      {:error, reason} when is_binary(reason) ->
-        Logger.error("Action failed: #{reason}")
-        GenServer.cast(Beamulator.DashboardStatsProvider, {:action, false})
-        log_event({behavior, name}, action, args, result, false)
+        {:error, reason} when is_binary(reason) ->
+          Logger.error("Action failed: #{reason}")
+          false
 
-      _ ->
-        raise ArgumentError,
-              "Action must return {:ok, any()} or {:error, binary()}, got: #{inspect(result)}"
-    end
+        _ ->
+          raise ArgumentError,
+                "Action must return {:ok, any()} or {:error, binary()}, got: #{inspect(result)}"
+      end
+
+    Sinks.fan_out_event(%Event{
+      actor_id: {behavior, name},
+      action: action,
+      args: args,
+      result: result,
+      success: success,
+      sim_time_ms: Beamulator.Clock.get_simulation_now()
+    })
 
     Logger.debug("Action #{inspect(action)} finished executing with result #{inspect(result)}")
     result
@@ -39,14 +49,5 @@ defmodule Beamulator.ActionExecutor do
 
   defp apply_action(action, args) do
     apply(action, List.wrap(args))
-  end
-
-  defp log_event(ident, action, args, result, success) do
-    if Application.get_env(:beamulator, :enable_action_logger, false) do
-      GenServer.cast(
-        Beamulator.ActionLogger,
-        {:log_event, {ident, action, args, result, success}}
-      )
-    end
   end
 end

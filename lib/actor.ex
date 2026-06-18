@@ -102,8 +102,12 @@ defmodule Beamulator.Actor do
       }
     }
 
-    delay = :rand.uniform(10) + 5
-    Process.send_after(self(), :start, delay)
+    if Application.fetch_env!(:beamulator, :simulation)[:deterministic_boot] == true do
+      send(self(), :start)
+    else
+      delay = :rand.uniform(10) + 5
+      Process.send_after(self(), :start, delay)
+    end
 
     Beamulator.Dashboard.WebSocketHandler.broadcast(:send_behaviors)
 
@@ -217,7 +221,14 @@ defmodule Beamulator.Actor do
       "Actor #{actor_name} scheduling next action in #{Lab.Duration.to_string(wait_simulation_time_ms)} simulation time (#{Lab.Duration.to_string(wait_real_time_ms)})"
     )
 
-    drift_adjusted = wait_real_time_ms - elapsed
-    Process.send_after(self(), :act, drift_adjusted)
+    case Clock.mode() do
+      :manual ->
+        due_ms = Clock.get_simulation_now() + wait_simulation_time_ms
+        Clock.schedule_at(self(), :act, due_ms)
+
+      :auto ->
+        drift_adjusted = wait_real_time_ms - elapsed
+        Process.send_after(self(), :act, drift_adjusted)
+    end
   end
 end

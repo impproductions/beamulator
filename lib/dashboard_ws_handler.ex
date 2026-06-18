@@ -136,24 +136,12 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   end
 
   defp fetch_behaviors do
-    list = Utils.Actors.select_all()
-
-    list
-    |> Enum.group_by(fn {_, {b, _, _}} -> inspect(b) end)
-    |> Enum.map(fn {b, actors} ->
-      %{
-        name: b,
-        count: Enum.count(actors),
-        actors: Enum.map(actors, fn {_, {_, n, _}} -> n end)
-      }
-    end)
+    Beamulator.RuntimeInspector.behaviors()
   end
 
   defp fetch_actors do
-    list = Utils.Actors.select_all()
-
-    list
-    |> Enum.map(fn {_, {_, n, _}} -> n end)
+    Beamulator.RuntimeInspector.actors()
+    |> Enum.map(& &1.name)
   end
 
   defp fetch_time_data do
@@ -192,7 +180,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   end
 
   def fetch_stats do
-    GenServer.call(Beamulator.DashboardStatsProvider, :get_stats)
+    Beamulator.RuntimeInspector.stats()
   end
 
   defp strip_namespace(behavior) do

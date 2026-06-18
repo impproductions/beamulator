@@ -102,21 +102,18 @@ defmodule Beamulator.Behavior do
               "Complaint triggered: #{complaint.message}. trigger code: #{complaint.code}"
             )
 
-            GenServer.cast(Beamulator.ActionLogger, {
-              :log_complaint,
-              {
-                __MODULE__,
-                actor_data.actor_name,
-                complaint.message,
-                complaint.severity,
-                action,
-                args,
-                %{
-                  trigger: complaint.code,
-                  status: status,
-                  result: result
-                }
-              }
+            Beamulator.Sinks.fan_out_complaint(%Beamulator.Sinks.Complaint{
+              actor_id: {__MODULE__, actor_data.actor_name},
+              message: complaint.message,
+              severity: complaint.severity,
+              action: action,
+              args: args,
+              meta: %{
+                trigger: complaint.code,
+                status: status,
+                result: result
+              },
+              sim_time_ms: Beamulator.Clock.get_simulation_now()
             })
           end
         end)

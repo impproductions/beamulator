@@ -34,7 +34,8 @@ defmodule Beamulator.MixProject do
   end
 
   defp elixirc_paths(), do: ["lib", simulation_path()]
-  defp simulation_path(), do: "example-sensors-no-backend/simulation"
+  defp simulation_path(),
+    do: System.get_env("BEAMULATOR_SIM_PATH") || "example-sensors-no-backend/simulation"
 
   defp deps do
     [

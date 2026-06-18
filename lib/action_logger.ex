@@ -4,110 +4,139 @@ defmodule Beamulator.ActionLogger do
 
   alias Beamulator.Clock
 
-  @headers [{"Content-Type", "application/json"}, {"Accept", "application/json"}]
-  @write_headers [{"Content-Type", "text/plain"}]
-  @write_url "http://localhost:9000/write"
-
   @behavior_symbol_capacity 1024
   @action_symbol_capacity 1024
   @severity_symbol_capacity 16
 
-  # Batching configuration
   @default_batch_size 1000
   @default_flush_interval 1_000
 
-  def start_link(opts) do
+  def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @impl true
-  def init(_opts) do
+  def init(opts) do
     questdb_config = Application.get_env(:beamulator, :questdb)
     url = "#{questdb_config[:url]}:#{questdb_config[:port]}"
-
     flush_interval = questdb_config[:flush_interval_ms] || @default_flush_interval
 
-    with :ok <- test_connection(url),
-         :ok <- create_tables(url) do
+    client =
+      Keyword.get(
+        opts,
+        :client,
+        Application.get_env(:beamulator, :questdb_client, Beamulator.Clients.QuestDBHttp)
+      )
+
+    state = %{
+      queue: [],
+      flush_timer: nil,
+      url: url,
+      flush_interval: flush_interval,
+      client: client,
+      ready: false
+    }
+
+    {:ok, try_setup(state)}
+  end
+
+  defp try_setup(%{client: client, url: url, flush_interval: flush_interval} = state) do
+    with :ok <- client.test_connection(url),
+         :ok <- create_tables(client, url) do
+      Logger.info("ActionLogger ready against #{url}")
       timer_ref = Process.send_after(self(), :flush, flush_interval)
-      {:ok, %{queue: [], flush_timer: timer_ref}}
+      %{state | ready: true, flush_timer: timer_ref}
     else
-      {:error, reason} -> {:stop, reason}
+      {:error, reason} ->
+        Logger.error("ActionLogger setup failed: #{inspect(reason)}; retrying in #{flush_interval}ms")
+        Process.send_after(self(), :retry_setup, flush_interval)
+        state
     end
   end
 
   @impl true
+  def handle_info(:retry_setup, %{ready: false} = state), do: {:noreply, try_setup(state)}
+
+  def handle_info(:retry_setup, state), do: {:noreply, state}
+
+  @impl true
+  def handle_cast({:log_complaint, _}, %{ready: false} = state) do
+    Logger.debug("Dropping complaint: ActionLogger not ready")
+    {:noreply, state}
+  end
+
   def handle_cast(
         {:log_complaint, {behavior, actor, message, severity, action, args, actual}},
         state
       ) do
-    write_complaint(%{
-      behavior: behavior,
-      actor: actor,
-      message: message,
-      severity: severity,
-      action: action,
-      args: args,
-      actual: actual
-    })
+    {line, context} =
+      build_complaint_line(%{
+        behavior: behavior,
+        actor: actor,
+        message: message,
+        severity: severity,
+        action: action,
+        args: args,
+        actual: actual
+      })
 
-    {:noreply, state}
+    {:noreply, enqueue(state, line, context)}
   end
 
   @impl true
+  def handle_cast({:log_event, _}, %{ready: false} = state) do
+    Logger.debug("Dropping event: ActionLogger not ready")
+    {:noreply, state}
+  end
+
   def handle_cast({:log_event, {{behavior, name}, action, args, result, success}}, state) do
-    write_event(%{
-      behavior: behavior,
-      name: name,
-      action: action,
-      args: args,
-      success: success,
-      result: result
-    })
+    {line, context} =
+      build_event_line(%{
+        behavior: behavior,
+        name: name,
+        action: action,
+        args: args,
+        success: success,
+        result: result
+      })
 
-    {:noreply, state}
+    {:noreply, enqueue(state, line, context)}
   end
 
-  @impl true
-  def handle_cast({:enqueue, line, context}, state) do
+  defp enqueue(state, line, context) do
     new_queue = state.queue ++ [{line, context}]
-    flush_batch_size = Application.get_env(:beamulator, :questdb)[:flush_batch_size] || @default_batch_size
+
+    flush_batch_size =
+      Application.get_env(:beamulator, :questdb)[:flush_batch_size] || @default_batch_size
+
     state = %{state | queue: new_queue}
 
     if length(new_queue) >= flush_batch_size do
       if state.flush_timer, do: Process.cancel_timer(state.flush_timer)
-      flush(state.queue)
-      timer_ref = Process.send_after(self(), :flush, @default_flush_interval)
-      {:noreply, %{state | queue: [], flush_timer: timer_ref}}
+      flush(state)
+      timer_ref = Process.send_after(self(), :flush, state.flush_interval)
+      %{state | queue: [], flush_timer: timer_ref}
     else
-      {:noreply, state}
+      state
     end
   end
 
   @impl true
   def handle_info(:flush, state) do
-    if state.queue != [] do
-      flush(state.queue)
-    end
-
-    timer_ref = Process.send_after(self(), :flush, @default_flush_interval)
+    if state.queue != [], do: flush(state)
+    timer_ref = Process.send_after(self(), :flush, state.flush_interval)
     {:noreply, %{state | queue: [], flush_timer: timer_ref}}
   end
 
-  defp flush(queue) do
+  defp flush(%{client: client, url: url, queue: queue}) do
     payload =
       queue
       |> Enum.map(fn {line, _context} -> line end)
       |> Enum.join("\n")
 
-    case HTTPoison.post(@write_url, payload, @write_headers) do
-      {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
+    case client.write(url, payload) do
+      :ok ->
         Logger.info("Successfully sent #{length(queue)} logs to QuestDB.")
-
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        Enum.each(queue, fn {_, context} ->
-          Logger.error("QuestDB returned status #{code} for #{context}. Body: #{body}")
-        end)
 
       {:error, reason} ->
         Enum.each(queue, fn {_, context} ->
@@ -116,34 +145,7 @@ defmodule Beamulator.ActionLogger do
     end
   end
 
-  defp post_line(line, context) do
-    GenServer.cast(__MODULE__, {:enqueue, line, context})
-  end
-
-  defp test_connection(url) do
-    Logger.debug("Testing connection to QuestDB at #{url}")
-
-    uri =
-      URI.new!(url <> "/exec")
-      |> URI.append_query(URI.encode_query(exec: "SELECT 1"))
-      |> URI.to_string()
-
-    case HTTPoison.get(uri, @headers) do
-      {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
-        Logger.info("Successfully connected to QuestDB.")
-        :ok
-
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        Logger.error("QuestDB returned status #{code}. Body: #{body}")
-        {:error, body}
-
-      {:error, reason} ->
-        Logger.error("Failed to connect to QuestDB: #{inspect(reason)}")
-        {:error, reason}
-    end
-  end
-
-  defp create_tables(url) do
+  defp create_tables(client, url) do
     Logger.info("Creating log and metadata tables...")
 
     ddls = [
@@ -201,21 +203,27 @@ defmodule Beamulator.ActionLogger do
       }
     ]
 
-    for {table, ddl} <- ddls do
-      uri =
-        URI.new!(url <> "/exec")
-        |> URI.append_query(URI.encode_query(query: ddl))
-        |> URI.to_string()
+    Enum.reduce_while(ddls, :ok, fn {table, ddl}, _acc ->
+      case client.exec(url, ddl) do
+        :ok ->
+          Logger.info("Table #{table} created or verified.")
+          {:cont, :ok}
 
-      HTTPoison.get!(uri, @headers)
-      Logger.info("Table #{table} created or verified.")
+        {:error, reason} ->
+          {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      :ok ->
+        fill_metadata_table(client, url)
+        :ok
+
+      err ->
+        err
     end
-
-    fill_metadata_table()
-    :ok
   end
 
-  defp fill_metadata_table() do
+  defp fill_metadata_table(client, url) do
     run_id = Application.get_env(:beamulator, :run_uuid)
     simulation_config = Application.get_env(:beamulator, :simulation)
     random_seed = simulation_config[:random_seed]
@@ -229,21 +237,13 @@ defmodule Beamulator.ActionLogger do
         "actions_file=\"#{actions_file}\",random_seed=#{random_seed} " <>
         "#{timestamp_ns}"
 
-    case HTTPoison.post(@write_url, line, @write_headers) do
-      {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
-        Logger.info("Metadata successfully sent to QuestDB.")
-
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        Logger.error("QuestDB returned status #{code} on metadata. Body: #{body}")
-        Logger.debug("Failed line: #{line}")
-
-      {:error, reason} ->
-        Logger.error("Failed to send metadata to QuestDB: #{inspect(reason)}")
-        Logger.debug("Failed line: #{line}")
+    case client.write(url, line) do
+      :ok -> Logger.info("Metadata successfully sent to QuestDB.")
+      {:error, reason} -> Logger.error("Failed to send metadata to QuestDB: #{inspect(reason)}")
     end
   end
 
-  defp write_complaint(data) do
+  defp build_complaint_line(data) do
     %{
       behavior: behavior,
       actor: actor,
@@ -271,10 +271,10 @@ defmodule Beamulator.ActionLogger do
         "start_time=#{start_timestamp}i,run_id=\"#{Application.get_env(:beamulator, :run_uuid)}\" " <>
         "#{timestamp}"
 
-    post_line(line, "complaint by #{actor}")
+    {line, "complaint by #{actor}"}
   end
 
-  defp write_event(data) do
+  defp build_event_line(data) do
     %{behavior: behavior, name: name, action: action, args: args, result: result} = data
     {status, content} = result
 
@@ -291,7 +291,7 @@ defmodule Beamulator.ActionLogger do
         "start_time=#{start_timestamp}i,run_id=\"#{Application.get_env(:beamulator, :run_uuid)}\",success=#{success} " <>
         "#{timestamp}"
 
-    post_line(line, "action #{action_str} by #{name}")
+    {line, "action #{action_str} by #{name}"}
   end
 
   defp compute_timestamps() do

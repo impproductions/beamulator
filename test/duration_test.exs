@@ -1,8 +1,7 @@
-defmodule DurationTest do
+defmodule Beamulator.Lab.DurationTest do
   use ExUnit.Case
 
-  alias Beamulator.Utils.Duration, as: D
-  doctest Duration
+  alias Beamulator.Lab.Duration, as: D
 
   test "1 second in milliseconds" do
     assert D.new(s: 1) == 1_000

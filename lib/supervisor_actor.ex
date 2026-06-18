@@ -8,7 +8,6 @@ defmodule Beamulator.SupervisorActors do
   end
 
   def init(_) do
-    Process.send_after(Beamulator.ActorInizializer, :create_actors, 10)
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
