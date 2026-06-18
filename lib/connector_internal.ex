@@ -1,15 +1,15 @@
 defmodule Beamulator.Connectors.Internal do
   require Logger
 
-  def create_actor(name, behavior_module, config) do
-    Beamulator.SupervisorActors.create_actor(name, behavior_module, config)
+  def create_actor(name, role_module, config) do
+    Beamulator.SupervisorActors.create_actor(name, role_module, config)
   end
 
   def create_actors(actors) do
     results =
       actors
-      |> Enum.map(fn %{name: name, behavior: behavior, config: config} ->
-        case Beamulator.SupervisorActors.create_actor(name, behavior, config) do
+      |> Enum.map(fn %{name: name, role: role, config: config} ->
+        case Beamulator.SupervisorActors.create_actor(name, role, config) do
           {:ok, pid} -> {:ok, pid}
           {:error, reason} -> {:error, reason}
         end

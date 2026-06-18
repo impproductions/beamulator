@@ -1,7 +1,7 @@
-defmodule Beamulator.Behaviors.Pong do
+defmodule Beamulator.Roles.Pong do
   alias Beamulator.Actions
   alias Beamulator.Lab.Duration, as: D
-  use Beamulator.Behavior
+  use Beamulator.Role
 
   @impl true
   def default_tags(), do: MapSet.new(["role:pong"])

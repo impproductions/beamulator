@@ -19,7 +19,7 @@ defmodule Beamulator.Sinks.ActionLogger do
 
   @impl true
   def log_complaint(%Beamulator.Sinks.Complaint{
-        actor_id: {behavior, name},
+        actor_id: {role, name},
         message: message,
         severity: severity,
         action: action,
@@ -28,7 +28,7 @@ defmodule Beamulator.Sinks.ActionLogger do
       }) do
     GenServer.cast(
       Beamulator.ActionLogger,
-      {:log_complaint, {behavior, name, message, severity, action, args, meta}}
+      {:log_complaint, {role, name, message, severity, action, args, meta}}
     )
 
     :ok

@@ -1,9 +1,9 @@
-defmodule Beamulator.Behaviors.Collector do
+defmodule Beamulator.Roles.Collector do
   alias Beamulator.Lab
   alias Beamulator.Actions
   alias Beamulator
   alias Beamulator.Lab.Duration, as: D
-  use Beamulator.Behavior
+  use Beamulator.Role
   require Logger
 
   @decision_wait_ms D.new(m: 30)
@@ -26,7 +26,7 @@ defmodule Beamulator.Behaviors.Collector do
     Logger.info("Collector #{serial_id} is collecting data")
 
     fooizers =
-      Lab.Actor.select_by_behavior(Beamulator.Behaviors.Sensor)
+      Lab.Actor.select_by_role(Beamulator.Roles.Sensor)
       |> Lab.Actor.filter_by_tag("owner:collector:#{serial_id}")
       |> Enum.map(fn %{pid: pid, serial_id: serial_id} ->
         %{state: %{metric_type: mt, metric_current: mc}} = Lab.Actor.get_state!(pid)

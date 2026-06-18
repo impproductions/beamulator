@@ -2,7 +2,7 @@
 
 ## Next
 
-- create distinction between Lab (for behavior labs) and Utils (for internal use) 🛠️
+- create distinction between Lab (for role labs) and Utils (for internal use) 🛠️
 - tooling for inter-actor communication 🛠️
 
 - alter simulation population at runtime
@@ -26,7 +26,7 @@
 - fix actor drift
 - rationalize type signatures for large tuples (convert to maps?)
   - action executor
-  - behavior registry/behavior spec?
+  - role registry/role spec?
 - make actor supervisor self healing? (what about state?)
 
 ## Feature ideas
@@ -39,7 +39,7 @@
 - restore state from target
 - add new behaviours at runtime
 - configure simulations at runtime
-  - extract behavior creation to lab
+  - extract role creation to lab
 
 ## Improvements
 
@@ -50,8 +50,8 @@
 
 ## Just thinking
 
-- find a controlled way to handle behavior loading?
-- rename behavior to personality to avoid confusion with elixir's behaviour keyword
+- find a controlled way to handle role loading?
+- rename role to personality to avoid confusion with elixir's behaviour keyword
 
 ## Done
 
@@ -61,7 +61,7 @@
 - actor supervisor should be in charge of scheduling actor starts (so it does when it crashes) ✅
 - multi-tenant todo example ✅
 - find a way to store runtime config along with simulation ✅
-- actor/behavior states ✅
+- actor/role states ✅
 - add stats to ui (actions per second?) ✅
 - inject correct ws url ✅
 - use serial id as identifier in UI instead of name ✅
@@ -78,7 +78,7 @@
 - graphic dashboard ✅
 - make actors restart after process dies ✅
 - refactor questdb writer ✅
-- behaviors in dashboard are broken ✅
+- roles in dashboard are broken ✅
 - actor complaint ✅
 - rename project to beamulator ✅
 - switch to self-scheduling actors ✅

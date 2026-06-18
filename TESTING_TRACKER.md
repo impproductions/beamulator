@@ -30,7 +30,7 @@ The user approves each batch before implementation.
 1. Fix existing unit tests — rename `Utils.Duration`/`Utils.Signal` references → `Lab.*`, drop the bogus `doctest Beamulator`, rename the duplicated `DurationTest` module.
 2. Add `:test` config (split `config/test.exs` or branch in `runtime.exs`) — `begin_on_start: false`, `enable_action_logger: false`, deterministic `random_seed`.
 3. Make `simulation_path` env-driven — read `BEAMULATOR_SIM_PATH` in `mix.exs`, fall back to current default.
-4. Add `test/fixtures/simulation/` — tiny 2-behavior, 3-actor scenario for hermetic tests; loaded via the env var under `MIX_ENV=test`.
+4. Add `test/fixtures/simulation/` — tiny 2-role, 3-actor scenario for hermetic tests; loaded via the env var under `MIX_ENV=test`.
 5. Gate startup jitter behind config — `actor.ex` and `actor_inizializer.ex` skip the `:rand.uniform` sleeps when `simulation[:deterministic_boot]` is true.
 6. Decouple Clock from wall time — introduce `:auto | :manual` mode; in `:manual`, expose `Clock.set_now/1` and `Clock.advance/1`.
 7. Route actor scheduling through Clock — replace direct `Process.send_after(self(), :act, …)` with a Clock-driven scheduler that, in `:manual`, fires ticks on `advance/1`.
@@ -38,12 +38,12 @@ The user approves each batch before implementation.
 9. Extract the framework's external-client pattern — QuestDB client (used by `ActionLogger`) goes behind a `Beamulator.Clients.QuestDB` behaviour with `QuestDBHttp` (real) and `QuestDBFake` (test) impls, resolved via config. Applies to any future first-party external integration. **Does not** apply to example-simulation HTTP clients (user code).
 10. Add `MemorySink` — test sink storing `{action, args, result, sim_time}` events; exposes `events/0`, `complaints/0`, `reset/0`.
 11. Route complaints through the sink — replace direct `GenServer.cast(ActionLogger, …)` so complaints are observable even with QuestDB off.
-12. Extract a `RuntimeInspector` behaviour — the single API the dashboard, future CLI, and tests all consume to read live state (stats, actors, behaviors, individual actor state, complaints). One interface, multiple consumers.
+12. Extract a `RuntimeInspector` behaviour — the single API the dashboard, future CLI, and tests all consume to read live state (stats, actors, roles, individual actor state, complaints). One interface, multiple consumers.
 13. Move QuestDB write URL to config — drop the `@write_url` hardcode in `action_logger.ex:9`, build from `questdb.url/port`.
 14. Make `ActionLogger.init` tolerant — never `{:stop, …}` on connect failure; log, retry on interval, buffer or drop per config.
 15. Add `Beamulator.TestSupport.start_simulation/1` — boots a minimal subtree (Registries, Clock in `:manual`, SupervisorActors, MemorySink) with the fixture sim, returns a handle, tears down cleanly.
 16. Write the first in-process e2e — boot fixture, `Clock.advance(D.new(m: 10))`, assert on `MemorySink.events()` and `ActorRegistry` contents.
-17. Add JSON read endpoints backed by `RuntimeInspector` — `GET /healthz`, `/api/stats`, `/api/actors`, `/api/actors/:serial_id`, `/api/behaviors`, `/api/complaints`. Refactor the dashboard WS handler to consume the same interface.
+17. Add JSON read endpoints backed by `RuntimeInspector` — `GET /healthz`, `/api/stats`, `/api/actors`, `/api/actors/:serial_id`, `/api/roles`, `/api/complaints`. Refactor the dashboard WS handler to consume the same interface.
 18. Add app service to `docker-compose.yml` — builds from `Dockerfile`, `depends_on` QuestDB, exposes `:4000`, env vars for sim path / logger toggle.
 19. Write a blackbox smoke test — boots compose, polls `/healthz`, asserts `/api/stats` and `/api/actors` shape against the sensors fixture. No dashboard assertions; simulation output + runtime state inspected over the JSON API only.
 20. Wrap in commands — `mix beam.test.unit`, `mix beam.test.e2e` (sets sim path env, runs in-process suite), `mix beam.test.blackbox` (compose up, wait-healthy, run suite, compose down), `mix beam.run.sim SIM=example-todo`.
@@ -57,4 +57,4 @@ The user approves each batch before implementation.
 
 - Browser-based dashboard testing.
 - Any dashboard assertions in blackbox tests — blackbox only cares about simulation output and runtime-state inspection over the text API.
-- Example-simulation external clients (FastAPI/Go server HTTP). Users write their own behaviors; their service mocks are their concern. The framework's behaviour-based sink/client pattern is a template they can copy, not a contract they must adopt.
+- Example-simulation external clients (FastAPI/Go server HTTP). Users write their own roles; their service mocks are their concern. The framework's behaviour-based sink/client pattern is a template they can copy, not a contract they must adopt.

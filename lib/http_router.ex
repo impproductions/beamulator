@@ -47,8 +47,8 @@ defmodule Beamulator.HttpRouter do
     end
   end
 
-  get "/api/behaviors" do
-    json(conn, 200, %{behaviors: Beamulator.RuntimeInspector.behaviors()})
+  get "/api/roles" do
+    json(conn, 200, %{roles: Beamulator.RuntimeInspector.roles()})
   end
 
   get "/api/complaints" do

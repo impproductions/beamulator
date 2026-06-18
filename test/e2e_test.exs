@@ -7,7 +7,7 @@ defmodule Beamulator.E2ETest do
   defmodule TickEmitter do
     alias Beamulator.Actions
     alias Beamulator.Lab.Duration, as: D
-    use Beamulator.Behavior
+    use Beamulator.Role
 
     @impl true
     def default_tags(), do: MapSet.new(["role:tick_emitter"])
@@ -23,7 +23,7 @@ defmodule Beamulator.E2ETest do
     end
   end
 
-  test "Clock.advance fires registered actor ticks; behavior.act → MemorySink end-to-end" do
+  test "Clock.advance fires registered actor ticks; role.act → MemorySink end-to-end" do
     # Clean slate: terminate any previously-spawned actors so they don't interfere.
     for {_, pid, _, _} <- DynamicSupervisor.which_children(Beamulator.SupervisorActors) do
       if is_pid(pid), do: DynamicSupervisor.terminate_child(Beamulator.SupervisorActors, pid)

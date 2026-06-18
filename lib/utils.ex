@@ -45,25 +45,25 @@ defmodule Beamulator.Utils do
     end
 
     @spec select_all() :: [
-            {pid(), {behavior :: module(), serial_id :: integer(), name :: binary()}}
+            {pid(), {role :: module(), serial_id :: integer(), name :: binary()}}
           ]
     def select_all() do
       Registry.lookup(Beamulator.ActorRegistry, :actors)
     end
 
     @spec select_by_pid(pid()) ::
-            {pid(), {behavior :: module(), serial_id :: integer(), name :: binary()}}
+            {pid(), {role :: module(), serial_id :: integer(), name :: binary()}}
             | {:error, String.t()}
     def select_by_pid(pid) when is_pid(pid) do
       Registry.lookup(Beamulator.ActorRegistry, :actors)
       |> Enum.find(fn {p_id, _} -> pid == p_id end) || {:error, "Actor not found"}
     end
 
-    @spec select_by_behavior(module()) :: [
-            {pid(), {behavior :: module(), serial_id :: integer(), name :: binary()}}
+    @spec select_by_role(module()) :: [
+            {pid(), {role :: module(), serial_id :: integer(), name :: binary()}}
           ]
-    def select_by_behavior(behavior_module) when is_atom(behavior_module) do
-      Registry.match(Beamulator.ActorRegistry, :actors, {behavior_module, :_, :_})
+    def select_by_role(role_module) when is_atom(role_module) do
+      Registry.match(Beamulator.ActorRegistry, :actors, {role_module, :_, :_})
     end
 
     @spec select_by_name(binary()) :: [{pid(), any()}]
@@ -72,7 +72,7 @@ defmodule Beamulator.Utils do
     end
 
     @spec select_by_serial_id(integer()) ::
-            {pid(), {behavior :: module(), serial_id :: integer(), name :: binary()}}
+            {pid(), {role :: module(), serial_id :: integer(), name :: binary()}}
             | {:error, String.t()}
     def select_by_serial_id(serial_id) when is_integer(serial_id) do
       found = Registry.match(Beamulator.ActorRegistry, :actors, {:_, serial_id, :_})

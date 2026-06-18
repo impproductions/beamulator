@@ -6,7 +6,7 @@ defmodule Beamulator.HttpApiTest do
   defmodule Probe do
     alias Beamulator.Actions
     alias Beamulator.Lab.Duration, as: D
-    use Beamulator.Behavior
+    use Beamulator.Role
 
     @impl true
     def default_tags(), do: MapSet.new()
@@ -103,11 +103,11 @@ defmodule Beamulator.HttpApiTest do
     assert conn.status == 400
   end
 
-  test "GET /api/behaviors groups actors by behavior" do
-    conn = call(:get, "/api/behaviors")
+  test "GET /api/roles groups actors by role" do
+    conn = call(:get, "/api/roles")
     assert conn.status == 200
     body = json_body(conn)
-    assert [%{"name" => name, "count" => 1, "actors" => ["HttpProbe 1"]}] = body["behaviors"]
+    assert [%{"name" => name, "count" => 1, "actors" => ["HttpProbe 1"]}] = body["roles"]
     assert name =~ "Probe"
   end
 

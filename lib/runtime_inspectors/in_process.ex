@@ -20,12 +20,12 @@ defmodule Beamulator.RuntimeInspectors.InProcess do
   end
 
   @impl true
-  def behaviors() do
+  def roles() do
     Lab.Actor.select_all()
-    |> Enum.group_by(& &1.behavior)
-    |> Enum.map(fn {behavior, defs} ->
+    |> Enum.group_by(& &1.role)
+    |> Enum.map(fn {role, defs} ->
       %{
-        name: inspect(behavior),
+        name: inspect(role),
         count: length(defs),
         actors: Enum.map(defs, & &1.name)
       }
@@ -46,7 +46,7 @@ defmodule Beamulator.RuntimeInspectors.InProcess do
     %{
       serial_id: def.serial_id,
       name: def.name,
-      behavior: inspect(def.behavior),
+      role: inspect(def.role),
       pid: inspect(def.pid)
     }
   end
@@ -55,7 +55,7 @@ defmodule Beamulator.RuntimeInspectors.InProcess do
     %{
       serial_id: state.serial_id,
       name: state.name,
-      behavior: inspect(state.behavior),
+      role: inspect(state.role),
       pid: inspect(self()),
       tags: MapSet.to_list(state.tags),
       runtime_stats: state.runtime_stats,

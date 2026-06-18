@@ -11,9 +11,9 @@ defmodule Beamulator.SupervisorActors do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  def create_actor(name, behavior_module, config) do
+  def create_actor(name, role_module, config) do
     Logger.debug("create actor: #{name}")
-    spec = {Beamulator.Actor, {Beamulator.Utils.increasing_int(), name, behavior_module, config}}
+    spec = {Beamulator.Actor, {Beamulator.Utils.increasing_int(), name, role_module, config}}
 
     case DynamicSupervisor.start_child(__MODULE__, spec) do
       {:ok, pid} ->

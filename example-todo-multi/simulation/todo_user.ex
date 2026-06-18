@@ -1,9 +1,9 @@
-defmodule Beamulator.Behaviors.TodoUser do
+defmodule Beamulator.Roles.TodoUser do
   alias Beamulator.Actions
   alias Beamulator
   alias Beamulator.Utils
   alias Beamulator.Lab.Duration, as: D
-  use Beamulator.Behavior
+  use Beamulator.Role
   require Logger
 
   @decision_wait_ms D.new(m: 30)

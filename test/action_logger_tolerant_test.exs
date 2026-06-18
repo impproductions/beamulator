@@ -10,7 +10,7 @@ defmodule Beamulator.ActionLoggerTolerantTest do
 
     GenServer.cast(
       ActionLogger,
-      {:log_event, {{Beamulator.Behaviors.Ping, "Ping 1"}, :action_a, [], {:ok, %{}}, true}}
+      {:log_event, {{Beamulator.Roles.Ping, "Ping 1"}, :action_a, [], {:ok, %{}}, true}}
     )
 
     Process.sleep(20)

@@ -1,11 +1,11 @@
-defmodule Beamulator.Behaviors.Sensor do
+defmodule Beamulator.Roles.Sensor do
   alias Beamulator.Lab
   alias Beamulator.Lab.Signal.PatchPresets
   alias Beamulator.Lab.Signal.Patch
   alias Beamulator
   alias Beamulator.Lab.Signal
   alias Beamulator.Lab.Duration, as: D
-  use Beamulator.Behavior
+  use Beamulator.Role
   require Logger
 
   @decision_wait_ms D.new(m: 1)
@@ -42,7 +42,7 @@ defmodule Beamulator.Behaviors.Sensor do
     state =
       with nil <- state.collector_serial_id,
            collectors when collectors != [] <-
-             Lab.Actor.select_by_behavior(Beamulator.Behaviors.Collector),
+             Lab.Actor.select_by_role(Beamulator.Roles.Collector),
            %{serial_id: collector_serial_id} <-
              collectors |> Enum.random() do
         Lab.Actor.set_tags(self(), ["owner:collector:#{collector_serial_id}"])

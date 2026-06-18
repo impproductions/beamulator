@@ -8,7 +8,7 @@ defmodule Beamulator.RuntimeInspectorTest do
   defmodule Probe do
     alias Beamulator.Actions
     alias Beamulator.Lab.Duration, as: D
-    use Beamulator.Behavior
+    use Beamulator.Role
 
     @impl true
     def default_tags(), do: MapSet.new(["role:probe"])
@@ -69,8 +69,8 @@ defmodule Beamulator.RuntimeInspectorTest do
 
   test "actors/0 returns one Probe summary", %{serial_id: serial_id} do
     actors = RuntimeInspector.actors()
-    assert [%{name: "Probe 1", behavior: behavior_str, serial_id: ^serial_id}] = actors
-    assert behavior_str =~ "Probe"
+    assert [%{name: "Probe 1", role: role_str, serial_id: ^serial_id}] = actors
+    assert role_str =~ "Probe"
   end
 
   test "actor/1 returns full state including runtime_stats and config", %{serial_id: serial_id} do
@@ -82,8 +82,8 @@ defmodule Beamulator.RuntimeInspectorTest do
     assert "role:probe" in detail.tags
   end
 
-  test "behaviors/0 groups by module", %{} do
-    [b] = RuntimeInspector.behaviors()
+  test "roles/0 groups by module", %{} do
+    [b] = RuntimeInspector.roles()
     assert b.name =~ "Probe"
     assert b.count == 1
     assert b.actors == ["Probe 1"]

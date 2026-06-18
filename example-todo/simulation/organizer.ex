@@ -1,7 +1,7 @@
-defmodule Beamulator.Behaviors.Organizer do
+defmodule Beamulator.Roles.Organizer do
   alias Beamulator.Utils
   alias Beamulator.Lab.Duration, as: D
-  use Beamulator.Behavior
+  use Beamulator.Role
 
   require Logger
 
@@ -16,7 +16,7 @@ defmodule Beamulator.Behaviors.Organizer do
     MapSet.new()
   end
 
-  @impl Beamulator.Behavior
+  @impl Beamulator.Role
   def default_state() do
     %{
       name: Faker.Person.name(),
@@ -25,7 +25,7 @@ defmodule Beamulator.Behaviors.Organizer do
     }
   end
 
-  @impl Beamulator.Behavior
+  @impl Beamulator.Role
   def act(%{actor_name: name, actor_state: _} = data) do
     {:ok, tasks} = execute(data, &Actions.list_tasks/0)
 

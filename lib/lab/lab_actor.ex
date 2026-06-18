@@ -1,10 +1,10 @@
 defmodule ActorDefinition do
-  @enforce_keys [:behavior, :name, :pid, :serial_id]
-  defstruct [:behavior, :name, :pid, :serial_id]
+  @enforce_keys [:role, :name, :pid, :serial_id]
+  defstruct [:role, :name, :pid, :serial_id]
 
   @type t :: %__MODULE__{
           pid: pid(),
-          behavior: module(),
+          role: module(),
           name: String.t(),
           serial_id: non_neg_integer()
         }
@@ -55,8 +55,8 @@ defmodule Beamulator.Lab.Actor do
     |> as_actor_definition()
   end
 
-  def select_by_behavior(behavior_module) do
-    Utils.Actors.select_by_behavior(behavior_module)
+  def select_by_role(role_module) do
+    Utils.Actors.select_by_role(role_module)
     |> Enum.map(&as_actor_definition/1)
   end
 
@@ -79,7 +79,7 @@ defmodule Beamulator.Lab.Actor do
     end)
   end
 
-  defp as_actor_definition({pid, {behavior, serial_id, name}}) do
-    %ActorDefinition{behavior: behavior, name: name, pid: pid, serial_id: serial_id}
+  defp as_actor_definition({pid, {role, serial_id, name}}) do
+    %ActorDefinition{role: role, name: name, pid: pid, serial_id: serial_id}
   end
 end

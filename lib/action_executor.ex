@@ -4,11 +4,11 @@ defmodule Beamulator.ActionExecutor do
   alias Beamulator.Sinks.Event
 
   @spec exec(
-          {behavior :: module(), name :: binary()},
+          {role :: module(), name :: binary()},
           action :: (... -> {:ok, any()} | {:error, binary()}),
           action_args :: any()
         ) :: {:ok, any()} | {:error, binary()}
-  def exec({behavior, name}, action, args) when is_function(action) do
+  def exec({role, name}, action, args) when is_function(action) do
     Logger.debug("Executing action: #{inspect(action)} with args #{inspect(args)}")
     result = apply_action(action, args)
 
@@ -27,7 +27,7 @@ defmodule Beamulator.ActionExecutor do
       end
 
     Sinks.fan_out_event(%Event{
-      actor_id: {behavior, name},
+      actor_id: {role, name},
       action: action,
       args: args,
       result: result,
@@ -40,11 +40,11 @@ defmodule Beamulator.ActionExecutor do
   end
 
   @spec exec(
-          {behavior :: module(), name :: binary()},
+          {role :: module(), name :: binary()},
           action :: (... -> {:ok, any()} | {:error, binary()})
         ) :: {:ok, any()} | {:error, binary()}
-  def exec({behavior, name}, action) do
-    exec({behavior, name}, action, nil)
+  def exec({role, name}, action) do
+    exec({role, name}, action, nil)
   end
 
   defp apply_action(action, args) do

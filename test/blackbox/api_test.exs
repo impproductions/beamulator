@@ -63,10 +63,10 @@ defmodule Beamulator.Blackbox.ApiTest do
     assert length(actors) > 0
   end
 
-  test "GET /api/behaviors lists at least one behavior" do
-    assert {200, %{"behaviors" => behaviors}} = get_json("/api/behaviors")
-    assert is_list(behaviors)
-    assert length(behaviors) > 0
+  test "GET /api/roles lists at least one role" do
+    assert {200, %{"roles" => roles}} = get_json("/api/roles")
+    assert is_list(roles)
+    assert length(roles) > 0
   end
 
   test "GET /api/complaints returns a list" do

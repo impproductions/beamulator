@@ -132,12 +132,12 @@
       );
     };
 
-    const BehaviorPanel = ({ stats, behaviors, actor }) =>
+    const RolePanel = ({ stats, roles, actor }) =>
       h("div", { className: "columns" }, [
         h("div", { className: "column is-half", style: { paddingBottom: 0 } },
           h("div", { className: "card" }, [
             h("header", { className: "card-header" },
-              h("p", { className: "card-header-title" }, "Behaviors")
+              h("p", { className: "card-header-title" }, "Roles")
             ),
             h("div", { className: "card-content" },
               h("table", { className: "table is-fullwidth is-striped" }, [
@@ -150,14 +150,14 @@
                   ])
                 ),
                 h("tbody", null,
-                  behaviors.map((behavior) =>
-                    h("tr", { key: behavior.name }, [
-                      h("td", null, behavior.name),
-                      h("td", null, behavior.count),
+                  roles.map((role) =>
+                    h("tr", { key: role.name }, [
+                      h("td", null, role.name),
+                      h("td", null, role.count),
                       h("td", null,
                         h("span", {
                           className: "tag",
-                          style: { backgroundColor: stringToColor(behavior.name) }
+                          style: { backgroundColor: stringToColor(role.name) }
                         })
                       ),
                       h("td", null,
@@ -195,7 +195,7 @@
             h("div", { className: "tag" }, "Action Count:" + actor.action_count),
             h("div", { className: "tag" }, "Last Action At: " + formatDateTime(actor.last_action_time)),
             h("div", { className: "tag" }, "Next Action At: " + formatDateTime(actor.next_action_time)),
-            h("div", { className: "tag" }, "Behavior: " + actor.behavior),
+            h("div", { className: "tag" }, "Role: " + actor.role),
             h("div", { className: "tag" }, "Started: " + actor.started),
           ]),
           h("div", { className: "content" }, [
@@ -271,7 +271,7 @@
 
     const ActorsOverviewTile = ({ actor, onSelectActor }) => {
       const tileRef = useRef(null);
-      const baseColor = useMemo(() => stringToColor(actor.behavior), [actor.behavior]);
+      const baseColor = useMemo(() => stringToColor(actor.role), [actor.role]);
 
       useEffect(() => {
         if (tileRef.current) {
@@ -307,7 +307,7 @@
 
     const Dashboard = () => {
       const [actorStates, setActorStates] = useState([]);
-      const [behaviors, setBehaviors] = useState([]);
+      const [roles, setRoles] = useState([]);
       const [selectedActor, setSelectedActor] = useState(null);
       const [simulation, setSimulation] = useState({ duration: 0 });
       const [stats, setStats] = useState({});
@@ -323,8 +323,8 @@
             });
             setStats(msg.stats);
             break;
-          case "behaviors":
-            setBehaviors(msg.behaviors);
+          case "roles":
+            setRoles(msg.roles);
             break;
           case "actor_state_update":
             setActorStates((prevStates) => {
@@ -339,8 +339,8 @@
               }
               const newStates = [...prevStates, { ...msg.actor_state }];
               newStates.sort((a, b) => {
-                if (a.behavior > b.behavior) return 1;
-                if (a.behavior < b.behavior) return -1;
+                if (a.role > b.role) return 1;
+                if (a.role < b.role) return -1;
                 if (a.name > b.name) return 1;
                 if (a.name < b.name) return -1;
                 return a.serial_id > b.serial_id ? 1 : -1;
@@ -363,7 +363,7 @@
           h("div", { className: "container dashboard-container" }, [
             h(SimulationPanel, simulation),
             h(ActorsOverviewPanel, { actorStates, onSelectActor: handleSelectActor }),
-            h(BehaviorPanel, { stats, behaviors, actor: displayedActor }),
+            h(RolePanel, { stats, roles, actor: displayedActor }),
             displayedActor
               ? h(ActorCard, { actor: displayedActor })
               : h("div", { className: "card" }, [

@@ -1,11 +1,11 @@
 defmodule Beamulator.Actor.Data do
-  @enforce_keys [:pid_str, :serial_id, :name, :behavior, :config, :state, :tags, :runtime_stats]
+  @enforce_keys [:pid_str, :serial_id, :name, :role, :config, :state, :tags, :runtime_stats]
   @derive Jason.Encoder
   defstruct [
     :pid_str,
     :serial_id,
     :name,
-    :behavior,
+    :role,
     :config,
     :state,
     :tags,
@@ -21,7 +21,7 @@ defmodule Beamulator.Actor.Data do
           pid_str: String.t(),
           serial_id: non_neg_integer(),
           name: String.t(),
-          behavior: module(),
+          role: module(),
           config: map(),
           state: map(),
           tags: MapSet.t(),
@@ -54,12 +54,12 @@ defmodule Beamulator.Actor do
   alias Beamulator.Clock
   alias Beamulator.Actor.Data
 
-  def start_link({serial_id, name, behavior_module, config}) do
-    Logger.debug("Attempting to start actor: #{name} with behavior #{inspect(behavior_module)}")
+  def start_link({serial_id, name, role_module, config}) do
+    Logger.debug("Attempting to start actor: #{name} with role #{inspect(role_module)}")
 
     case GenServer.start_link(
            __MODULE__,
-           {serial_id, name, behavior_module, config}
+           {serial_id, name, role_module, config}
          ) do
       {:ok, pid} ->
         Logger.debug("Actor #{name} started successfully")
@@ -78,11 +78,11 @@ defmodule Beamulator.Actor do
     end
   end
 
-  def init({serial_id, name, behavior_module, config}) do
+  def init({serial_id, name, role_module, config}) do
     Logger.debug("Initializing actor: #{name}")
-    selector = {behavior_module, serial_id, name}
-    initial_state = behavior_module.default_state()
-    initial_tags = behavior_module.default_tags()
+    selector = {role_module, serial_id, name}
+    initial_state = role_module.default_state()
+    initial_tags = role_module.default_tags()
 
     Registry.register(Beamulator.ActorRegistry, :actors, selector)
 
@@ -90,7 +90,7 @@ defmodule Beamulator.Actor do
       pid_str: inspect(self()),
       serial_id: serial_id,
       name: name,
-      behavior: behavior_module,
+      role: role_module,
       config: config,
       state: initial_state,
       tags: initial_tags,
@@ -109,7 +109,7 @@ defmodule Beamulator.Actor do
       Process.send_after(self(), :start, delay)
     end
 
-    Beamulator.Dashboard.WebSocketHandler.broadcast(:send_behaviors)
+    Beamulator.Dashboard.WebSocketHandler.broadcast(:send_roles)
 
     {:ok, state}
   end
@@ -123,7 +123,7 @@ defmodule Beamulator.Actor do
 
   def handle_info(
         :act,
-        %{behavior: behavior, state: actor_state, runtime_stats: %{started: started}} = state
+        %{role: role, state: actor_state, runtime_stats: %{started: started}} = state
       ) do
     action_start_time = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
     simulation_time_ms = Clock.get_simulation_now()
@@ -136,7 +136,7 @@ defmodule Beamulator.Actor do
 
     Logger.debug("Actor #{state.name} received action request")
 
-    behavior_data = %Beamulator.Behavior.ActPayload{
+    role_data = %Beamulator.Role.ActPayload{
       simulation_data: %Beamulator.Simulation.SimulationData{
         now_ms: simulation_time_ms,
         duration_ms: Clock.get_simulation_duration_ms(),
@@ -151,10 +151,10 @@ defmodule Beamulator.Actor do
 
     if started do
       {wait_simulation_time_ms, new_state} =
-        case behavior.act(behavior_data) do
-          {:ok, wait_simulation_time_ms, new_behavior_data} ->
+        case role.act(role_data) do
+          {:ok, wait_simulation_time_ms, new_role_data} ->
             Logger.debug("Actor #{state.name} acted successfully at #{simulation_time_ms}")
-            updated_state = %{state | state: new_behavior_data.actor_state}
+            updated_state = %{state | state: new_role_data.actor_state}
             {wait_simulation_time_ms, updated_state}
 
           {:error, wait_simulation_time_ms, reason} ->

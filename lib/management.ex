@@ -29,8 +29,8 @@ defmodule Manage do
 
   import AlertFunctions, only: [defwithalert: 2]
 
-  # defwithalert behavior_list() do
-  #   Beamulator.Behavior.Registry.list_behaviors()
+  # defwithalert role_list() do
+  #   Beamulator.Role.Registry.list_roles()
   # end
 
   defwithalert actor_list() do
@@ -38,8 +38,8 @@ defmodule Manage do
     |> Enum.map(&simplify_actor_data/1)
   end
 
-  defp simplify_actor_data({pid, {behavior, serial_id, name}}) do
-    {behavior, serial_id, name, pid}
+  defp simplify_actor_data({pid, {role, serial_id, name}}) do
+    {role, serial_id, name, pid}
   end
 
   defwithalert actor_state(pid_string) when is_binary(pid_string) do
@@ -47,7 +47,7 @@ defmodule Manage do
 
     case Registry.lookup(Beamulator.ActorRegistry, :actors)
          |> Enum.find(fn {p_id, _} -> pid == p_id end) do
-      {pid, {behavior, serial_id, name}} ->
+      {pid, {role, serial_id, name}} ->
         actor_state = GenServer.call(pid, :state)
         {:message_queue_len, mailbox_length} = Process.info(pid, :message_queue_len)
 
@@ -59,10 +59,10 @@ defmodule Manage do
         actor_state =
           Map.put(actor_state, :__housekeeping__, housekeeping)
           |> Map.put(:__struct__, inspect(Map.get(actor_state, :__struct__)))
-          |> Map.put(:__behavior__, behavior)
+          |> Map.put(:__role__, role)
 
         Logger.debug(
-          "Fetched state for actor #{name} (#{behavior}) (#{serial_id}) [#{inspect(pid)}]"
+          "Fetched state for actor #{name} (#{role}) (#{serial_id}) [#{inspect(pid)}]"
         )
 
         Logger.debug("""
@@ -77,25 +77,25 @@ defmodule Manage do
     end
   end
 
-  defwithalert actor_spawn(behavior_module) do
-    behaviour_name = behavior_module |> Atom.to_string() |> String.split(".") |> List.last()
+  defwithalert actor_spawn(role_module) do
+    behaviour_name = role_module |> Atom.to_string() |> String.split(".") |> List.last()
     name = "#{behaviour_name} #{Beamulator.Utils.increasing_int()}"
 
-    Logger.info("Spawning actor: #{name} with behavior #{behavior_module}")
-    actor_spawn(name, behavior_module, %{})
+    Logger.info("Spawning actor: #{name} with role #{role_module}")
+    actor_spawn(name, role_module, %{})
   end
 
-  defwithalert actor_spawn(name, behavior_module) do
-    Logger.info("Spawning actor: #{name} with behavior #{behavior_module}")
-    actor_spawn(name, behavior_module, %{})
+  defwithalert actor_spawn(name, role_module) do
+    Logger.info("Spawning actor: #{name} with role #{role_module}")
+    actor_spawn(name, role_module, %{})
   end
 
-  defwithalert actor_spawn(name, behavior_module, config) do
+  defwithalert actor_spawn(name, role_module, config) do
     Logger.info(
-      "Spawning actor: #{name} with behavior #{behavior_module} and config #{inspect(config)}"
+      "Spawning actor: #{name} with role #{role_module} and config #{inspect(config)}"
     )
 
-    Beamulator.SupervisorActors.create_actor(name, behavior_module, config)
+    Beamulator.SupervisorActors.create_actor(name, role_module, config)
   end
 
   defwithalert actor_kill(pid_string) when is_binary(pid_string) do
@@ -117,8 +117,8 @@ defmodule Manage do
     Logger.info("Mailbox length for actor #{inspect(pid)}: #{inspect(mailbox_length)}")
   end
 
-  def actors_by_behavior(behavior_module) do
-    Utils.Actors.select_by_behavior(behavior_module)
+  def actors_by_role(role_module) do
+    Utils.Actors.select_by_role(role_module)
   end
 
   defp extract_pid(pid_string) do

@@ -1,4 +1,4 @@
-defmodule Beamulator.Behavior.ActPayload do
+defmodule Beamulator.Role.ActPayload do
   @enforce_keys [:simulation_data, :actor_serial_id, :actor_name, :actor_config, :actor_state, :actor_runtime]
   defstruct [:simulation_data, :actor_serial_id, :actor_name, :actor_config, :actor_state, :actor_runtime]
 
@@ -12,7 +12,7 @@ defmodule Beamulator.Behavior.ActPayload do
         }
 end
 
-defmodule Beamulator.Behavior.Complaint do
+defmodule Beamulator.Role.Complaint do
   @enforce_keys [:trigger, :message, :severity, :code]
   defstruct [:trigger, :message, :severity, :code]
 
@@ -24,12 +24,12 @@ defmodule Beamulator.Behavior.Complaint do
         }
 end
 
-defmodule Beamulator.Behavior.ComplaintBuilder do
+defmodule Beamulator.Role.ComplaintBuilder do
   defmacro build_complaint(trigger, message, severity) do
     code = Macro.to_string(trigger)
 
     quote do
-      %Beamulator.Behavior.Complaint{
+      %Beamulator.Role.Complaint{
         trigger: unquote(trigger),
         message: unquote(message),
         severity: unquote(severity),
@@ -39,14 +39,14 @@ defmodule Beamulator.Behavior.ComplaintBuilder do
   end
 end
 
-defmodule Beamulator.Behavior do
+defmodule Beamulator.Role do
   @doc """
-  The default_state function should return the initial state of the behavior.
+  The default_state function should return the initial state of the role.
   """
   @callback default_state() :: map()
 
   @doc """
-  The default_tags function should return a set of tags that the behavior is associated with.
+  The default_tags function should return a set of tags that the role is associated with.
   """
   @callback default_tags() :: MapSet.t()
 
@@ -55,15 +55,15 @@ defmodule Beamulator.Behavior do
   It returns a tuple with:
     - the result of the action, either `:ok` or `:error`
     - the time to wait before the next action, in ms, in simulation time (e.s. 1 second is 100ms in simulation time if the simulation is running at 10x speed)
-    - the updated behavior data
+    - the updated role data
   """
-  @callback act(actor_data :: Beamulator.Behavior.ActPayload.t()) ::
-              {:ok, wait_ms :: integer(), new_data :: Beamulator.Behavior.ActPayload.t()}
-              | {:error, wait_ms :: integer(), new_data :: Beamulator.Behavior.ActPayload.t()}
+  @callback act(actor_data :: Beamulator.Role.ActPayload.t()) ::
+              {:ok, wait_ms :: integer(), new_data :: Beamulator.Role.ActPayload.t()}
+              | {:error, wait_ms :: integer(), new_data :: Beamulator.Role.ActPayload.t()}
 
   defmacro __using__(_opts) do
     quote do
-      @behaviour Beamulator.Behavior
+      @behaviour Beamulator.Role
 
       require Logger
       alias Beamulator.ActionExecutor

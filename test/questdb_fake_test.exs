@@ -12,7 +12,7 @@ defmodule Beamulator.QuestDBFakeTest do
   test "events cast to ActionLogger flush as ILP lines to the fake" do
     GenServer.cast(
       ActionLogger,
-      {:log_event, {{Beamulator.Behaviors.Ping, "Ping 1"}, :action_a, [1, 2], {:ok, %{}}, true}}
+      {:log_event, {{Beamulator.Roles.Ping, "Ping 1"}, :action_a, [1, 2], {:ok, %{}}, true}}
     )
 
     send(ActionLogger, :flush)
@@ -27,7 +27,7 @@ defmodule Beamulator.QuestDBFakeTest do
     GenServer.cast(
       ActionLogger,
       {:log_complaint,
-       {Beamulator.Behaviors.Ping, "Ping 1", "violation", :urgent, :action_a, [],
+       {Beamulator.Roles.Ping, "Ping 1", "violation", :urgent, :action_a, [],
         %{trigger: "t", status: :ok, result: %{}}}}
     )
 

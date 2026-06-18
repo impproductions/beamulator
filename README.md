@@ -6,9 +6,9 @@ A playful, experimental agent-based population simulator built with Elixir.
 
 Beamulator is a fun project I tinker with on weeknights as I take my first steps in Elixir — and my ~~serious~~ response to the good old “test in production!” adage 🤪.
 
-It simulates a lively population of independent actors, each running in its own process. Every actor acts based on a user-defined behavior. Key highlights include:
+It simulates a lively population of independent actors, each running in its own process. Every actor acts based on a user-defined role. Key highlights include:
 
-- **Agent-Based Simulation:** Behaviors are defined as stateless `act` functions, allowing on-the-fly replacements and manual tweaks.
+- **Agent-Based Simulation:** Roles are defined as stateless `act` functions, allowing on-the-fly replacements and manual tweaks.
 - **Testing in Production (Sort Of):** Create a dynamic, production-like environment where you can experiment with live features and explore novel testing methods without taking things too seriously.
 - **Time Scaling:** Run the simulation faster than real time, so you can iterate and test time-dependent features without the wait.
 - **Fuzzy Testing:** Actor choices can be fuzzed, opening the door to entirely new testing patterns.
@@ -24,7 +24,7 @@ A simulation scenario is defined by a few user defined modules:
 
 - `Beamulator.Actions` (`actions.ex`)
 - `Beamulator.ActorsConfig` (`actors_config.ex`)
-- `Beamulator.Behaviors.<Behavior Name>` (at least one)
+- `Beamulator.Roles.<Role Name>` (at least one)
 
 ### Beamulator.Actions
 
@@ -32,22 +32,22 @@ This is the interface with the target service. It should be defined in terms of 
 
 ### Beamulator.ActorsConfig
 
-This defines how many actors will be spawned for each defined behavior, along with some additional data.
+This defines how many actors will be spawned for each defined role, along with some additional data.
 
-### Beamulator.Behaviors.*
+### Beamulator.Roles.*
 
-One module per behavior. These will be referenced by module name in the application, and they should implement the Beamulator.Behavior (module name) behaviour (elixir keyword).
+One module per role. These will be referenced by module name in the application, and they should implement the Beamulator.Role (module name) behaviour (elixir keyword).
 
-## What can actors/behaviors do?
+## What can actors/roles do?
 
-The simplest way is to think of an actor with a behavior as an NPC in a video game. Just define how you want it to act based on its state.
+The simplest way is to think of an actor with a role as an NPC in a video game. Just define how you want it to act based on its state.
 
-With this in mind, a behavior must define an `act` function that defines how it should act, and perform actions through the `execute()` function. Here's a simple example of a simulated sensor that will send a steady stream of data to a backend, occasionally sending an outlier:
+With this in mind, a role must define an `act` function that defines how it should act, and perform actions through the `execute()` function. Here's a simple example of a simulated sensor that will send a steady stream of data to a backend, occasionally sending an outlier:
 
 ```elixir
-defmodule Beamulator.Behaviors.Sensor do
+defmodule Beamulator.Roles.Sensor do
   alias Beamulator.Lab.Duration, as: D
-  use Beamulator.Behavior
+  use Beamulator.Role
   require Logger
 
   @decision_wait_ms D.new(m: 10)
@@ -83,7 +83,7 @@ That's basically it. Since this is just an elixir function, you're free to do wh
 
 What's the point of testing in production if users don't complain?\*
 
-You can define expectations for the result of actions, and the actors will complain (in the form of a complaint log in Beamulator's database) if it isn't matched. For example, a behavior updating a task in a todo application might complain if the result of its action doesn't get displayed (in case you didn't know, this is a very common consistency level called "read your writes"!):
+You can define expectations for the result of actions, and the actors will complain (in the form of a complaint log in Beamulator's database) if it isn't matched. For example, a role updating a task in a todo application might complain if the result of its action doesn't get displayed (in case you didn't know, this is a very common consistency level called "read your writes"!):
 
 ```elixir
 execute(

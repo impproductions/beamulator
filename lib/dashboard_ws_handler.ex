@@ -21,7 +21,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
 
     case Registry.register(Beamulator.WebsocketRegistry, :connections, self()) do
       {:ok, _} ->
-        send(self(), :send_behaviors)
+        send(self(), :send_roles)
         send(self(), :refresh)
         {:ok, state}
 
@@ -51,8 +51,8 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   @impl true
   def websocket_handle(_data, state), do: {:ok, state}
 
-  defp handle_client_message("get_behaviors", state) do
-    send(self(), :send_behaviors)
+  defp handle_client_message("get_roles", state) do
+    send(self(), :send_roles)
     {:ok, state}
   end
 
@@ -86,12 +86,12 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   end
 
   @impl true
-  def websocket_info(:send_behaviors, state) do
-    behaviors = fetch_behaviors()
+  def websocket_info(:send_roles, state) do
+    roles = fetch_roles()
 
     payload = %{
-      type: "behaviors",
-      behaviors: behaviors
+      type: "roles",
+      roles: roles
     }
 
     json_message = Jason.encode!(payload)
@@ -135,8 +135,8 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     :ok
   end
 
-  defp fetch_behaviors do
-    Beamulator.RuntimeInspector.behaviors()
+  defp fetch_roles do
+    Beamulator.RuntimeInspector.roles()
   end
 
   defp fetch_actors do
@@ -163,7 +163,7 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     %{
       serial_id: actor_state.serial_id,
       pid: actor_state.pid_str,
-      behavior: strip_namespace(actor_state.behavior),
+      role: strip_namespace(actor_state.role),
       tags: MapSet.to_list(actor_state.tags),
       name: actor_state.name,
       action_count: actor_state.runtime_stats.action_count,
@@ -183,8 +183,8 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
     Beamulator.RuntimeInspector.stats()
   end
 
-  defp strip_namespace(behavior) do
-    behavior
+  defp strip_namespace(role) do
+    role
     |> Atom.to_string()
     |> String.split(".")
     |> tl()

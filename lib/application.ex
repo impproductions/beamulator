@@ -54,17 +54,17 @@ defmodule Beamulator.Application do
   #   actors_config = Application.fetch_env!(:beamulator, :actors)
 
   #   actors_config
-  #   |> Enum.flat_map(fn %{name: name, behavior: behavior, config: config, amt: amt} ->
+  #   |> Enum.flat_map(fn %{name: name, role: role, config: config, amt: amt} ->
   #     for _ <- 1..amt do
   #       %{
   #         name: "#{name} #{Beamulator.Utils.increasing_int()}",
-  #         behavior: behavior,
+  #         role: role,
   #         config: config
   #       }
   #     end
   #   end)
-  #   |> Enum.each(fn %{name: name, behavior: behavior, config: config} ->
-  #     Beamulator.Connectors.Internal.create_actor(name, behavior, config)
+  #   |> Enum.each(fn %{name: name, role: role, config: config} ->
+  #     Beamulator.Connectors.Internal.create_actor(name, role, config)
   #     Process.sleep(:rand.uniform(100) + 50)
   #   end)
 

@@ -4,7 +4,7 @@ defmodule Beamulator.ActionLogger do
 
   alias Beamulator.Clock
 
-  @behavior_symbol_capacity 1024
+  @role_symbol_capacity 1024
   @action_symbol_capacity 1024
   @severity_symbol_capacity 16
 
@@ -66,12 +66,12 @@ defmodule Beamulator.ActionLogger do
   end
 
   def handle_cast(
-        {:log_complaint, {behavior, actor, message, severity, action, args, actual}},
+        {:log_complaint, {role, actor, message, severity, action, args, actual}},
         state
       ) do
     {line, context} =
       build_complaint_line(%{
-        behavior: behavior,
+        role: role,
         actor: actor,
         message: message,
         severity: severity,
@@ -89,10 +89,10 @@ defmodule Beamulator.ActionLogger do
     {:noreply, state}
   end
 
-  def handle_cast({:log_event, {{behavior, name}, action, args, result, success}}, state) do
+  def handle_cast({:log_event, {{role, name}, action, args, result, success}}, state) do
     {line, context} =
       build_event_line(%{
-        behavior: behavior,
+        role: role,
         name: name,
         action: action,
         args: args,
@@ -154,7 +154,7 @@ defmodule Beamulator.ActionLogger do
         """
         CREATE TABLE IF NOT EXISTS action_log (
           timestamp TIMESTAMP,
-          behavior SYMBOL CAPACITY #{@behavior_symbol_capacity} NOCACHE,
+          role SYMBOL CAPACITY #{@role_symbol_capacity} NOCACHE,
           name STRING,
           action SYMBOL CAPACITY #{@action_symbol_capacity} NOCACHE,
           args STRING,
@@ -184,7 +184,7 @@ defmodule Beamulator.ActionLogger do
         """
         CREATE TABLE IF NOT EXISTS complaints_log (
           timestamp TIMESTAMP,
-          behavior SYMBOL CAPACITY #{@behavior_symbol_capacity} NOCACHE,
+          role SYMBOL CAPACITY #{@role_symbol_capacity} NOCACHE,
           actor STRING,
           message STRING,
           severity SYMBOL CAPACITY #{@severity_symbol_capacity} NOCACHE,
@@ -244,7 +244,7 @@ defmodule Beamulator.ActionLogger do
 
   defp build_complaint_line(data) do
     %{
-      behavior: behavior,
+      role: role,
       actor: actor,
       message: message,
       severity: severity,
@@ -265,7 +265,7 @@ defmodule Beamulator.ActionLogger do
     {timestamp, start_timestamp, _real_time} = compute_timestamps()
 
     line =
-      "complaints_log,behavior=#{escape_tag(behavior)},actor=#{escape_tag(actor)},severity=#{escape_tag(severity_str)} " <>
+      "complaints_log,role=#{escape_tag(role)},actor=#{escape_tag(actor)},severity=#{escape_tag(severity_str)} " <>
         "message=\"#{message}\",action=\"#{escape_field(action_str)}\",args=\"#{args_str}\",result=\"#{actual_str}\",trigger=\"#{trigger_str}\"," <>
         "start_time=#{start_timestamp}i,run_id=\"#{Application.get_env(:beamulator, :run_uuid)}\" " <>
         "#{timestamp}"
@@ -274,7 +274,7 @@ defmodule Beamulator.ActionLogger do
   end
 
   defp build_event_line(data) do
-    %{behavior: behavior, name: name, action: action, args: args, result: result} = data
+    %{role: role, name: name, action: action, args: args, result: result} = data
     {status, content} = result
 
     action_str = inspect(action) |> escape_tag()
@@ -285,7 +285,7 @@ defmodule Beamulator.ActionLogger do
     {timestamp, start_timestamp, real_time} = compute_timestamps()
 
     line =
-      "action_log,behavior=#{escape_tag(behavior)},name=#{escape_tag(name)},action=#{escape_tag(action_str)} " <>
+      "action_log,role=#{escape_tag(role)},name=#{escape_tag(name)},action=#{escape_tag(action_str)} " <>
         "args=\"#{args_str}\",result=\"#{result_str}\",real_time=#{real_time}i," <>
         "start_time=#{start_timestamp}i,run_id=\"#{Application.get_env(:beamulator, :run_uuid)}\",success=#{success} " <>
         "#{timestamp}"

@@ -1,8 +1,8 @@
-defmodule Beamulator.Behaviors.Procrastinator do
+defmodule Beamulator.Roles.Procrastinator do
   alias Beamulator.Utils
   alias Beamulator.Lab.Duration, as: D
-  use Beamulator.Behavior
-  import Beamulator.Behavior.ComplaintBuilder
+  use Beamulator.Role
+  import Beamulator.Role.ComplaintBuilder
 
   require Logger
   alias Beamulator.Actions
