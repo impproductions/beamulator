@@ -177,7 +177,6 @@ defmodule Beamulator.ActionLogger do
           actions_file STRING,
           random_seed INT
         ) TIMESTAMP(timestamp)
-        WAL
         """
       },
       {
