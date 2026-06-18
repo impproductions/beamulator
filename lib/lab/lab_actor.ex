@@ -45,6 +45,17 @@ defmodule Beamulator.Lab.Actor do
     GenServer.cast(pid, {:set_tags, tags})
   end
 
+  def invoke(serial_id, action_name, args) when is_integer(serial_id) do
+    case Utils.Actors.select_by_serial_id(serial_id) do
+      {pid, _} when is_pid(pid) -> invoke(pid, action_name, args)
+      _ -> {:error, :actor_not_found}
+    end
+  end
+
+  def invoke(pid, action_name, args) when is_pid(pid) do
+    GenServer.call(pid, {:invoke_action, action_name, args}, 10_000)
+  end
+
   def select_all() do
     Utils.Actors.select_all()
     |> Enum.map(&as_actor_definition/1)

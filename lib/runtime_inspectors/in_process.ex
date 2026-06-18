@@ -33,6 +33,32 @@ defmodule Beamulator.RuntimeInspectors.InProcess do
   end
 
   @impl true
+  def actions_for(role) when is_binary(role) do
+    case safe_string_to_module(role) do
+      {:ok, mod} -> actions_for(mod)
+      :error -> []
+    end
+  end
+
+  def actions_for(role) when is_atom(role) do
+    if Code.ensure_loaded?(role) and function_exported?(role, :actions, 0) do
+      role.actions()
+      |> Enum.map(fn %{name: name, default_args: default_args} ->
+        %{name: name, default_args: default_args}
+      end)
+    else
+      []
+    end
+  end
+
+  defp safe_string_to_module(name) do
+    candidate = if String.starts_with?(name, "Elixir."), do: name, else: "Elixir." <> name
+    {:ok, String.to_existing_atom(candidate)}
+  rescue
+    ArgumentError -> :error
+  end
+
+  @impl true
   def complaints() do
     if Process.whereis(Beamulator.Sinks.Memory) do
       Beamulator.Sinks.Memory.complaints()

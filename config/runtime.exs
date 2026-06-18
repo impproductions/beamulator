@@ -1,9 +1,9 @@
 import Config
 
 config :beamulator,
-  enable_action_logger: false,
+  enable_action_logger: true,
   start_memory_sink: false,
-  action_sinks: [Beamulator.Sinks.DashboardStats],
+  action_sinks: [Beamulator.Sinks.DashboardStats, Beamulator.Sinks.ActionLogger],
   questdb_client: Beamulator.Clients.QuestDBHttp,
   runtime_inspector: Beamulator.RuntimeInspectors.InProcess,
   questdb: %{

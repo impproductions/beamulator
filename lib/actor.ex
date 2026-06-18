@@ -204,6 +204,48 @@ defmodule Beamulator.Actor do
     {:reply, state, state}
   end
 
+  def handle_call({:invoke_action, action_name, args}, _from, state) do
+    case resolve_action(state.role, action_name) do
+      {:ok, fun} ->
+        result = Beamulator.ActionExecutor.exec({state.role, state.name}, fun, args)
+        new_state = bump_runtime_stats(state)
+        Beamulator.Dashboard.WebSocketHandler.broadcast({:actor_state_update, new_state})
+
+        Beamulator.Dashboard.WebSocketHandler.broadcast(
+          {:manual_action_trigger, state.serial_id, action_name}
+        )
+
+        {:reply, {:ok, result}, new_state}
+
+      :error ->
+        {:reply, {:error, :unknown_action}, state}
+    end
+  end
+
+  defp bump_runtime_stats(state) do
+    now = Clock.get_simulation_now()
+
+    %{
+      state
+      | runtime_stats: %{
+          state.runtime_stats
+          | action_count: state.runtime_stats.action_count + 1,
+            last_action_time: now
+        }
+    }
+  end
+
+  defp resolve_action(role, action_name) when is_binary(action_name) do
+    if function_exported?(role, :actions, 0) do
+      Enum.find_value(role.actions(), :error, fn
+        %{name: ^action_name, function: fun} -> {:ok, fun}
+        _ -> false
+      end)
+    else
+      :error
+    end
+  end
+
   def terminate(reason, state) do
     Logger.error("Actor #{state.name} terminating with reason: #{inspect(reason)}")
 
@@ -227,7 +269,7 @@ defmodule Beamulator.Actor do
         Clock.schedule_at(self(), :act, due_ms)
 
       :auto ->
-        drift_adjusted = wait_real_time_ms - elapsed
+        drift_adjusted = max(0, wait_real_time_ms - elapsed)
         Process.send_after(self(), :act, drift_adjusted)
     end
   end

@@ -35,8 +35,8 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   def websocket_handle({:text, msg}, state) do
     Logger.info("Received message: #{msg}")
 
-    with {:ok, %{"type" => type}} <- Jason.decode(msg) do
-      handle_client_message(type, state)
+    with {:ok, %{"type" => _type} = decoded} <- Jason.decode(msg) do
+      handle_client_message(decoded, state)
     else
       {:error, _} ->
         Logger.error("Failed to decode message: #{msg}")
@@ -51,25 +51,68 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
   @impl true
   def websocket_handle(_data, state), do: {:ok, state}
 
-  defp handle_client_message("get_roles", state) do
+  defp handle_client_message(%{"type" => "get_roles"}, state) do
     send(self(), :send_roles)
     {:ok, state}
   end
 
-  defp handle_client_message("get_actors", state) do
+  defp handle_client_message(%{"type" => "get_actors"}, state) do
     send(self(), :send_actors)
     {:ok, state}
   end
 
-  defp handle_client_message("heartbeat", state) do
+  defp handle_client_message(%{"type" => "heartbeat"}, state) do
     Logger.debug("Received heartbeat")
     {:ok, state}
+  end
+
+  defp handle_client_message(%{"type" => "get_actions", "role" => role}, state) do
+    payload = %{
+      type: "actions",
+      role: role,
+      actions: Beamulator.RuntimeInspector.actions_for(role)
+    }
+
+    {:reply, {:text, Jason.encode!(payload)}, state}
+  end
+
+  defp handle_client_message(
+         %{"type" => "invoke_action", "serial_id" => serial_id, "action" => action} = msg,
+         state
+       )
+       when is_integer(serial_id) and is_binary(action) do
+    args = Map.get(msg, "args")
+    result = Beamulator.Lab.Actor.invoke(serial_id, action, args)
+
+    {success, payload_result} =
+      case result do
+        {:ok, {:ok, value}} -> {true, %{ok: encode_result(value)}}
+        {:ok, {:error, reason}} -> {false, %{error: encode_result(reason)}}
+        {:error, reason} -> {false, %{error: inspect(reason)}}
+      end
+
+    payload = %{
+      type: "invoke_result",
+      serial_id: serial_id,
+      action: action,
+      success: success,
+      result: payload_result
+    }
+
+    {:reply, {:text, Jason.encode!(payload)}, state}
   end
 
   defp handle_client_message(_, state) do
     Logger.error("Unknown message type")
     {:ok, state}
   end
+
+  defp encode_result(v) when is_binary(v) or is_number(v) or is_boolean(v) or is_nil(v), do: v
+  defp encode_result(v) when is_list(v), do: Enum.map(v, &encode_result/1)
+  defp encode_result(v) when is_map(v) and not is_struct(v) do
+    for {k, val} <- v, into: %{}, do: {to_string(k), encode_result(val)}
+  end
+  defp encode_result(v), do: inspect(v)
 
   @impl true
   def websocket_info(:refresh, state) do
@@ -118,6 +161,17 @@ defmodule Beamulator.Dashboard.WebSocketHandler do
 
     json_message = Jason.encode!(payload)
     {:reply, {:text, json_message}, state}
+  end
+
+  @impl true
+  def websocket_info({:manual_action_trigger, serial_id, action_name}, state) do
+    payload = %{
+      type: "manual_action_trigger",
+      serial_id: serial_id,
+      action: action_name
+    }
+
+    {:reply, {:text, Jason.encode!(payload)}, state}
   end
 
   @impl true

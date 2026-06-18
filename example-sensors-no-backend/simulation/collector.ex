@@ -6,6 +6,10 @@ defmodule Beamulator.Roles.Collector do
   use Beamulator.Role
   require Logger
 
+  expose_actions [
+    {:send_collected_metrics, default_args: [[[1, "temperature", 21.5]]]}
+  ]
+
   @decision_wait_ms D.new(m: 30)
 
   @impl true

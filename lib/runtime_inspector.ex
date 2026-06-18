@@ -10,12 +10,14 @@ defmodule Beamulator.RuntimeInspector do
   @callback actor(serial_id :: non_neg_integer()) :: {:ok, map()} | {:error, term()}
   @callback roles() :: [map()]
   @callback complaints() :: [map()]
+  @callback actions_for(role :: module() | String.t()) :: [map()]
 
   def stats(), do: impl().stats()
   def actors(), do: impl().actors()
   def actor(serial_id), do: impl().actor(serial_id)
   def roles(), do: impl().roles()
   def complaints(), do: impl().complaints()
+  def actions_for(role), do: impl().actions_for(role)
 
   defp impl(),
     do: Application.get_env(:beamulator, :runtime_inspector, Beamulator.RuntimeInspectors.InProcess)

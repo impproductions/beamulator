@@ -35,6 +35,33 @@
       transition: transform 0.2s, box-shadow 0.2s;
     }
 
+    @keyframes manual-trigger-flash {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.0);
+      }
+      15% {
+        background-color: #ff1744 !important;
+        transform: scale(2.2);
+        box-shadow: 0 0.9px 1.8px rgba(0, 0, 0, 0.55);
+      }
+      55% {
+        background-color: #ff1744 !important;
+        transform: scale(2.2);
+        box-shadow: 0 0.9px 1.8px rgba(0, 0, 0, 0.55);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.0);
+      }
+    }
+
+    .actor-tile[data-manual-acted] {
+      animation: manual-trigger-flash 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 10;
+      position: relative;
+    }
+
     .actors-overview {
       display: flex;
       flex-wrap: wrap;
@@ -51,6 +78,75 @@
       font-size: 0.8rem;
       max-height: 30rem;
       overflow: auto;
+    }
+
+    .actions-panel {
+      margin: 1rem 0;
+      padding: 0.75rem 1rem;
+      background-color: #fafafa;
+      border-left: 3px solid #3273dc;
+      border-radius: 4px;
+    }
+
+    .actions-panel-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #555;
+      margin: 0 0 0.75rem 0;
+    }
+
+    .actions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .action-row {
+      background-color: white;
+      border: 1px solid #e6e6e6;
+      border-radius: 4px;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .action-row-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .action-row-form {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .action-args-textarea {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+      font-size: 0.85rem !important;
+      line-height: 1.4 !important;
+      width: 50ch !important;
+      max-width: 100% !important;
+      height: 14rem !important;
+      min-height: 14rem !important;
+      resize: both !important;
+      white-space: pre !important;
+    }
+
+    .action-result {
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    .action-result code {
+      background-color: rgba(255, 255, 255, 0.25) !important;
+      color: inherit !important;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
   </style>
 </head>
@@ -178,7 +274,7 @@
         )
       ]);
 
-    const ActorCard = ({ actor }) => {
+    const ActorCard = ({ actor, actions, invokeAction, lastResult }) => {
       if (!actor) return null;
       return h("div", { className: "card" }, [
         h("header", { className: "card-header" },
@@ -198,13 +294,102 @@
             h("div", { className: "tag" }, "Role: " + actor.role),
             h("div", { className: "tag" }, "Started: " + actor.started),
           ]),
+          h(ActionsPanel, {
+            actor,
+            actions: actions || [],
+            invokeAction,
+            lastResult
+          }),
           h("div", { className: "content" }, [
             h("h4", null, "State"),
             h("pre", { className: "card-pre" }, actor.state),
             h("h4", null, "Config"),
-            h("pre", { className: "card-pre" }, JSON.stringify(actor.config, null, 2))
+            h("pre", { className: "card-pre" }, actor.config)
           ])
         ])
+      ]);
+    };
+
+    const ActionsPanel = ({ actor, actions, invokeAction, lastResult }) => {
+      const [expanded, setExpanded] = useState(null);
+      const [argsText, setArgsText] = useState({});
+      const [error, setError] = useState(null);
+
+      const onToggle = (a) => {
+        if (expanded === a.name) {
+          setExpanded(null);
+          return;
+        }
+        setExpanded(a.name);
+        if (argsText[a.name] === undefined) {
+          setArgsText({
+            ...argsText,
+            [a.name]: JSON.stringify(a.default_args)
+          });
+        }
+        setError(null);
+      };
+
+      const onInvoke = (a) => {
+        const text = argsText[a.name] ?? "null";
+        let args;
+        try {
+          args = JSON.parse(text);
+        } catch (e) {
+          setError("Invalid JSON: " + e.message);
+          return;
+        }
+        setError(null);
+        invokeAction(actor.serial_id, a.name, args);
+      };
+
+      return h("div", { className: "actions-panel" }, [
+        h("h4", { className: "actions-panel-title" }, "Manual Actions"),
+        actions.length === 0
+          ? h("p", { className: "has-text-grey is-size-7" },
+              "This role exposes no actions.")
+          : h("div", { className: "actions-list" },
+              actions.map((a) =>
+                h("div", { key: a.name, className: "action-row" }, [
+                  h("div", { className: "action-row-header" }, [
+                    h("button", {
+                      className: "button is-small is-link",
+                      onClick: () => onToggle(a)
+                    }, a.name),
+                    expanded === a.name
+                      ? h("button", {
+                          className: "button is-small is-primary",
+                          onClick: () => onInvoke(a)
+                        }, "Invoke")
+                      : null
+                  ]),
+                  expanded === a.name
+                    ? h("div", { className: "action-row-form" }, [
+                        h("label", { className: "label is-small" }, "Args (JSON)"),
+                        h("textarea", {
+                          className: "textarea is-small action-args-textarea",
+                          spellcheck: false,
+                          value: argsText[a.name] ?? "",
+                          onInput: (e) =>
+                            setArgsText({ ...argsText, [a.name]: e.target.value })
+                        }),
+                        error
+                          ? h("p", { className: "help is-danger" }, error)
+                          : null
+                      ])
+                    : null
+                ])
+              )
+            ),
+        lastResult
+          ? h("div", {
+              className: "notification action-result " +
+                (lastResult.success ? "is-success" : "is-danger")
+            }, [
+              h("strong", null, lastResult.action + ": "),
+              h("code", null, JSON.stringify(lastResult.result))
+            ])
+          : null
       ]);
     };
 
@@ -269,7 +454,7 @@
       return `hsl(${hVal}, 70%, 60%)`;
     };
 
-    const ActorsOverviewTile = ({ actor, onSelectActor }) => {
+    const ActorsOverviewTile = ({ actor, manualPulse, onSelectActor }) => {
       const tileRef = useRef(null);
       const baseColor = useMemo(() => stringToColor(actor.role), [actor.role]);
 
@@ -277,11 +462,21 @@
         if (tileRef.current) {
           tileRef.current.setAttribute("data-just-acted", "true");
           const timer = setTimeout(() => {
-            tileRef.current.removeAttribute("data-just-acted");
+            if (tileRef.current) tileRef.current.removeAttribute("data-just-acted");
           }, 500);
           return () => clearTimeout(timer);
         }
       }, [actor.action_count]);
+
+      useEffect(() => {
+        if (manualPulse && tileRef.current) {
+          tileRef.current.setAttribute("data-manual-acted", "true");
+          const timer = setTimeout(() => {
+            if (tileRef.current) tileRef.current.removeAttribute("data-manual-acted");
+          }, 1200);
+          return () => clearTimeout(timer);
+        }
+      }, [manualPulse]);
 
       return h("div", {
         ref: tileRef,
@@ -293,14 +488,19 @@
       });
     };
 
-    const ActorsOverviewPanel = ({ actorStates, onSelectActor }) =>
+    const ActorsOverviewPanel = ({ actorStates, manualPulses, onSelectActor }) =>
       h("div", { className: "card" }, [
         h("header", { className: "card-header" },
           h("p", { className: "card-header-title" }, "Actors Overview")
         ),
         h("div", { className: "card-content actors-overview" },
           actorStates.map((actor) =>
-            h(ActorsOverviewTile, { key: actor.serial_id, actor, onSelectActor })
+            h(ActorsOverviewTile, {
+              key: actor.serial_id,
+              actor,
+              manualPulse: manualPulses[actor.serial_id] || 0,
+              onSelectActor
+            })
           )
         )
       ]);
@@ -311,6 +511,9 @@
       const [selectedActor, setSelectedActor] = useState(null);
       const [simulation, setSimulation] = useState({ duration: 0 });
       const [stats, setStats] = useState({});
+      const [actionsByRole, setActionsByRole] = useState({});
+      const [lastInvokeResult, setLastInvokeResult] = useState(null);
+      const [manualPulses, setManualPulses] = useState({});
 
       const handleMessage = useCallback((msg) => {
         switch (msg.type) {
@@ -325,6 +528,23 @@
             break;
           case "roles":
             setRoles(msg.roles);
+            break;
+          case "actions":
+            setActionsByRole((prev) => ({ ...prev, [msg.role]: msg.actions }));
+            break;
+          case "invoke_result":
+            setLastInvokeResult({
+              serial_id: msg.serial_id,
+              action: msg.action,
+              success: msg.success,
+              result: msg.result
+            });
+            break;
+          case "manual_action_trigger":
+            setManualPulses((prev) => ({
+              ...prev,
+              [msg.serial_id]: (prev[msg.serial_id] || 0) + 1
+            }));
             break;
           case "actor_state_update":
             setActorStates((prevStates) => {
@@ -354,18 +574,47 @@
       }, []);
 
       const { status, sendMessage } = useWebSocket(wsUrl, handleMessage);
-      const handleSelectActor = (actorName) => setSelectedActor(actorName);
+      const handleSelectActor = (actorName) => {
+        setSelectedActor(actorName);
+        setLastInvokeResult(null);
+      };
       const displayedActor = actorStates.find((a) => a.serial_id === selectedActor);
+      const displayedRole = displayedActor?.role || null;
+
+      useEffect(() => {
+        if (displayedRole && !actionsByRole[displayedRole]) {
+          sendMessage({ type: "get_actions", role: displayedRole });
+        }
+      }, [displayedRole, actionsByRole, sendMessage]);
+
+      const invokeAction = useCallback((serial_id, action, args) => {
+        sendMessage({ type: "invoke_action", serial_id, action, args });
+      }, [sendMessage]);
+
+      const displayedActions = displayedRole ? actionsByRole[displayedRole] : null;
+      const displayedResult =
+        lastInvokeResult && displayedActor && lastInvokeResult.serial_id === displayedActor.serial_id
+          ? lastInvokeResult
+          : null;
 
       return h("div", null, [
         h(Navbar, { title: "Dashboard", status }),
         h("section", { className: "section" },
           h("div", { className: "container dashboard-container" }, [
             h(SimulationPanel, simulation),
-            h(ActorsOverviewPanel, { actorStates, onSelectActor: handleSelectActor }),
+            h(ActorsOverviewPanel, {
+              actorStates,
+              manualPulses,
+              onSelectActor: handleSelectActor
+            }),
             h(RolePanel, { stats, roles, actor: displayedActor }),
             displayedActor
-              ? h(ActorCard, { actor: displayedActor })
+              ? h(ActorCard, {
+                  actor: displayedActor,
+                  actions: displayedActions,
+                  invokeAction,
+                  lastResult: displayedResult
+                })
               : h("div", { className: "card" }, [
                 h("header", { className: "card-header" },
                   h("p", { className: "card-header-title" }, "Actor")
