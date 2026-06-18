@@ -22,6 +22,6 @@ RUN apk add --no-cache libstdc++ ncurses-libs openssl
 WORKDIR /app
 COPY --from=builder /app/_build/prod/rel/beamulator ./
 
-EXPOSE 8080
+EXPOSE 4000
 
 ENTRYPOINT ["bin/beamulator", "start"]

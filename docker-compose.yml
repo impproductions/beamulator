@@ -5,3 +5,16 @@ services:
     ports:
       - "8812:8812"
       - "9000:9000"
+
+  beamulator:
+    container_name: beamulator
+    build:
+      context: .
+    depends_on:
+      - database
+    ports:
+      - "4000:4000"
+    environment:
+      BEAMULATOR_QUESTDB_URL: "http://questdb"
+      BEAMULATOR_QUESTDB_PORT: "9000"
+      BEAMULATOR_SIM_PATH: "${BEAMULATOR_SIM_PATH:-}"
